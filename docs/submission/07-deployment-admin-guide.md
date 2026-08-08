@@ -1,4 +1,4 @@
-# Sustainable Finance MEL Platform Deployment and Administration Guide
+# 07 Deployment and Administration Guide
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-# Sustainable Finance MEL Platform Documentation Plan
+# 00 Documentation Plan
 
 ## Purpose
 
@@ -54,7 +54,7 @@ The documentation should show that the same platform concept can support a broad
 ```text
 docs/submission/
   00-documentation-plan.md
-  01-executive-overview.md
+  01-executive-summary.md
   02-prototype-scope.md
   03-requirements-specification.md
   04-current-architecture.md

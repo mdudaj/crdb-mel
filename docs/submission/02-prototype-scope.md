@@ -1,4 +1,4 @@
-# Sustainable Finance MEL Platform Prototype Scope
+# 02 Prototype Scope
 
 ## Prototype Summary
 

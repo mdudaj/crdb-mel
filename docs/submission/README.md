@@ -1,4 +1,4 @@
-# Sustainable Finance MEL Platform submission pack
+# Submission pack
 
 Start here when reviewing the prototype documentation.
 
@@ -8,21 +8,31 @@ This pack documents the Sustainable Finance MEL Platform prototype and the propo
 
 The current prototype uses TACATDP monitoring as the proof-of-concept use case. The active prototype architecture is Power Pages plus Dataverse. The future product should support a broader Sustainable Finance Unit operating scope and should go through architecture review before production rollout.
 
-## Recommended reading order
+## Client-facing pack
 
-1. `01-executive-overview.md`
-2. `02-prototype-scope.md`
-3. `03-requirements-specification.md`
-4. `04-current-architecture.md`
-5. `05-user-manual.md`
-6. `06-testing-validation-report.md`
-7. `07-deployment-admin-guide.md`
-8. `08-known-limitations.md`
-9. `09-future-product-vision.md`
-10. `10-implementation-roadmap.md`
-11. `11-traceability-matrix.md`
+Use the client-facing PDF for review and sharing. It includes only the core narrative documents:
 
-Use `00-documentation-plan.md` to check the writing rules, scope boundaries, and definition of done.
+1. `01-executive-summary.md` — Executive Summary
+2. `02-prototype-scope.md` — Prototype Scope
+3. `03-requirements-specification.md` — Requirements Specification
+4. `04-current-architecture.md` — Current Architecture
+5. `05-user-manual.md` — User Manual
+6. `06-testing-validation-report.md` — Testing and Validation Report
+7. `07-deployment-admin-guide.md` — Deployment and Administration Guide
+8. `08-known-limitations.md` — Known Limitations
+9. `09-future-product-vision.md` — Future Product Vision
+
+Generated file:
+
+- `Sustainable-Finance-MEL-Platform-Client-Submission-Pack.pdf`
+
+## Internal pack
+
+Use the full internal PDF when planning implementation work. It includes the client-facing documents plus the documentation plan, roadmap, and traceability matrix.
+
+Generated file:
+
+- `Sustainable-Finance-MEL-Platform-Submission-Pack.pdf`
 
 ## Key boundaries
 

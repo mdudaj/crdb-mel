@@ -1,4 +1,4 @@
-# Sustainable Finance MEL Platform Current Architecture
+# 04 Current Architecture
 
 ## Architecture Summary
 
