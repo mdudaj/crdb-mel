@@ -1,4 +1,4 @@
-# 04 Current Architecture
+# 4. Current Architecture
 
 ## Architecture Summary
 

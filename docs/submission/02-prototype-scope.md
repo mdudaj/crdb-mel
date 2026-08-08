@@ -1,4 +1,4 @@
-# 02 Prototype Scope
+# 2. Prototype Scope
 
 ## Prototype Summary
 

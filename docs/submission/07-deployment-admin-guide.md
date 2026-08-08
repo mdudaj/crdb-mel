@@ -1,4 +1,4 @@
-# 07 Deployment and Administration Guide
+# 7. Deployment and Administration Guide
 
 ## Purpose
 

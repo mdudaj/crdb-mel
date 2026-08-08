@@ -1,4 +1,4 @@
-# 03 Requirements Specification
+# 3. Requirements Specification
 
 ## Purpose
 
