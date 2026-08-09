@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   LogIn,
   Mail,
+  MapPinned,
   Menu,
   MoreVertical,
   NotepadText,
@@ -30,6 +31,7 @@ import {
   Users,
 } from '@lucide/vue';
 import { computed, defineAsyncComponent, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Component } from 'vue';
 import { draftStore, type LocalDraft } from '../offline/drafts';
 import { PowerPagesApiClient } from '../powerpages-api/client';
 import type {
@@ -133,6 +135,50 @@ const VueDatePicker = defineAsyncComponent(async () => {
   await import('@vuepic/vue-datepicker/dist/main.css');
   const module = await import('@vuepic/vue-datepicker');
   return module.VueDatePicker;
+});
+const DashboardChart = defineAsyncComponent(async () => {
+  const [
+    core,
+    charts,
+    components,
+    features,
+    renderers,
+    vueECharts,
+  ] = await Promise.all([
+    import('echarts/core'),
+    import('echarts/charts'),
+    import('echarts/components'),
+    import('echarts/features'),
+    import('echarts/renderers'),
+    import('vue-echarts'),
+  ]);
+  core.use([
+    charts.BarChart,
+    charts.PieChart,
+    components.GridComponent,
+    components.LegendComponent,
+    components.TooltipComponent,
+    features.LabelLayout,
+    renderers.CanvasRenderer,
+  ]);
+  return vueECharts.default as Component;
+});
+const LeafletMap = defineAsyncComponent(async () => {
+  await import('leaflet/dist/leaflet.css');
+  const module = await import('@vue-leaflet/vue-leaflet');
+  return module.LMap as Component;
+});
+const LeafletTileLayer = defineAsyncComponent(async () => {
+  const module = await import('@vue-leaflet/vue-leaflet');
+  return module.LTileLayer as Component;
+});
+const LeafletMarker = defineAsyncComponent(async () => {
+  const module = await import('@vue-leaflet/vue-leaflet');
+  return module.LMarker as Component;
+});
+const LeafletPopup = defineAsyncComponent(async () => {
+  const module = await import('@vue-leaflet/vue-leaflet');
+  return module.LPopup as Component;
 });
 const pageSize = 10;
 const loading = ref(false);
@@ -291,6 +337,23 @@ const powerBiTables = [
   { logical: 'mp_submissionrepeatrow', label: 'Submission repeat rows', purpose: 'One row per repeat-group instance' },
   { logical: 'mp_submissionanswer', label: 'Submission answers', purpose: 'Long-format answer facts' },
 ];
+
+interface PrototypeBeneficiaryInsight {
+  id: string;
+  name: string;
+  district: string;
+  ward: string;
+  type: string;
+  gender: string;
+  submittedAt?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+interface PrototypeBeneficiaryMapPoint extends PrototypeBeneficiaryInsight {
+  latitude: number;
+  longitude: number;
+}
 const accessRoleReference = [
   { role: 'Platform Administrator', summary: 'Manages users, projects, forms, reporting, and configuration.' },
   { role: 'Project Manager', summary: 'Manages users and form access for assigned projects.' },
@@ -688,6 +751,134 @@ const signedInUserInitials = computed(() => {
   return (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : label.slice(0, 2)).toUpperCase();
 });
 const signedInUserRoleLabel = computed(() => (canManageAccess.value ? 'Platform Administrator' : 'MEL User'));
+
+function parseReportRootAnswers(row: SubmissionReportRow): Record<string, unknown> {
+  if (!row.mp_rootanswersjson) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(row.mp_rootanswersjson);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function firstTextValue(source: Record<string, unknown>, keys: string[], fallback = ''): string {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+  }
+  return fallback;
+}
+
+function firstNumberValue(source: Record<string, unknown>, keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return undefined;
+}
+
+function normalizeChartLabel(value: string, fallback: string): string {
+  return value.trim() || fallback;
+}
+
+function countBy<T>(items: T[], resolveKey: (item: T) => string): Array<{ name: string; value: number }> {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const key = resolveKey(item);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name));
+}
+
+const prototypeBeneficiaries = computed<PrototypeBeneficiaryInsight[]>(() => reportRows.value.map((row) => {
+  const answers = parseReportRootAnswers(row);
+  const id = firstTextValue(answers, ['beneficiary_id', 'customer_id', 'participant_id', 'respondent_id'], row.mp_instanceid);
+  const name = firstTextValue(answers, ['beneficiary_name', 'customer_name', 'respondent_name', 'full_name'], row.mp_displayname || id);
+  return {
+    id,
+    name,
+    district: firstTextValue(answers, ['district', 'district_name', 'District'], 'Unspecified district'),
+    ward: firstTextValue(answers, ['ward', 'ward_name', 'Ward'], 'Unspecified ward'),
+    type: firstTextValue(answers, ['beneficiary_type', 'customer_type', 'respondent_type'], 'Baseline respondent'),
+    gender: firstTextValue(answers, ['gender', 'sex'], 'Not specified'),
+    submittedAt: row.mp_submittedat,
+    latitude: firstNumberValue(answers, ['latitude', 'lat', 'gps_latitude', 'geopoint_latitude']),
+    longitude: firstNumberValue(answers, ['longitude', 'lon', 'lng', 'gps_longitude', 'geopoint_longitude']),
+  };
+}).filter((beneficiary, index, list) => (
+  list.findIndex((candidate) => candidate.id === beneficiary.id) === index
+)));
+
+const beneficiaryDistrictCoverage = computed(() => countBy(prototypeBeneficiaries.value, (beneficiary) => normalizeChartLabel(beneficiary.district, 'Unspecified district')));
+const beneficiaryTypeBreakdown = computed(() => countBy(prototypeBeneficiaries.value, (beneficiary) => normalizeChartLabel(beneficiary.type, 'Baseline respondent')));
+const beneficiaryMapPoints = computed<PrototypeBeneficiaryMapPoint[]>(() => prototypeBeneficiaries.value.flatMap((beneficiary) => {
+  if (
+    typeof beneficiary.latitude === 'number'
+    && typeof beneficiary.longitude === 'number'
+    && beneficiary.latitude >= -90
+    && beneficiary.latitude <= 90
+    && beneficiary.longitude >= -180
+    && beneficiary.longitude <= 180
+  ) {
+    return [{ ...beneficiary, latitude: beneficiary.latitude, longitude: beneficiary.longitude }];
+  }
+  return [];
+}));
+const beneficiaryMapCenter = computed<[number, number]>(() => {
+  if (beneficiaryMapPoints.value.length === 0) {
+    return [-6.369, 34.8888];
+  }
+  const latitude = beneficiaryMapPoints.value.reduce((sum, point) => sum + (point.latitude ?? 0), 0) / beneficiaryMapPoints.value.length;
+  const longitude = beneficiaryMapPoints.value.reduce((sum, point) => sum + (point.longitude ?? 0), 0) / beneficiaryMapPoints.value.length;
+  return [latitude, longitude];
+});
+const beneficiaryTypeChartOption = computed<Record<string, unknown>>(() => ({
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, left: 'center', itemWidth: 10, itemHeight: 10 },
+  series: [{
+    name: 'Beneficiaries',
+    type: 'pie',
+    radius: ['42%', '68%'],
+    center: ['50%', '43%'],
+    avoidLabelOverlap: true,
+    data: beneficiaryTypeBreakdown.value,
+  }],
+}));
+const beneficiaryDistrictChartOption = computed<Record<string, unknown>>(() => ({
+  tooltip: { trigger: 'axis' },
+  grid: { left: 8, right: 12, top: 12, bottom: 4, containLabel: true },
+  xAxis: { type: 'value', minInterval: 1 },
+  yAxis: {
+    type: 'category',
+    data: beneficiaryDistrictCoverage.value.slice(0, 6).map((item) => item.name),
+    axisLabel: { width: 110, overflow: 'truncate' },
+  },
+  series: [{
+    name: 'Beneficiaries',
+    type: 'bar',
+    data: beneficiaryDistrictCoverage.value.slice(0, 6).map((item) => item.value),
+    itemStyle: { borderRadius: [0, 6, 6, 0], color: '#007a3d' },
+  }],
+}));
 const dashboardMetricItems = computed(() => [
   {
     id: 'active-projects',
@@ -702,6 +893,20 @@ const dashboardMetricItems = computed(() => [
     label: 'Assigned forms',
     detail: 'Available to collect',
     tone: 'neutral',
+  },
+  {
+    id: 'beneficiaries',
+    value: reportLoading.value ? '...' : String(prototypeBeneficiaries.value.length),
+    label: 'Beneficiaries',
+    detail: prototypeBeneficiaries.value.length > 0 ? 'Mapped from baseline records' : 'Awaiting baseline records',
+    tone: prototypeBeneficiaries.value.length > 0 ? 'success' : 'neutral',
+  },
+  {
+    id: 'coverage',
+    value: reportLoading.value ? '...' : String(beneficiaryDistrictCoverage.value.length),
+    label: 'Districts covered',
+    detail: beneficiaryMapPoints.value.length > 0 ? `${beneficiaryMapPoints.value.length} mapped point${beneficiaryMapPoints.value.length === 1 ? '' : 's'}` : 'Map uses coverage table until coordinates exist',
+    tone: beneficiaryDistrictCoverage.value.length > 0 ? 'success' : 'neutral',
   },
   {
     id: 'local-drafts',
@@ -2232,6 +2437,7 @@ async function loadWorkspace() {
       ? 'No Dataverse submit write attempted for this selected form.'
       : 'No assigned form selected.';
     lastWorkspaceRefreshAt.value = new Date().toISOString();
+    void loadReportingData();
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : 'Unable to load workspace.';
     if ((message.includes('401') || message.includes('403')) && !api.hasPowerPagesSession()) {
@@ -2616,10 +2822,89 @@ onUnmounted(() => {
             <span class="operational-metric__icon" aria-hidden="true">
               <FolderOpen v-if="metric.id === 'active-projects'" />
               <Clipboard v-else-if="metric.id === 'forms-action'" />
+              <Users v-else-if="metric.id === 'beneficiaries'" />
+              <MapPinned v-else-if="metric.id === 'coverage'" />
               <FileSpreadsheet v-else-if="metric.id === 'local-drafts'" />
               <UserCog v-else />
             </span>
           </article>
+        </section>
+
+        <section class="beneficiary-insights-panel" aria-labelledby="beneficiary-insights-title">
+          <header class="section-heading">
+            <div>
+              <p class="eyebrow">Prototype insights</p>
+              <h2 id="beneficiary-insights-title">Beneficiary baseline view</h2>
+            </div>
+            <span class="state-chip state-chip--neutral">Portal visualisation</span>
+          </header>
+
+          <div v-if="reportLoading" class="loading-panel loading-panel--inline" aria-live="polite">
+            <h2>Loading beneficiary insights</h2>
+            <p>Preparing KPI charts and location coverage from projected baseline records.</p>
+          </div>
+
+          <div v-else-if="prototypeBeneficiaries.length > 0" class="beneficiary-insights-grid">
+            <section class="insight-card insight-card--chart" aria-labelledby="beneficiary-type-chart-title">
+              <div>
+                <p class="eyebrow">Beneficiary model</p>
+                <h3 id="beneficiary-type-chart-title">Type breakdown</h3>
+              </div>
+              <DashboardChart class="insight-chart" :option="beneficiaryTypeChartOption" autoresize />
+            </section>
+
+            <section class="insight-card insight-card--chart" aria-labelledby="beneficiary-coverage-chart-title">
+              <div>
+                <p class="eyebrow">Coverage</p>
+                <h3 id="beneficiary-coverage-chart-title">District distribution</h3>
+              </div>
+              <DashboardChart class="insight-chart" :option="beneficiaryDistrictChartOption" autoresize />
+            </section>
+
+            <section class="insight-card insight-card--map" aria-labelledby="beneficiary-map-title">
+              <div>
+                <p class="eyebrow">Mapping</p>
+                <h3 id="beneficiary-map-title">Location coverage</h3>
+              </div>
+              <div v-if="beneficiaryMapPoints.length > 0" class="beneficiary-map-shell">
+                <LeafletMap :zoom="6" :center="beneficiaryMapCenter" :use-global-leaflet="false">
+                  <LeafletTileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                  />
+                  <LeafletMarker
+                    v-for="point in beneficiaryMapPoints"
+                    :key="`beneficiary-map:${point.id}`"
+                    :lat-lng="[point.latitude, point.longitude]"
+                  >
+                    <LeafletPopup>
+                      <strong>{{ point.name }}</strong><br>
+                      {{ point.district }}<template v-if="point.ward !== 'Unspecified ward'"> · {{ point.ward }}</template>
+                    </LeafletPopup>
+                  </LeafletMarker>
+                </LeafletMap>
+              </div>
+              <div v-else class="coverage-table" role="region" aria-label="Beneficiary coverage by district">
+                <p class="data-entry-summary">Coordinates are not available in the current projected records. The map panel falls back to district coverage until geopoints are captured or projected.</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">District</th>
+                      <th scope="col">Beneficiaries</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in beneficiaryDistrictCoverage.slice(0, 6)" :key="`coverage:${item.name}`">
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.value }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <p v-else class="data-entry-empty-note">Beneficiary KPI and map panels will populate after baseline records are projected into reporting rows.</p>
         </section>
 
         <section class="dashboard-grid dashboard-grid--with-rail">
