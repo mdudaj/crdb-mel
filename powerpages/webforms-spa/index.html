@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MEL Tool</title>
+    <script>
+      const tacatdpAuthenticated = "{% if user %}true{% else %}false{% endif %}";
+      window.__TACATDP_POWERPAGES__ = {
+        isAuthenticated: tacatdpAuthenticated === "true",
+        userEmail: "{% if user %}{{ user.emailaddress1 | escape }}{% endif %}",
+        userName: "{% if user %}{{ user.fullname | escape }}{% endif %}",
+        roles: [{% if user %}{% for role in user.roles %}"{{ role | escape }}"{% unless forloop.last %},{% endunless %}{% endfor %}{% endif %}]
+      };
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

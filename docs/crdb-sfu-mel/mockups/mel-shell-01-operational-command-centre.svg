@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" font-family="Segoe UI, Arial, sans-serif">
+<defs>
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0b3818" flood-opacity="0.08"/></filter>
+      <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#063E76"/><stop offset="1" stop-color="#082B49"/></linearGradient>
+      <linearGradient id="darkGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06192B"/><stop offset="1" stop-color="#0E3A5A"/></linearGradient>
+    </defs>
+<rect width="1600" height="1000" fill="#F4F8F2"/>
+<rect x="0" y="0" width="260" height="1000" fill="url(#navGrad)"/>
+<circle cx="52" cy="54" r="24" fill="#43B02A"/><text x="52" y="61" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">✓</text>
+<text x="88" y="48" font-size="22" font-weight="800" fill="#fff" text-anchor="start">CRDB</text>
+<text x="88" y="75" font-size="15" font-weight="500" fill="#cfe7d1" text-anchor="start">Sustainable Finance</text>
+<rect x="260" y="0" width="1340" height="86" fill="#fff" stroke="#D9E6D4"/>
+<text x="308" y="42" font-size="25" font-weight="700" fill="#5C6B60" text-anchor="start">☰</text>
+<text x="352" y="38" font-size="27" font-weight="800" fill="#102018" text-anchor="start">Impact Monitoring</text>
+<text x="352" y="65" font-size="15" font-weight="500" fill="#5C6B60" text-anchor="start">SFU operational workspace</text>
+<rect x="1040" y="24" width="300" height="40" rx="8" fill="#fff" stroke="#D9E6D4"/>
+<text x="1060" y="50" font-size="15" font-weight="500" fill="#5C6B60" text-anchor="start">⌕ Search programmes, projects, indicators</text>
+<text x="1380" y="50" font-size="15" font-weight="700" fill="#43B02A" text-anchor="start">● Synced 2 min ago</text>
+<circle cx="1530" cy="43" r="22" fill="#2F6FED"/><text x="1530" y="50" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">AM</text>
+<rect x="24" y="130" width="212" height="44" rx="8" fill="#2B6FC5"/>
+<rect x="24" y="138" width="5" height="28" rx="2" fill="#F2C84B"/>
+<text x="68" y="159" font-size="17" font-weight="700" fill="#fff" text-anchor="start">Dashboard</text>
+<rect x="24" y="186" width="212" height="44" rx="8" fill="transparent"/>
+<text x="68" y="215" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Projects</text>
+<rect x="24" y="242" width="212" height="44" rx="8" fill="transparent"/>
+<text x="68" y="271" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Reporting</text>
+<rect x="24" y="298" width="212" height="44" rx="8" fill="transparent"/>
+<text x="68" y="327" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">System Activity</text>
+<rect x="24" y="354" width="212" height="44" rx="8" fill="transparent"/>
+<text x="68" y="383" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">User &amp; Access</text>
+<rect x="288" y="116" width="1268" height="86" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<text x="318" y="154" font-size="28" font-weight="800" fill="#236B22" text-anchor="start">TACATDP field monitoring command centre</text>
+<text x="318" y="184" font-size="16" font-weight="500" fill="#5C6B60" text-anchor="start">Attention, current assignments, collection progress, and reporting readiness in one operational view.</text>
+<rect x="1360" y="140" width="150" height="38" rx="19.0" fill="#43B02A"/><text x="1435.0" y="165.0" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">Refresh</text>
+<rect x="288" y="222" width="1268" height="48" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<circle cx="318" cy="246" r="8" fill="#43B02A"/><text x="318" y="253" font-size="22" font-weight="800" fill="#fff" text-anchor="middle"></text>
+<text x="340" y="252" font-size="16" font-weight="700" fill="#102018" text-anchor="start">Connected · Assignments refreshed 07:12 · 0 drafts on this device · No pending uploads</text>
+<rect x="288" y="292" width="1268" height="78" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<circle cx="322" cy="331" r="22" fill="#EAF6E7"/><text x="322" y="338" font-size="22" font-weight="800" fill="#236B22" text-anchor="middle">✓</text>
+<text x="360" y="322" font-size="14" font-weight="800" fill="#5C6B60" text-anchor="start">Attention required</text>
+<text x="360" y="348" font-size="18" font-weight="800" fill="#102018" text-anchor="start">No known issues require attention</text>
+<text x="720" y="348" font-size="15" font-weight="500" fill="#5C6B60" text-anchor="start">Based on latest assignment refresh and local device state.</text>
+<rect x="288" y="394" width="1268" height="88" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<text x="318" y="426" font-size="14" font-weight="800" fill="#5C6B60" text-anchor="start">Active assignment</text>
+<text x="318" y="454" font-size="24" font-weight="800" fill="#236B22" text-anchor="start">TACATDP Impact Evaluation</text>
+<text x="318" y="478" font-size="16" font-weight="500" fill="#5C6B60" text-anchor="start">Version 260709-rich-mvp · Collector scope</text>
+<rect x="1332" y="422" width="160" height="40" rx="20.0" fill="#43B02A"/><text x="1412.0" y="448.0" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">Collect</text>
+<rect x="288" y="514" width="208" height="116" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/><circle cx="336" cy="558" r="26" fill="#43B02A"/><text x="336" y="565" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">P</text><text x="376" y="552" font-size="15" font-weight="700" fill="#5C6B60" text-anchor="start">Projects</text><text x="376" y="584" font-size="28" font-weight="800" fill="#102018" text-anchor="start">1</text><text x="376" y="610" font-size="14" font-weight="700" fill="#236B22" text-anchor="start">assigned</text>
+<rect x="606" y="514" width="208" height="116" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/><circle cx="654" cy="558" r="26" fill="#2F6FED"/><text x="654" y="565" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">F</text><text x="694" y="552" font-size="15" font-weight="700" fill="#5C6B60" text-anchor="start">Forms</text><text x="694" y="584" font-size="28" font-weight="800" fill="#102018" text-anchor="start">1</text><text x="694" y="610" font-size="14" font-weight="700" fill="#236B22" text-anchor="start">available</text>
+<rect x="924" y="514" width="208" height="116" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/><circle cx="972" cy="558" r="26" fill="#F59E0B"/><text x="972" y="565" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">D</text><text x="1012" y="552" font-size="15" font-weight="700" fill="#5C6B60" text-anchor="start">Drafts</text><text x="1012" y="584" font-size="28" font-weight="800" fill="#102018" text-anchor="start">0</text><text x="1012" y="610" font-size="14" font-weight="700" fill="#236B22" text-anchor="start">on this device</text>
+<rect x="1242" y="514" width="208" height="116" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/><circle cx="1290" cy="558" r="26" fill="#19A7A6"/><text x="1290" y="565" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">M</text><text x="1330" y="552" font-size="15" font-weight="700" fill="#5C6B60" text-anchor="start">My records</text><text x="1330" y="584" font-size="28" font-weight="800" fill="#102018" text-anchor="start">Open Data</text><text x="1330" y="610" font-size="14" font-weight="700" fill="#236B22" text-anchor="start">collector scope</text>
+<rect x="288" y="668" width="612" height="222" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<text x="318" y="704" font-size="14" font-weight="800" fill="#5C6B60" text-anchor="start">Work queue</text>
+<text x="318" y="736" font-size="25" font-weight="800" fill="#102018" text-anchor="start">Assigned projects</text>
+<rect x="318" y="760" width="540" height="88" rx="8" fill="#fff" stroke="#D9E6D4"/>
+<text x="342" y="798" font-size="20" font-weight="800" fill="#236B22" text-anchor="start">TACATDP Impact Evaluation</text>
+<text x="342" y="826" font-size="16" font-weight="500" fill="#5C6B60" text-anchor="start">1 form assigned · 0 drafts on this device</text>
+<rect x="744" y="786" width="94" height="36" rx="18.0" fill="#43B02A"/><text x="791.0" y="810.0" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">Open</text>
+<rect x="932" y="668" width="624" height="222" rx="10" fill="#fff" stroke="#D9E6D4" filter="url(#shadow)"/>
+<text x="962" y="704" font-size="14" font-weight="800" fill="#5C6B60" text-anchor="start">Data access</text>
+<text x="962" y="736" font-size="25" font-weight="800" fill="#102018" text-anchor="start">Submitted records</text>
+<text x="962" y="794" font-size="17" font-weight="500" fill="#5C6B60" text-anchor="start">Open Data to view submitted records, review status, and recent changes.</text>
+<text x="962" y="844" font-size="16" font-weight="700" fill="#102018" text-anchor="start">Scope: My records</text>
+<rect x="1360" y="704" width="132" height="38" rx="19.0" fill="#43B02A"/><text x="1426.0" y="729.0" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">Open Data</text>
+<text x="286" y="964" font-size="14" font-weight="600" fill="#5C6B60" text-anchor="start">CRDB Bank · Secure · Compliant · Impact driven</text><text x="1500" y="964" font-size="14" font-weight="600" fill="#5C6B60" text-anchor="end">Copyright 2026</text></svg>

@@ -1,0 +1,662 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_an_onboarding_request_is_pending": {
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "mp_onboardingrequest",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "mp_status",
+              "subscriptionRequest/filterexpression": "mp_status eq 100000000"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Set_Request_Processing": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "mp_onboardingrequests",
+              "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+              "item": {
+                "mp_status": 100000001,
+                "mp_processingattempts": "@add(coalesce(triggerOutputs()?['body/mp_processingattempts'], 0), 1)",
+                "mp_lastattemptat": "@utcNow()",
+                "mp_resultmessage": "Processing onboarding request.",
+                "mp_errorcategory": null,
+                "mp_errorjson": null
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Parse_Form_Scope": {
+          "runAfter": {
+            "Set_Request_Processing": [
+              "Succeeded"
+            ]
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerOutputs()?['body/mp_formscopejson']",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "formId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "formName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "formVersionId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "formVersionId"
+                ]
+              }
+            }
+          }
+        },
+        "Find_Contact_By_Email": {
+          "runAfter": {
+            "Set_Request_Processing": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "contacts",
+              "$select": "contactid,fullname,emailaddress1,statecode,adx_identity_logonenabled",
+              "$filter": "@concat('emailaddress1 eq ''', triggerOutputs()?['body/mp_email'], ''' and statecode eq 0')",
+              "$top": 1
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Create_Contact_Route": {
+          "runAfter": {
+            "Find_Contact_By_Email": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@length(outputs('Find_Contact_By_Email')?['body/value'])",
+              0
+            ]
+          },
+          "actions": {
+            "Create_Contact_When_Missing": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord"
+                },
+                "parameters": {
+                  "entityName": "contacts",
+                  "item": {
+                    "fullname": "@triggerOutputs()?['body/mp_fullname']",
+                    "lastname": "@coalesce(triggerOutputs()?['body/mp_fullname'], triggerOutputs()?['body/mp_email'])",
+                    "emailaddress1": "@triggerOutputs()?['body/mp_email']"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Resolve_Contact_Id": {
+          "runAfter": {
+            "Create_Contact_Route": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(greater(length(outputs('Find_Contact_By_Email')?['body/value']), 0), first(outputs('Find_Contact_By_Email')?['body/value'])?['contactid'], actions('Create_Contact_When_Missing')?['outputs']?['body/contactid'])"
+        },
+        "Update_Request_Contact": {
+          "runAfter": {
+            "Resolve_Contact_Id": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "mp_onboardingrequests",
+              "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+              "item": {
+                "mp_contactid": "@outputs('Resolve_Contact_Id')"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Create_Request_Audit": {
+          "runAfter": {
+            "Resolve_Contact_Id": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord"
+            },
+            "parameters": {
+              "entityName": "mp_accessauditlogs",
+              "item": {
+                "mp_auditkey": "@concat('access:', utcNow(), ':', triggerOutputs()?['body/mp_actoremail'], ':InviteUser:', triggerOutputs()?['body/mp_email'], ':', triggerOutputs()?['body/mp_requestid'])",
+                "mp_action": 100000000,
+                "mp_resultstatus": 100000000,
+                "mp_actoremail": "@triggerOutputs()?['body/mp_actoremail']",
+                "mp_actorrolesjson": "@triggerOutputs()?['body/mp_actorrolesjson']",
+                "mp_affectedemail": "@triggerOutputs()?['body/mp_email']",
+                "mp_AffectedContact@odata.bind": "@concat('/contacts(', outputs('Resolve_Contact_Id'), ')')",
+                "mp_targetrole": "@triggerOutputs()?['body/mp_targetrole']",
+                "mp_scopetype": 100000000,
+                "mp_newstatejson": "@string(triggerOutputs()?['body'])",
+                "mp_reason": "@triggerOutputs()?['body/mp_reason']",
+                "mp_sourceroute": "@triggerOutputs()?['body/mp_sourceroute']",
+                "mp_requestid": "@triggerOutputs()?['body/mp_requestid']",
+                "mp_occurredat": "@utcNow()",
+                "mp_resultmessage": "Onboarding request accepted for server-side processing."
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_Form_Assignments": {
+          "runAfter": {
+            "Create_Request_Audit": [
+              "Succeeded"
+            ],
+            "Parse_Form_Scope": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Parse_Form_Scope')",
+          "actions": {
+            "Find_Existing_Form_Assignment": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "parameters": {
+                  "entityName": "mp_formassignments",
+                  "$select": "mp_formassignmentid,mp_assignmentkey,mp_useremail,_mp_formversion_value",
+                  "$filter": "@concat('mp_useremail eq ''', triggerOutputs()?['body/mp_email'], ''' and _mp_formversion_value eq ', items('Apply_Form_Assignments')?['formVersionId'])",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Create_Assign_Form_Audit": {
+              "runAfter": {
+                "Find_Existing_Form_Assignment": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord"
+                },
+                "parameters": {
+                  "entityName": "mp_accessauditlogs",
+                  "item": {
+                    "mp_auditkey": "@concat('access:', utcNow(), ':', triggerOutputs()?['body/mp_actoremail'], ':AssignForm:', triggerOutputs()?['body/mp_email'], ':', items('Apply_Form_Assignments')?['formVersionId'], ':', triggerOutputs()?['body/mp_requestid'])",
+                    "mp_action": 100000002,
+                    "mp_resultstatus": 100000000,
+                    "mp_actoremail": "@triggerOutputs()?['body/mp_actoremail']",
+                    "mp_actorrolesjson": "@triggerOutputs()?['body/mp_actorrolesjson']",
+                    "mp_affectedemail": "@triggerOutputs()?['body/mp_email']",
+                    "mp_AffectedContact@odata.bind": "@concat('/contacts(', outputs('Resolve_Contact_Id'), ')')",
+                    "mp_targetrole": "@triggerOutputs()?['body/mp_targetrole']",
+                    "mp_scopetype": 100000003,
+                    "mp_FormVersion@odata.bind": "@concat('/mp_formversions(', items('Apply_Form_Assignments')?['formVersionId'], ')')",
+                    "mp_newstatejson": "@string(items('Apply_Form_Assignments'))",
+                    "mp_reason": "@triggerOutputs()?['body/mp_reason']",
+                    "mp_sourceroute": "@triggerOutputs()?['body/mp_sourceroute']",
+                    "mp_requestid": "@concat(triggerOutputs()?['body/mp_requestid'], ':', items('Apply_Form_Assignments')?['formVersionId'])",
+                    "mp_occurredat": "@utcNow()",
+                    "mp_resultmessage": "Form assignment requested."
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Create_Form_Assignment_When_Missing": {
+              "runAfter": {
+                "Create_Assign_Form_Audit": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "equals": [
+                  "@length(outputs('Find_Existing_Form_Assignment')?['body/value'])",
+                  0
+                ]
+              },
+              "actions": {
+                "Create_Form_Assignment": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord"
+                    },
+                    "parameters": {
+                      "entityName": "mp_formassignments",
+                      "item": {
+                        "mp_useremail": "@triggerOutputs()?['body/mp_email']",
+                        "mp_assignmentkey": "@concat(triggerOutputs()?['body/mp_email'], ':', items('Apply_Form_Assignments')?['formVersionId'])",
+                        "mp_lifecyclestatus": 100000000,
+                        "mp_FormVersion@odata.bind": "@concat('/mp_formversions(', items('Apply_Form_Assignments')?['formVersionId'], ')')"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          }
+        },
+        "Find_Notification_Delivery_Setting": {
+          "runAfter": {
+            "Apply_Form_Assignments": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords"
+            },
+            "parameters": {
+              "entityName": "mp_notificationdeliverysettings",
+              "$select": "mp_notificationdeliverysettingid,mp_settingkey,mp_deliverymode,mp_sendermailbox,mp_mailboxstatus",
+              "$filter": "mp_settingkey eq 'onboarding-delivery'",
+              "$top": 1
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Route_Email_Delivery": {
+          "runAfter": {
+            "Find_Notification_Delivery_Setting": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "or": [
+              {
+                "equals": [
+                  "@triggerOutputs()?['body/mp_requesttype']",
+                  100000000
+                ]
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@if(greater(length(outputs('Find_Contact_By_Email')?['body/value']), 0), first(outputs('Find_Contact_By_Email')?['body/value'])?['adx_identity_logonenabled'], false)",
+                    true
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Create_Native_Power_Pages_Invitation": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord"
+                },
+                "parameters": {
+                  "entityName": "adx_invitations",
+                  "item": {
+                    "adx_name": "@concat('Impact Monitoring invitation - ', triggerOutputs()?['body/mp_email'])",
+                    "adx_type": 756150000,
+                    "adx_maximumredemptions": 1,
+                    "adx_invitationcode": "@guid()",
+                    "adx_expirydate": "@addDays(utcNow(), 14)",
+                    "adx_inviteContact@odata.bind": "@concat('/contacts(', outputs('Resolve_Contact_Id'), ')')",
+                    "mspp_websiteid@odata.bind": "/powerpagesites(fccc0cc6-7f5e-4885-aeb8-2272e68130a3)"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Determine_Email_Delivery_Readiness": {
+              "runAfter": {
+                "Associate_Invitation_Authenticated_Users_Role": [
+                  "Succeeded",
+                  "Failed",
+                  "TimedOut",
+                  "Skipped"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@and(greater(length(outputs('Find_Notification_Delivery_Setting')?['body/value']), 0),equals(first(outputs('Find_Notification_Delivery_Setting')?['body/value'])?['mp_deliverymode'], 100000001),equals(first(outputs('Find_Notification_Delivery_Setting')?['body/value'])?['mp_mailboxstatus'], 100000003),not(empty(first(outputs('Find_Notification_Delivery_Setting')?['body/value'])?['mp_sendermailbox'])))"
+            },
+            "Run_Native_Send_Invitation_When_Ready": {
+              "runAfter": {
+                "Determine_Email_Delivery_Readiness": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "equals": [
+                  "@outputs('Determine_Email_Delivery_Readiness')",
+                  true
+                ]
+              },
+              "actions": {
+                "Run_Native_Send_Invitation_Workflow": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "PerformBoundAction"
+                    },
+                    "parameters": {
+                      "entityName": "workflows",
+                      "actionName": "Microsoft.Dynamics.CRM.ExecuteWorkflow",
+                      "recordId": "15c03c8d-754f-4386-a62c-cf7e91337ebd",
+                      "item": {
+                        "EntityId": "@outputs('Create_Native_Power_Pages_Invitation')?['body/adx_invitationid']"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            },
+            "Update_Request_Invitation_Result": {
+              "runAfter": {
+                "Run_Native_Send_Invitation_When_Ready": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord"
+                },
+                "parameters": {
+                  "entityName": "mp_onboardingrequests",
+                  "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+                  "item": {
+                    "mp_invitationid": "@outputs('Create_Native_Power_Pages_Invitation')?['body/adx_invitationid']",
+                    "mp_invitationcode": "@outputs('Create_Native_Power_Pages_Invitation')?['body/adx_invitationcode']",
+                    "mp_invitationexpiresat": "@outputs('Create_Native_Power_Pages_Invitation')?['body/adx_expirydate']",
+                    "mp_invitationstatus": 100000001,
+                    "mp_invitationdeliverymode": "@if(outputs('Determine_Email_Delivery_Readiness'), 100000000, 100000001)",
+                    "mp_invitationredeemurl": "@concat('https://tacatdp-crdb.powerappsportals.com/register/?returnurl=%2f&invitation=', outputs('Create_Native_Power_Pages_Invitation')?['body/adx_invitationcode'])",
+                    "mp_resultmessage": "@if(outputs('Determine_Email_Delivery_Readiness'), 'Invitation created and native Send Invitation workflow was requested. Confirm email delivery or redemption before treating onboarding as complete.', 'Invitation created. Mailbox delivery is not configured; issue the invitation code through an approved internal channel.')"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Find_Authenticated_Users_Web_Role": {
+              "runAfter": {
+                "Create_Native_Power_Pages_Invitation": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "ListRecords"
+                },
+                "parameters": {
+                  "entityName": "powerpagecomponents",
+                  "$select": "powerpagecomponentid,name,powerpagecomponenttype",
+                  "$filter": "name eq 'Authenticated Users' and powerpagecomponenttype eq 11",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Associate_Invitation_Authenticated_Users_Role": {
+              "runAfter": {
+                "Find_Authenticated_Users_Web_Role": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "AssociateEntities"
+                },
+                "parameters": {
+                  "entityName": "adx_invitations",
+                  "recordId": "@outputs('Create_Native_Power_Pages_Invitation')?['body/adx_invitationid']",
+                  "associationEntityRelationship": "adx_invitation_mspp_webrole_powerpagecomponent",
+                  "item/@odata.id": "@concat('https://org5eb0379b.crm4.dynamics.com/api/data/v9.2/powerpagecomponents(', first(outputs('Find_Authenticated_Users_Web_Role')?['body/value'])?['powerpagecomponentid'], ')')"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Skip_Email_When_Mailbox_Not_Configured": {
+                "runAfter": {},
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "UpdateRecord"
+                  },
+                  "parameters": {
+                    "entityName": "mp_onboardingrequests",
+                    "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+                    "item": {
+                      "mp_invitationstatus": 100000001,
+                      "mp_invitationdeliverymode": 100000002,
+                      "mp_resultmessage": "Assignment completed. The user already has portal login enabled; no invitation was created. Mailbox notification is not configured, so inform the user through an approved internal channel."
+                    }
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              }
+            }
+          }
+        },
+        "Set_Request_Needs_Review": {
+          "runAfter": {
+            "Route_Email_Delivery": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "mp_onboardingrequests",
+              "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+              "item": {
+                "mp_status": 100000005,
+                "mp_completedat": "@utcNow()",
+                "mp_resultmessage": "Onboarding server-side writes completed. Review invitation or notification delivery before treating onboarding as complete.",
+                "mp_auditkey": "@outputs('Create_Request_Audit')?['body/mp_auditkey']"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Set_Request_Failed_On_Error": {
+          "runAfter": {
+            "Set_Request_Processing": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Parse_Form_Scope": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Find_Contact_By_Email": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Create_Contact_Route": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Resolve_Contact_Id": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Update_Request_Contact": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Create_Request_Audit": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Apply_Form_Assignments": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Find_Notification_Delivery_Setting": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Route_Email_Delivery": [
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord"
+            },
+            "parameters": {
+              "entityName": "mp_onboardingrequests",
+              "recordId": "@triggerOutputs()?['body/mp_onboardingrequestid']",
+              "item": {
+                "mp_status": 100000003,
+                "mp_resultmessage": "Onboarding request failed during server-side processing. Review the flow run history.",
+                "mp_errorcategory": "processor-failed",
+                "mp_errorjson": "@json(concat('{\"failedAt\":\"', utcNow(), '\",\"message\":\"Review Power Automate run history for this request.\"}'))"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

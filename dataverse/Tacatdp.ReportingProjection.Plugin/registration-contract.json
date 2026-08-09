@@ -1,0 +1,21 @@
+{
+  "solutionUniqueName": "tacatdp_prototype",
+  "assembly": "Tacatdp.ReportingProjection.Plugin",
+  "type": "Tacatdp.ReportingProjection.Plugin.ProjectionRefreshPlugin",
+  "step": {
+    "name": "TACATDP projection refresh on SubmissionVersion create",
+    "message": "Create",
+    "primaryEntity": "mp_submissionversion",
+    "stage": "PostOperation",
+    "mode": "Asynchronous",
+    "executionOrder": 20,
+    "runInUserContext": "DEDICATED_LEAST_PRIVILEGE_USER_REQUIRED"
+  },
+  "postImage": {
+    "alias": "SubmissionVersionImage",
+    "columns": [
+      "mp_instanceid"
+    ]
+  },
+  "environmentWrite": false
+}

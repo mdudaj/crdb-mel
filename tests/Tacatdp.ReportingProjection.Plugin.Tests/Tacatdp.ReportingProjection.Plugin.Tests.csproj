@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../dataverse/Tacatdp.ReportingProjection.Plugin/ProjectionModels.cs" Link="ProjectionModels.cs" />
+    <Compile Include="../../dataverse/Tacatdp.ReportingProjection.Plugin/ProjectionCore.cs" Link="ProjectionCore.cs" />
+    <Compile Include="../../dataverse/Tacatdp.ReportingProjection.Plugin/SubmissionMetadataParser.cs" Link="SubmissionMetadataParser.cs" />
+  </ItemGroup>
+</Project>

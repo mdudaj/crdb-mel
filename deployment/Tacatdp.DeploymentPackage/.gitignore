@@ -1,0 +1,4 @@
+DeploymentAssets/Solutions/*.zip
+PkgAssets/Content/*.xml
+bin/
+obj/

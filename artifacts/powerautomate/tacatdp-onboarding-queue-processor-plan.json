@@ -1,0 +1,283 @@
+{
+  "failure_policy": {
+    "failed_request_status": 100000003,
+    "no_delete": "Requests are never deleted during failure handling.",
+    "retry": "Administrator explicitly sets a retry-approved Pending state after reviewing the error.",
+    "store_sanitized_error_only": true
+  },
+  "generated_on": "2026-07-24",
+  "idempotency": {
+    "assignment_key": "mp_assignmentkey = lower(email) + ':' + formVersionId prevents duplicate form assignments.",
+    "audit_key": "mp_auditkey uses request id, action, affected email, and form version where applicable.",
+    "request_key": "mp_requestkey alternate key prevents duplicate request rows."
+  },
+  "invitation_delivery_mode_codes": {
+    "AssignmentNotification": 100000002,
+    "Email": 100000000,
+    "ManualCode": 100000001
+  },
+  "invitation_status_codes": {
+    "EmailSent": 100000002,
+    "Expired": 100000004,
+    "ManualDeliveryRequired": 100000001,
+    "Pending": 100000000,
+    "Redeemed": 100000003,
+    "Replaced": 100000005
+  },
+  "mshirika_smoke_tests": [
+    "Create a NewUser request from the portal and confirm one queue row starts Pending.",
+    "Confirm the Dataverse-triggered flow run appears for the request.",
+    "Confirm status changes to Processing and then NeedsReview or Failed.",
+    "Confirm NeedsReview NewUser has contact, invitation, audit, and assignments, then verify email delivery or invitation redemption.",
+    "Create an ExistingUser request and confirm Dataverse email notification path.",
+    "Retry a failed request and confirm no duplicate assignments are created.",
+    "Confirm Data Collector cannot read or create mp_onboardingrequest rows."
+  ],
+  "name": "TACATDP - Onboarding Queue Processor",
+  "official_references": [
+    "https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger",
+    "https://learn.microsoft.com/en-us/connectors/commondataserviceforapps/",
+    "https://learn.microsoft.com/en-us/power-automate/dataverse/create",
+    "https://learn.microsoft.com/en-us/power-automate/dataverse/bound-unbound"
+  ],
+  "request_type_codes": {
+    "ExistingUser": 100000001,
+    "NewUser": 100000000,
+    "Unresolved": 100000002
+  },
+  "solution_aware": true,
+  "status": "planned",
+  "status_codes": {
+    "Cancelled": 100000004,
+    "Completed": 100000002,
+    "Failed": 100000003,
+    "NeedsReview": 100000005,
+    "Pending": 100000000,
+    "Processing": 100000001
+  },
+  "steps": [
+    {
+      "id": 1,
+      "inputs": {},
+      "kind": "condition",
+      "name": "Guard_Pending_Status",
+      "purpose": "Exit without mutation unless request status is Pending."
+    },
+    {
+      "id": 2,
+      "inputs": {
+        "status": 100000001,
+        "table": "mp_onboardingrequests"
+      },
+      "kind": "update-row",
+      "name": "Set_Request_Processing",
+      "purpose": "Set status to Processing, increment attempts, set LastAttemptAt."
+    },
+    {
+      "id": 3,
+      "inputs": {},
+      "kind": "parse-json",
+      "name": "Parse_Form_Scope",
+      "purpose": "Parse mp_formscopejson into selected form-version entries."
+    },
+    {
+      "id": 4,
+      "inputs": {
+        "filter": "emailaddress1 eq @{triggerOutputs()?['body/mp_email']}",
+        "table": "contacts"
+      },
+      "kind": "list-rows",
+      "name": "Find_Contact_By_Email",
+      "purpose": "Find existing active Power Pages contact by emailaddress1."
+    },
+    {
+      "id": 5,
+      "inputs": {
+        "fields": [
+          "fullname",
+          "lastname",
+          "emailaddress1"
+        ],
+        "table": "contacts"
+      },
+      "kind": "conditional-create-row",
+      "name": "Create_Contact_When_Missing",
+      "purpose": "Create contact only when no matching contact is found."
+    },
+    {
+      "id": 6,
+      "inputs": {},
+      "kind": "update-row",
+      "name": "Update_Request_Contact",
+      "purpose": "Write resolved contact id back to the onboarding request."
+    },
+    {
+      "id": 7,
+      "inputs": {
+        "result_status": "Requested",
+        "table": "mp_accessauditlogs"
+      },
+      "kind": "create-row",
+      "name": "Create_Request_Audit",
+      "purpose": "Create high-level InviteUser or AssignProject access audit before downstream mutation."
+    },
+    {
+      "id": 8,
+      "inputs": {
+        "assignment_key": "lower(email) + ':' + formVersionId",
+        "create_assignment_when_missing": true,
+        "idempotent_lookup": "mp_useremail eq lower(email) and _mp_formversion_value eq formVersionId"
+      },
+      "kind": "apply-to-each",
+      "name": "Apply_Form_Assignments",
+      "purpose": "For each selected form version, create assignment audit and assignment if missing."
+    },
+    {
+      "id": 9,
+      "inputs": {
+        "fallback": "manual-code when missing or not tested",
+        "filter": "mp_settingkey eq 'onboarding-delivery'",
+        "table": "mp_notificationdeliverysettings"
+      },
+      "kind": "list-rows",
+      "name": "Find_Notification_Delivery_Setting",
+      "purpose": "Load singleton onboarding delivery configuration from NotificationDeliverySettings."
+    },
+    {
+      "id": 10,
+      "inputs": {},
+      "kind": "condition",
+      "name": "Route_Email_Delivery",
+      "purpose": "New users receive native Power Pages invitation; existing users receive Dataverse email notification when a mailbox sender is configured."
+    },
+    {
+      "id": 11,
+      "inputs": {
+        "fields": [
+          "adx_invitationcode",
+          "adx_expirydate",
+          "adx_inviteContact",
+          "mspp_websiteid"
+        ],
+        "request_type": 100000000,
+        "table": "adx_invitations"
+      },
+      "kind": "conditional-create-row",
+      "name": "Create_Native_Power_Pages_Invitation",
+      "purpose": "For NewUser requests, create adx_invitation bound to contact and site."
+    },
+    {
+      "id": 12,
+      "inputs": {
+        "delivery_mode_required": 100000000,
+        "mailbox_status_required": "TestedAndEnabled"
+      },
+      "kind": "compose",
+      "name": "Determine_Email_Delivery_Readiness",
+      "purpose": "Email mode is allowed only when configuration says Email and mailbox status is TestedAndEnabled with a sender mailbox."
+    },
+    {
+      "id": 13,
+      "inputs": {},
+      "kind": "condition",
+      "name": "Run_Native_Send_Invitation_When_Ready",
+      "purpose": "Call native Send Invitation workflow only when delivery configuration is email-ready."
+    },
+    {
+      "id": 14,
+      "inputs": {
+        "action": "Microsoft.Dynamics.CRM.ExecuteWorkflow"
+      },
+      "kind": "optional-perform-bound-action",
+      "name": "Run_Native_Send_Invitation_Workflow",
+      "purpose": "Execute the native Power Pages Send Invitation workflow only when mailbox delivery is configured."
+    },
+    {
+      "id": 15,
+      "inputs": {
+        "delivery_mode": 100000001,
+        "invitation_status": 100000001,
+        "redeem_url_pattern": "https://<portal>/register/?returnurl=%2f&invitation=<Invitation Code>",
+        "table": "mp_onboardingrequests"
+      },
+      "kind": "update-row",
+      "name": "Update_Request_Invitation_Result",
+      "purpose": "Write invitation id, code, redeem URL, expiry, status, and delivery mode back to the admin-only queue row."
+    },
+    {
+      "id": 16,
+      "inputs": {
+        "request_type": 100000001,
+        "table": "emails"
+      },
+      "kind": "conditional-create-row",
+      "name": "Create_Dataverse_Assignment_Email",
+      "purpose": "For ExistingUser requests, create Dataverse email activity when a mailbox sender is configured."
+    },
+    {
+      "id": 17,
+      "inputs": {
+        "delivery_mode": 100000002,
+        "table": "mp_onboardingrequests"
+      },
+      "kind": "update-row",
+      "name": "Update_Request_Assignment_Notification_Result",
+      "purpose": "Write assignment notification delivery mode back to the queue row for existing-user requests."
+    },
+    {
+      "id": 18,
+      "inputs": {
+        "action": "Microsoft.Dynamics.CRM.SendEmail"
+      },
+      "kind": "optional-perform-bound-action",
+      "name": "Send_Dataverse_Assignment_Email",
+      "purpose": "Send existing-user assignment notification through Dataverse SendEmail only when mailbox send is approved."
+    },
+    {
+      "id": 19,
+      "inputs": {
+        "existing_user_message": "Assignment completed. Dataverse notification email was created but requires mailbox send approval/review.",
+        "new_user_message": "Invitation created. If mailbox delivery is not configured, issue the invitation code through an approved internal channel.",
+        "status": 100000005
+      },
+      "kind": "update-row",
+      "name": "Set_Request_Needs_Review",
+      "purpose": "Set status NeedsReview after server-side writes when email delivery, manual code handoff, or invitation redemption cannot be confirmed automatically."
+    },
+    {
+      "id": 20,
+      "inputs": {
+        "must_not_store": [
+          "tokens",
+          "connector credentials",
+          "passwords"
+        ],
+        "status": 100000003
+      },
+      "kind": "failure-scope",
+      "name": "Set_Request_Failed_On_Error",
+      "purpose": "On any processing failure, write Failed status, sanitized error category, and result message."
+    }
+  ],
+  "trigger": {
+    "change_type": "Added or modified",
+    "connector": "Microsoft Dataverse",
+    "filter_rows": "mp_status eq 100000000",
+    "operation": "When a row is added, modified or deleted",
+    "operation_id": "SubscribeWebhookTrigger",
+    "required_privileges": [
+      "Create/read/write/delete on Callback Registration for the flow owner",
+      "Read/update on mp_onboardingrequest",
+      "Create/read/update on contact",
+      "Create/read adx_invitation and execute native Send Invitation workflow",
+      "Create/read/update on mp_accessauditlog",
+      "Create/read on mp_formassignment",
+      "Read/append-to on mp_formversion",
+      "Create/send Dataverse email for assignment notifications"
+    ],
+    "scope": "Organization",
+    "select_columns": "mp_status",
+    "table": "mp_onboardingrequest"
+  },
+  "writes_performed": false
+}

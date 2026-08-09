@@ -1,0 +1,13 @@
+adx_append: false
+adx_appendto: true
+adx_create: false
+adx_delete: false
+adx_entitylogicalname: mp_formversion
+adx_entityname: mp_formversion
+adx_entitypermission_webrole:
+- 1bb3051d-e53f-44e0-b226-d6c7050632b0
+adx_entitypermissionid: 67ebf3cf-b47b-f111-ab0e-7c1e523612eb
+adx_parententitypermission: 
+adx_read: true
+adx_scope: 756150000
+adx_write: false

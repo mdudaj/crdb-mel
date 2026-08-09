@@ -1,0 +1,184 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "82d6ab24-7be7-443e-8047-cb19cf22fb7a"
+          },
+          "type": "Request",
+          "kind": "PowerPages",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "Input",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "eventData",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Parse_JSON": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9500aa77-8300-437f-b6ed-63283e635a98"
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "triggerBody()?['eventData']",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "requestId": {
+                  "type": "string"
+                },
+                "deliveryType": {
+                  "type": "string"
+                },
+                "contactId": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "projectName": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "actorEmail": {
+                  "type": "string"
+                },
+                "sourceRoute": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Create_native_Power_Pages_invitation": {
+          "runAfter": {
+            "Parse_JSON": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "590478de-f107-4e1c-b133-d7e875a428fe"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord"
+            },
+            "parameters": {
+              "organization": "https://orga3cf4b37.crm4.dynamics.com",
+              "entityName": "adx_invitations",
+              "item": {
+                "adx_name": "@{concat('TACATDP invitation - ', body('Parse_JSON')?['email'])}",
+                "adx_type": 756150000,
+                "adx_maximumredemptions": 1,
+                "adx_invitationcode": "@{guid()}",
+                "adx_inviteContact@odata.bind": "@{concat('/contacts(', body('Parse_JSON')?['contactId'], ')')}",
+                "mspp_websiteid@odata.bind": "/powerpagesites(fccc0cc6-7f5e-4885-aeb8-2272e68130a3)"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Run_native_Send_Invitation_workflow": {
+          "runAfter": {
+            "Create_native_Power_Pages_invitation": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d9e0e190-1075-49bf-b558-79fa7168021a"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "PerformBoundAction"
+            },
+            "parameters": {
+              "organization": "https://orga3cf4b37.crm4.dynamics.com",
+              "entityName": "workflows",
+              "actionName": "Microsoft.Dynamics.CRM.ExecuteWorkflow",
+              "recordId": "eb467141-a276-f111-ab0e-70a8a52d4a92",
+              "item": {
+                "EntityId": "@outputs('Create_native_Power_Pages_invitation')?['body/adx_invitationid']"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Respond_to_Power_Pages": {
+          "runAfter": {
+            "Run_native_Send_Invitation_workflow": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0ee92a99-7dfe-4241-b785-25deb49ccb4a"
+          },
+          "type": "Response",
+          "kind": "PowerPages",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "status": "native-invitation-requested",
+              "message": "@{concat('Native Power Pages invitation requested for ', body('Parse_JSON')?['email'])}",
+              "requestId": "@body('Parse_JSON')?['requestId']"
+            }
+          }
+        }
+      },
+      "outputs": {}
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}

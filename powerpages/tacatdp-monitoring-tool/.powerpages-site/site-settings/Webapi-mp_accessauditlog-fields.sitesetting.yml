@@ -1,0 +1,4 @@
+id: 7a816312-192a-45a5-8723-dc71533e754e
+name: Webapi/mp_accessauditlog/fields
+source: 0
+value: mp_auditkey,mp_action,mp_resultstatus,mp_actoremail,mp_actorrolesjson,mp_affectedemail,mp_targetrole,mp_scopetype,mp_previousstatejson,mp_newstatejson,mp_reason,mp_sourceroute,mp_requestid,mp_occurredat,mp_resultmessage

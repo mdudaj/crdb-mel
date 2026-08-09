@@ -1,3 +1,7 @@
+# Maker Runbook Supersession Note
+
+Status: superseded for July 7 MVP except as historical Canvas maker context. The active path is a metadata-driven Canvas runtime over Dataverse MVP tables, not Microsoft Lists placeholders or generated fixed screens.
+
 # Phase 3 Maker Execution Runbook
 
 ## Purpose
@@ -51,6 +55,12 @@ The live generated source uses chronological screen names:
 `Screen_<two-digit-order>_<semantic_name>.pa.yaml`
 
 The imported screen list should start with `Screen_01_demographics`, whose visible fields start at `Customer ID`. ODK ecosystem metadata fields `starttime`, `endtime`, `deviceid`, `subscriberid`, `simid`, `devicephonenum`, and `username` are not shown as data-entry rows. If those values are needed later, capture them through Power Apps app/save metadata such as `Now()`, `User()`, and device/session information rather than asking enumerators to type them.
+
+## Multi-project renderer caution
+
+The fixed screen list is a TACATDP-specific scaffold, not the long-term multi-project platform architecture. For multi-project delivery, prefer a metadata-driven form runner that loads `InstrumentVersion`, `GroupDefinition`, `FieldDefinition`, rules, vocabularies, references, and repeat definitions at runtime. Do not continue expanding hand-built TACATDP screens as the platform default until `docs/multi-project-monitoring/form-renderer-ux.md` and the renderer contract are reviewed.
+
+The near-term delivery path is still allowed to implement TACATDP as a one-project prototype. Prototype screens must be documented as TACATDP-specific and should keep seams that can later migrate into the project-platform renderer.
 
 ## Maker execution order
 

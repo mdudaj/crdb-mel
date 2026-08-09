@@ -1,0 +1,75 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "actions": {
+        "Return_value(s)_to_Power_Pages": {
+          "inputs": {
+            "body": {
+              "message": "Flow registration test",
+              "status": "ok"
+            },
+            "schema": {
+              "properties": {
+                "message": {
+                  "title": "message",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "status": {
+                  "title": "status",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "type": "object"
+            },
+            "statusCode": 200
+          },
+          "kind": "PowerPages",
+          "metadata": {
+            "operationMetadataId": "9a168a38-8eca-4911-aad5-4fd2a4d3c6a3"
+          },
+          "runAfter": {},
+          "type": "Response"
+        }
+      },
+      "contentVersion": "1.0.0.0",
+      "outputs": {},
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "inputs": {
+            "schema": {
+              "properties": {
+                "text": {
+                  "description": "eventData",
+                  "title": "Input",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            }
+          },
+          "kind": "PowerPages",
+          "metadata": {
+            "operationMetadataId": "a53a1c77-7571-4612-88ec-e87550b6903a"
+          },
+          "type": "Request"
+        }
+      }
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" font-family="Segoe UI, Arial, sans-serif">
+<defs>
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0b3818" flood-opacity="0.08"/></filter>
+      <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#063E76"/><stop offset="1" stop-color="#082B49"/></linearGradient>
+      <linearGradient id="darkGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#06192B"/><stop offset="1" stop-color="#0E3A5A"/></linearGradient>
+    </defs>
+<rect width="1600" height="1000" fill="#0A3552"/>
+<rect x="0" y="0" width="210" height="1000" fill="#051323"/>
+<circle cx="52" cy="54" r="24" fill="#43B02A"/><text x="52" y="61" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">✓</text>
+<text x="88" y="48" font-size="22" font-weight="800" fill="#fff" text-anchor="start">CRDB</text>
+<text x="88" y="75" font-size="15" font-weight="500" fill="#cfe7d1" text-anchor="start">Sustainable Finance</text>
+<rect x="210" y="0" width="1390" height="86" fill="#071A2B" stroke="#24455F"/>
+<text x="258" y="42" font-size="25" font-weight="700" fill="#BBD1DE" text-anchor="start">☰</text>
+<text x="302" y="38" font-size="27" font-weight="800" fill="#fff" text-anchor="start">SFU MEL Cockpit</text>
+<text x="302" y="65" font-size="15" font-weight="500" fill="#BBD1DE" text-anchor="start">Executive portfolio insight view</text>
+<rect x="1040" y="24" width="300" height="40" rx="8" fill="#102B45" stroke="#24455F"/>
+<text x="1060" y="50" font-size="15" font-weight="500" fill="#BBD1DE" text-anchor="start">⌕ Search programmes, projects, indicators</text>
+<text x="1380" y="50" font-size="15" font-weight="700" fill="#43B02A" text-anchor="start">● Synced 2 min ago</text>
+<circle cx="1530" cy="43" r="22" fill="#2F6FED"/><text x="1530" y="50" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">AM</text>
+<rect x="18" y="130" width="212" height="44" rx="8" fill="#2B6FC5"/>
+<rect x="18" y="138" width="5" height="28" rx="2" fill="#F2C84B"/>
+<text x="62" y="159" font-size="17" font-weight="700" fill="#fff" text-anchor="start">Overview</text>
+<rect x="18" y="186" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="215" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Portfolio</text>
+<rect x="18" y="242" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="271" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Outcomes</text>
+<rect x="18" y="298" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="327" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">ESG Indicators</text>
+<rect x="18" y="354" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="383" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Evidence</text>
+<rect x="18" y="410" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="439" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Safeguards</text>
+<rect x="18" y="466" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="495" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Reports</text>
+<rect x="18" y="522" width="212" height="44" rx="8" fill="transparent"/>
+<text x="62" y="551" font-size="17" font-weight="500" fill="#d9e8ed" text-anchor="start">Settings</text>
+<rect x="240" y="130" width="300" height="120" rx="10" fill="#0C2740" stroke="#24455F"/>
+<circle cx="288" cy="182" r="26" fill="#2F6FED"/><text x="288" y="189" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">C</text>
+<text x="330" y="174" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Committed capital</text>
+<text x="330" y="208" font-size="29" font-weight="800" fill="#fff" text-anchor="start">TZS 248.6B</text>
+<text x="330" y="234" font-size="15" font-weight="700" fill="#43B02A" text-anchor="start">8.4% vs Q1</text>
+<rect x="570" y="130" width="300" height="120" rx="10" fill="#0C2740" stroke="#24455F"/>
+<circle cx="618" cy="182" r="26" fill="#43B02A"/><text x="618" y="189" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">D</text>
+<text x="660" y="174" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Disbursed</text>
+<text x="660" y="208" font-size="29" font-weight="800" fill="#fff" text-anchor="start">TZS 176.3B</text>
+<text x="660" y="234" font-size="15" font-weight="700" fill="#43B02A" text-anchor="start">71% committed</text>
+<rect x="900" y="130" width="300" height="120" rx="10" fill="#0C2740" stroke="#24455F"/>
+<circle cx="948" cy="182" r="26" fill="#19A7A6"/><text x="948" y="189" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">V</text>
+<text x="990" y="174" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Verified results</text>
+<text x="990" y="208" font-size="29" font-weight="800" fill="#fff" text-anchor="start">TZS 92.4B</text>
+<text x="990" y="234" font-size="15" font-weight="700" fill="#43B02A" text-anchor="start">52% committed</text>
+<rect x="1230" y="130" width="300" height="120" rx="10" fill="#0C2740" stroke="#24455F"/>
+<circle cx="1278" cy="182" r="26" fill="#F59E0B"/><text x="1278" y="189" font-size="22" font-weight="800" fill="#fff" text-anchor="middle">P</text>
+<text x="1320" y="174" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Portfolio risk</text>
+<text x="1320" y="208" font-size="29" font-weight="800" fill="#F2C84B" text-anchor="start">Medium</text>
+<text x="1320" y="234" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Risk score 2.4 / 5</text>
+<rect x="240" y="280" width="520" height="292" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="270" y="318" font-size="24" font-weight="800" fill="#fff" text-anchor="start">Portfolio flow</text>
+<polyline points="285,506 360,482 440,444 522,420 610,390 720,356" fill="none" stroke="#43B02A" stroke-width="5"/><polyline points="285,538 360,522 440,490 522,470 610,450 720,428" fill="none" stroke="#64DCE1" stroke-width="5"/>
+<text x="650" y="366" font-size="17" font-weight="800" fill="#64DCE1" text-anchor="start">248.6B</text>
+<text x="650" y="438" font-size="17" font-weight="800" fill="#43B02A" text-anchor="start">176.3B</text>
+<rect x="790" y="280" width="460" height="292" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="820" y="318" font-size="24" font-weight="800" fill="#fff" text-anchor="start">ESG / SDG alignment</text>
+<circle cx="940" cy="430" r="84" fill="none" stroke="#24455F" stroke-width="36"/><circle cx="940" cy="430" r="84" fill="none" stroke="#19A7A6" stroke-width="36" stroke-dasharray="190 530" transform="rotate(-90 940 430)"/><circle cx="940" cy="430" r="84" fill="none" stroke="#F2C84B" stroke-width="36" stroke-dasharray="110 530" stroke-dashoffset="-190" transform="rotate(-90 940 430)"/>
+<text x="1080" y="390" font-size="17" font-weight="700" fill="#fff" text-anchor="start">Climate 36%</text>
+<text x="1080" y="430" font-size="17" font-weight="700" fill="#fff" text-anchor="start">Gender 18%</text>
+<text x="1080" y="470" font-size="17" font-weight="700" fill="#fff" text-anchor="start">Agriculture 13%</text>
+<rect x="1280" y="280" width="280" height="292" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="1310" y="318" font-size="24" font-weight="800" fill="#fff" text-anchor="start">MEL Assistant</text>
+<text x="1310" y="368" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Explain variance in disbursements</text>
+<text x="1310" y="418" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Draft donor update for Q2</text>
+<text x="1310" y="468" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Check data gaps in indicators</text>
+<text x="1310" y="518" font-size="15" font-weight="700" fill="#BBD1DE" text-anchor="start">Summarize safeguards findings</text>
+<rect x="240" y="610" width="610" height="280" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="270" y="648" font-size="24" font-weight="800" fill="#fff" text-anchor="start">Evidence register &amp; audit trail</text>
+<text x="270" y="700" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Partner Bank Report Q2 2026 Verified</text>
+<text x="270" y="748" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Field Verification Q2 2026 Pending Review</text>
+<text x="270" y="796" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Safeguards Checklist Q2 2026 Flagged</text>
+<rect x="880" y="610" width="370" height="280" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="910" y="648" font-size="24" font-weight="800" fill="#fff" text-anchor="start">Results framework</text>
+<text x="910" y="700" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Jobs supported 74%</text>
+<text x="910" y="748" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Emissions avoided 65%</text>
+<text x="910" y="796" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Women-led businesses 73%</text>
+<text x="910" y="844" font-size="16" font-weight="700" fill="#BBD1DE" text-anchor="start">Climate-smart hectares 66%</text>
+<rect x="1280" y="610" width="280" height="280" rx="10" fill="#0C2740" stroke="#24455F"/>
+<text x="1310" y="648" font-size="24" font-weight="800" fill="#fff" text-anchor="start">Quick actions</text>
+<text x="1310" y="704" font-size="17" font-weight="800" fill="#fff" text-anchor="start">Submit Q2 report</text>
+<text x="1310" y="756" font-size="17" font-weight="800" fill="#fff" text-anchor="start">Upload evidence</text>
+<text x="1310" y="808" font-size="17" font-weight="800" fill="#fff" text-anchor="start">Review exceptions</text>
+<text x="286" y="964" font-size="14" font-weight="600" fill="#9fb8c4" text-anchor="start">CRDB Bank · Secure · Compliant · Impact driven</text><text x="1500" y="964" font-size="14" font-weight="600" fill="#9fb8c4" text-anchor="end">Copyright 2026</text></svg>

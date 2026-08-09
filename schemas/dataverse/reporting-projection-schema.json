@@ -1,0 +1,559 @@
+{
+  "generated_for_review_only": true,
+  "generated_on": "2026-07-14",
+  "schema_name": "tacatdp_reporting_projection_schema",
+  "target_host": "Monitoring Tool Data, Exports, and Power BI workspace",
+  "environment_write": false,
+  "solution_header": "MSCRM.SolutionUniqueName=$POWER_PLATFORM_SOLUTION_UNIQUE_NAME",
+  "publisher_prefix": "$POWER_PLATFORM_PUBLISHER_PREFIX",
+  "scope": "Additive reporting projection tables derived from canonical Submissions and SubmissionVersions. No canonical submission storage changes.",
+  "source_model": "ODK Central-inspired reporting projection with root submission rows, repeat rows, answer rows, and named export settings.",
+  "tables": [
+    {
+      "name": "SubmissionReportRows",
+      "display_name": "SubmissionReportRows",
+      "singular_name": "SubmissionReportRow",
+      "purpose": "One current reporting row per submitted ODK instance for table browsing, root CSV export, and Power BI root facts.",
+      "ownership_type": "UserOwned",
+      "primary_name_column": "ReportKey",
+      "columns": [
+        {
+          "name": "ReportKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key: formVersionId:instanceId."
+        },
+        {
+          "name": "Project",
+          "type": "Lookup:Projects",
+          "required": false,
+          "notes": "Project snapshot for filtering and future multi-project reporting."
+        },
+        {
+          "name": "Form",
+          "type": "Lookup:Forms",
+          "required": false,
+          "notes": "Form identity snapshot for project dashboards."
+        },
+        {
+          "name": "FormVersion",
+          "type": "Lookup:FormVersions",
+          "required": true,
+          "notes": "Source form version used by the submitted payload."
+        },
+        {
+          "name": "Submission",
+          "type": "Lookup:Submissions",
+          "required": true,
+          "notes": "Canonical submission header."
+        },
+        {
+          "name": "SubmissionVersion",
+          "type": "Lookup:SubmissionVersions",
+          "required": true,
+          "notes": "Current source submission version used to build the projection."
+        },
+        {
+          "name": "InstanceId",
+          "type": "Text",
+          "required": true,
+          "notes": "ODK instanceId."
+        },
+        {
+          "name": "DisplayName",
+          "type": "Text",
+          "required": false,
+          "notes": "Computed XLSForm instance_name or fallback display title."
+        },
+        {
+          "name": "UserEmail",
+          "type": "Text",
+          "required": false,
+          "notes": "Submitter email snapshot."
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Submission timestamp."
+        },
+        {
+          "name": "UpdatedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Latest canonical submission update timestamp."
+        },
+        {
+          "name": "VersionNumber",
+          "type": "WholeNumber",
+          "required": true,
+          "notes": "Current source submission version number."
+        },
+        {
+          "name": "LifecycleStatus",
+          "type": "Choice",
+          "required": false,
+          "notes": "Canonical collection lifecycle state.",
+          "choices": [
+            "Draft",
+            "Submitted",
+            "Locked"
+          ]
+        },
+        {
+          "name": "ReviewState",
+          "type": "Choice",
+          "required": false,
+          "notes": "Canonical review state.",
+          "choices": [
+            "Received",
+            "Edited",
+            "HasIssues",
+            "Rejected",
+            "Approved"
+          ]
+        },
+        {
+          "name": "ProjectionStatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Projection build status for operational support.",
+          "choices": [
+            "Ready",
+            "Stale",
+            "Failed"
+          ]
+        },
+        {
+          "name": "ProjectedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Projection build timestamp."
+        },
+        {
+          "name": "ProjectionError",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Last projection error if status is Failed."
+        },
+        {
+          "name": "RootAnswersJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Compact root-level answer map for prototype table/detail UX. Not the canonical source."
+        }
+      ]
+    },
+    {
+      "name": "SubmissionRepeatRows",
+      "display_name": "SubmissionRepeatRows",
+      "singular_name": "SubmissionRepeatRow",
+      "purpose": "One reporting row per repeat group instance, related to the root report row for XLSX sheets and Power BI repeat facts.",
+      "ownership_type": "UserOwned",
+      "primary_name_column": "RepeatRowKey",
+      "columns": [
+        {
+          "name": "RepeatRowKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key: formVersionId:instanceId:repeatPath:parentPath:rowIndex."
+        },
+        {
+          "name": "SubmissionReportRow",
+          "type": "Lookup:SubmissionReportRows",
+          "required": true,
+          "notes": "Root reporting row."
+        },
+        {
+          "name": "SubmissionVersion",
+          "type": "Lookup:SubmissionVersions",
+          "required": true,
+          "notes": "Current source submission version used to build this repeat row."
+        },
+        {
+          "name": "InstanceId",
+          "type": "Text",
+          "required": true,
+          "notes": "ODK instanceId snapshot."
+        },
+        {
+          "name": "RepeatPath",
+          "type": "Text",
+          "required": true,
+          "notes": "XForm repeat path, for example /data/household_members."
+        },
+        {
+          "name": "ParentPath",
+          "type": "Text",
+          "required": false,
+          "notes": "Parent repeat/root path for nested repeat joins."
+        },
+        {
+          "name": "ParentRepeatRowKey",
+          "type": "Text",
+          "required": false,
+          "notes": "Parent repeat row key for nested repeats."
+        },
+        {
+          "name": "RowIndex",
+          "type": "WholeNumber",
+          "required": true,
+          "notes": "Zero-based repeat instance index under the parent."
+        },
+        {
+          "name": "AnswersJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Compact answer map for this repeat row."
+        },
+        {
+          "name": "ProjectedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Projection build timestamp."
+        }
+      ]
+    },
+    {
+      "name": "SubmissionAnswers",
+      "display_name": "SubmissionAnswers",
+      "singular_name": "SubmissionAnswer",
+      "purpose": "One field answer per root or repeat context for flexible filtering, field-level audit, and Power BI long-format analysis.",
+      "ownership_type": "UserOwned",
+      "primary_name_column": "AnswerKey",
+      "columns": [
+        {
+          "name": "AnswerKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key: formVersionId:instanceId:repeatRowKey:fieldPath."
+        },
+        {
+          "name": "SubmissionReportRow",
+          "type": "Lookup:SubmissionReportRows",
+          "required": true,
+          "notes": "Root reporting row."
+        },
+        {
+          "name": "SubmissionRepeatRow",
+          "type": "Lookup:SubmissionRepeatRows",
+          "required": false,
+          "notes": "Repeat row context when the answer belongs to a repeat group."
+        },
+        {
+          "name": "SubmissionVersion",
+          "type": "Lookup:SubmissionVersions",
+          "required": true,
+          "notes": "Current source submission version used to build this answer."
+        },
+        {
+          "name": "InstanceId",
+          "type": "Text",
+          "required": true,
+          "notes": "ODK instanceId snapshot."
+        },
+        {
+          "name": "FieldPath",
+          "type": "Text",
+          "required": true,
+          "notes": "XForm field path."
+        },
+        {
+          "name": "FieldName",
+          "type": "Text",
+          "required": false,
+          "notes": "Leaf field name for display and exports."
+        },
+        {
+          "name": "FieldLabel",
+          "type": "Text",
+          "required": false,
+          "notes": "Resolved label for the selected export language when available."
+        },
+        {
+          "name": "ValueText",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Text representation of the answer."
+        },
+        {
+          "name": "ValueDecimal",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Numeric decimal projection when parseable."
+        },
+        {
+          "name": "ValueDate",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Date/dateTime projection when parseable."
+        },
+        {
+          "name": "ValueBoolean",
+          "type": "Boolean",
+          "required": false,
+          "notes": "Boolean projection when parseable."
+        },
+        {
+          "name": "ValueJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Structured value snapshot for select-many, geopoint, or future compound values."
+        },
+        {
+          "name": "ProjectedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Projection build timestamp."
+        }
+      ]
+    },
+    {
+      "name": "ExportSettings",
+      "display_name": "ExportSettings",
+      "singular_name": "ExportSetting",
+      "purpose": "Named user/admin export configurations for repeatable CSV/XLSX downloads and Power BI guidance.",
+      "ownership_type": "UserOwned",
+      "primary_name_column": "Name",
+      "columns": [
+        {
+          "name": "ExportKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key: projectCode:formId:name."
+        },
+        {
+          "name": "Name",
+          "type": "Text",
+          "required": true,
+          "notes": "Export configuration display name."
+        },
+        {
+          "name": "Project",
+          "type": "Lookup:Projects",
+          "required": false,
+          "notes": "Project scope."
+        },
+        {
+          "name": "Form",
+          "type": "Lookup:Forms",
+          "required": false,
+          "notes": "Form scope."
+        },
+        {
+          "name": "FormVersion",
+          "type": "Lookup:FormVersions",
+          "required": false,
+          "notes": "Optional version-specific export scope."
+        },
+        {
+          "name": "Format",
+          "type": "Choice",
+          "required": true,
+          "notes": "Export format.",
+          "choices": [
+            "CSV",
+            "XLSX"
+          ]
+        },
+        {
+          "name": "Scope",
+          "type": "Choice",
+          "required": true,
+          "notes": "Export row scope.",
+          "choices": [
+            "CurrentFilters",
+            "AllSubmitted",
+            "SelectedRecords"
+          ]
+        },
+        {
+          "name": "IncludeRepeats",
+          "type": "Boolean",
+          "required": false,
+          "notes": "True for XLSX exports that include repeat sheets."
+        },
+        {
+          "name": "UseLabels",
+          "type": "Boolean",
+          "required": false,
+          "notes": "True to use labels instead of XML field names where available."
+        },
+        {
+          "name": "Language",
+          "type": "Text",
+          "required": false,
+          "notes": "Preferred label language, for example en or sw."
+        },
+        {
+          "name": "IncludeMediaLinks",
+          "type": "Boolean",
+          "required": false,
+          "notes": "Whether export output includes attachment/media links."
+        },
+        {
+          "name": "FilterJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Saved filters for date, submitter, status, review state, or project-specific fields."
+        },
+        {
+          "name": "ColumnJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Saved selected/exported columns."
+        },
+        {
+          "name": "CreatedByEmail",
+          "type": "Text",
+          "required": false,
+          "notes": "Creator email snapshot for support."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Export setting creation timestamp."
+        },
+        {
+          "name": "UpdatedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Export setting update timestamp."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "referenced_table": "Projects",
+      "referencing_table": "SubmissionReportRows",
+      "lookup_column": "Project",
+      "required": false,
+      "notes": "Project reporting scope."
+    },
+    {
+      "referenced_table": "Forms",
+      "referencing_table": "SubmissionReportRows",
+      "lookup_column": "Form",
+      "required": false,
+      "notes": "Form reporting scope."
+    },
+    {
+      "referenced_table": "FormVersions",
+      "referencing_table": "SubmissionReportRows",
+      "lookup_column": "FormVersion",
+      "required": true,
+      "notes": "Source form version."
+    },
+    {
+      "referenced_table": "Submissions",
+      "referencing_table": "SubmissionReportRows",
+      "lookup_column": "Submission",
+      "required": true,
+      "notes": "Canonical submission header."
+    },
+    {
+      "referenced_table": "SubmissionVersions",
+      "referencing_table": "SubmissionReportRows",
+      "lookup_column": "SubmissionVersion",
+      "required": true,
+      "notes": "Current source submission version."
+    },
+    {
+      "referenced_table": "SubmissionReportRows",
+      "referencing_table": "SubmissionRepeatRows",
+      "lookup_column": "SubmissionReportRow",
+      "required": true,
+      "notes": "Root-to-repeat reporting relationship."
+    },
+    {
+      "referenced_table": "SubmissionVersions",
+      "referencing_table": "SubmissionRepeatRows",
+      "lookup_column": "SubmissionVersion",
+      "required": true,
+      "notes": "Current source submission version."
+    },
+    {
+      "referenced_table": "SubmissionReportRows",
+      "referencing_table": "SubmissionAnswers",
+      "lookup_column": "SubmissionReportRow",
+      "required": true,
+      "notes": "Root answer relationship."
+    },
+    {
+      "referenced_table": "SubmissionRepeatRows",
+      "referencing_table": "SubmissionAnswers",
+      "lookup_column": "SubmissionRepeatRow",
+      "required": false,
+      "notes": "Repeat answer context."
+    },
+    {
+      "referenced_table": "SubmissionVersions",
+      "referencing_table": "SubmissionAnswers",
+      "lookup_column": "SubmissionVersion",
+      "required": true,
+      "notes": "Current source submission version."
+    },
+    {
+      "referenced_table": "Projects",
+      "referencing_table": "ExportSettings",
+      "lookup_column": "Project",
+      "required": false,
+      "notes": "Project export scope."
+    },
+    {
+      "referenced_table": "Forms",
+      "referencing_table": "ExportSettings",
+      "lookup_column": "Form",
+      "required": false,
+      "notes": "Form export scope."
+    },
+    {
+      "referenced_table": "FormVersions",
+      "referencing_table": "ExportSettings",
+      "lookup_column": "FormVersion",
+      "required": false,
+      "notes": "Optional version export scope."
+    }
+  ],
+    "alternate_keys": [
+        {
+            "table": "SubmissionReportRows",
+            "name": "ak_submission_report_root",
+            "columns": [
+                "ReportKey"
+            ],
+            "notes": "Stable text key for idempotent root projection upserts. ReportKey is composed from formVersionId and instanceId."
+        },
+        {
+            "table": "SubmissionRepeatRows",
+            "name": "ak_submission_repeat_row",
+            "columns": [
+                "RepeatRowKey"
+            ],
+            "notes": "Stable text key for idempotent repeat-row projection upserts. RepeatRowKey is composed from formVersionId, instanceId, repeat path, parent path, and row index."
+        },
+        {
+            "table": "SubmissionAnswers",
+            "name": "ak_submission_answer",
+            "columns": [
+                "AnswerKey"
+            ],
+            "notes": "Stable text key for idempotent long-answer projection upserts. AnswerKey avoids nullable lookup columns for root answers."
+        },
+    {
+      "table": "ExportSettings",
+      "name": "ak_export_setting",
+      "columns": [
+        "ExportKey"
+      ],
+      "notes": "Stable named export configuration key."
+    }
+  ],
+  "deferred": [
+    "Embedded Power BI reports",
+    "Full OData service with metadata endpoint",
+    "Azure Synapse Link/Fabric warehouse"
+  ]
+}

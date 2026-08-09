@@ -1,0 +1,28 @@
+{
+  "submissionId": "00000000-0000-0000-0000-000000000001",
+  "submissionVersionId": "00000000-0000-0000-0000-000000000002",
+  "formVersionId": "00000000-0000-0000-0000-000000000003",
+  "instanceId": "uuid:test-instance",
+  "xmlFormId": "tacatdp_test",
+  "instanceName": "Test instance",
+  "userEmail": "collector@example.test",
+  "submittedAt": "2026-07-14T10:00:00Z",
+  "updatedAt": "2026-07-14T10:05:00Z",
+  "versionNumber": 3,
+  "lifecycleStatus": 100000001,
+  "reviewState": 100000000,
+  "projectedAt": "2026-07-14T10:06:00Z",
+  "repeatPaths": [
+    "/data/household",
+    "/data/household/member"
+  ],
+  "submissionXml": "<data id=\"tacatdp_test\"><customer_name>Asha</customer_name><active>true</active><amount>12.50</amount><visit_date>2026-07-14</visit_date><geo>{\"lat\":-6.8}</geo><empty></empty><household><zone>north</zone><member><name>One</name><age>10</age></member><member><name>Two</name><age>11</age></member></household><household><zone>south</zone><member><name>Three</name><age>12</age></member></household></data>",
+  "expected": {
+    "reportKey": "00000000-0000-0000-0000-000000000003:uuid:test-instance",
+    "repeatCount": 5,
+    "answerCount": 13,
+    "rootAnswerCount": 5,
+    "householdRepeatCount": 2,
+    "memberRepeatCount": 3
+  }
+}

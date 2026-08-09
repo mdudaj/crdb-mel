@@ -1,0 +1,520 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "metadata": {
+            "operationMetadataId": "82d6ab24-7be7-443e-8047-cb19cf22fb7a"
+          },
+          "type": "Request",
+          "kind": "PowerPages",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "eventData": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "requestId": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "deliveryType": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "contactId": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "email": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "fullName": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "role": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "projectName": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "reason": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "actorEmail": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "assignmentResults": {
+                  "type": "array",
+                  "x-ms-dynamically-added": true
+                },
+                "sourceRoute": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "eventData"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Parse_JSON": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9500aa77-8300-437f-b6ed-63283e635a98"
+          },
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerBody()?['eventData']",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "requestId": {
+                  "type": "string"
+                },
+                "deliveryType": {
+                  "type": "string"
+                },
+                "contactId": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "projectName": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "actorEmail": {
+                  "type": "string"
+                },
+                "assignmentResults": {
+                  "type": "array"
+                },
+                "sourceRoute": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "Respond_to_Power_Pages_Parse_Failed": {
+          "runAfter": {
+            "Parse_JSON": [
+              "Failed",
+              "TimedOut"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+          },
+          "type": "Response",
+          "kind": "PowerPages",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "status": "onboarding-payload-parse-failed",
+              "message": "@{coalesce(actions('Parse_JSON')?['error']?['message'], 'Onboarding flow could not parse the Power Pages payload.')}",
+              "requestId": "@triggerBody()?['eventData']"
+            }
+          }
+        },
+        "Route_delivery_type": {
+          "runAfter": {
+            "Parse_JSON": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7c66a6f1-2d51-49be-8dbb-1f962a359e31"
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@body('Parse_JSON')?['deliveryType']",
+              "EnsureContact"
+            ]
+          },
+          "actions": {
+            "Create_Dataverse_onboarding_contact": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "056b2317-adf6-4a16-b129-b210524b7ebd"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord"
+                },
+                "parameters": {
+                  "entityName": "contacts",
+                  "item": {
+                    "fullname": "@body('Parse_JSON')?['fullName']",
+                    "lastname": "@body('Parse_JSON')?['fullName']",
+                    "emailaddress1": "@body('Parse_JSON')?['email']"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Respond_to_Power_Pages_Contact": {
+              "runAfter": {
+                "Create_Dataverse_onboarding_contact": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "a5f59ff2-6da8-4a60-8606-4cb0d6dcf56a"
+              },
+              "type": "Response",
+              "kind": "PowerPages",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "dataverse-contact-created",
+                  "message": "@{concat('Dataverse contact created for ', body('Parse_JSON')?['email'])}",
+                  "requestId": "@body('Parse_JSON')?['requestId']",
+                  "contactId": "@outputs('Create_Dataverse_onboarding_contact')?['body/contactid']",
+                  "created": true
+                }
+              }
+            },
+            "Respond_to_Power_Pages_Contact_Create_Failed": {
+              "runAfter": {
+                "Create_Dataverse_onboarding_contact": [
+                  "Failed",
+                  "TimedOut"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+              },
+              "type": "Response",
+              "kind": "PowerPages",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "status": "dataverse-contact-create-failed",
+                  "message": "@{coalesce(actions('Create_Dataverse_onboarding_contact')?['error']?['message'], 'Dataverse contact create failed.')}",
+                  "requestId": "@body('Parse_JSON')?['requestId']"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Route_email_delivery_type": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "058e135e-3d0e-43ea-82d1-c92a969a65e9"
+                },
+                "type": "If",
+                "expression": {
+                  "equals": [
+                    "@body('Parse_JSON')?['deliveryType']",
+                    "PowerPagesInvitation"
+                  ]
+                },
+                "actions": {
+                  "Create_native_Power_Pages_invitation": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "590478de-f107-4e1c-b133-d7e875a428fe"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "CreateRecord"
+                      },
+                      "parameters": {
+                        "entityName": "adx_invitations",
+                        "item": {
+                          "adx_name": "@{concat('TACATDP invitation - ', body('Parse_JSON')?['email'])}",
+                          "adx_type": 756150000,
+                          "adx_maximumredemptions": 1,
+                          "adx_invitationcode": "@{guid()}",
+                          "adx_inviteContact@odata.bind": "@{concat('/contacts(', body('Parse_JSON')?['contactId'], ')')}",
+                          "mspp_websiteid@odata.bind": "/powerpagesites(fccc0cc6-7f5e-4885-aeb8-2272e68130a3)"
+                        }
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  },
+                  "Run_native_Send_Invitation_workflow": {
+                    "runAfter": {
+                      "Create_native_Power_Pages_invitation": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "d9e0e190-1075-49bf-b558-79fa7168021a"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "PerformBoundAction"
+                      },
+                      "parameters": {
+                        "entityName": "workflows",
+                        "actionName": "Microsoft.Dynamics.CRM.ExecuteWorkflow",
+                        "recordId": "eb467141-a276-f111-ab0e-70a8a52d4a92",
+                        "item": {
+                          "EntityId": "@outputs('Create_native_Power_Pages_invitation')?['body/adx_invitationid']"
+                        }
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  },
+                  "Respond_to_Power_Pages": {
+                    "runAfter": {
+                      "Run_native_Send_Invitation_workflow": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "0ee92a99-7dfe-4241-b785-25deb49ccb4a"
+                    },
+                    "type": "Response",
+                    "kind": "PowerPages",
+                    "inputs": {
+                      "statusCode": 200,
+                      "body": {
+                        "status": "native-invitation-requested",
+                        "message": "@{concat('Native Power Pages invitation requested for ', body('Parse_JSON')?['email'])}",
+                        "requestId": "@body('Parse_JSON')?['requestId']"
+                      }
+                    }
+                  },
+                  "Respond_to_Power_Pages_Invitation_Create_Failed": {
+                    "runAfter": {
+                      "Create_native_Power_Pages_invitation": [
+                        "Failed",
+                        "TimedOut"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+                    },
+                    "type": "Response",
+                    "kind": "PowerPages",
+                    "inputs": {
+                      "statusCode": 200,
+                      "body": {
+                        "status": "native-invitation-create-failed",
+                        "message": "@{coalesce(actions('Create_native_Power_Pages_invitation')?['error']?['message'], 'Native Power Pages invitation create failed.')}",
+                        "requestId": "@body('Parse_JSON')?['requestId']"
+                      }
+                    }
+                  },
+                  "Respond_to_Power_Pages_Invitation_Workflow_Failed": {
+                    "runAfter": {
+                      "Run_native_Send_Invitation_workflow": [
+                        "Failed",
+                        "TimedOut"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+                    },
+                    "type": "Response",
+                    "kind": "PowerPages",
+                    "inputs": {
+                      "statusCode": 200,
+                      "body": {
+                        "status": "native-invitation-workflow-failed",
+                        "message": "@{coalesce(actions('Run_native_Send_Invitation_workflow')?['error']?['message'], 'Native Power Pages Send Invitation workflow failed.')}",
+                        "requestId": "@body('Parse_JSON')?['requestId']"
+                      }
+                    }
+                  }
+                },
+                "else": {
+                  "actions": {
+                    "Create_Dataverse_assignment_email": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "f3190627-c0d4-44d8-8a4c-60b43754cbe4"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord"
+                        },
+                        "parameters": {
+                          "entityName": "emails",
+                          "item": {
+                            "subject": "@{concat('Impact Monitoring access updated - ', coalesce(body('Parse_JSON')?['projectName'], 'Project assignment'))}",
+                            "description": "@{concat('<p>Hello ', coalesce(body('Parse_JSON')?['fullName'], body('Parse_JSON')?['email']), ',</p><p>Your Impact Monitoring access has been updated.</p><p><strong>Project:</strong> ', coalesce(body('Parse_JSON')?['projectName'], 'Assigned project'), '</p><p><strong>Role:</strong> ', coalesce(body('Parse_JSON')?['role'], 'Assigned user'), '</p><p>Please sign in to the portal using your Microsoft account.</p>')}",
+                            "email_activity_parties": [
+                              {
+                                "partyid_systemuser@odata.bind": "/systemusers(1ec44477-5c76-f111-ab0e-70a8a52d4a92)",
+                                "participationtypemask": 1
+                              },
+                              {
+                                "partyid_contact@odata.bind": "@{concat('/contacts(', body('Parse_JSON')?['contactId'], ')')}",
+                                "participationtypemask": 2
+                              }
+                            ]
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "Send_Dataverse_assignment_email": {
+                      "runAfter": {
+                        "Create_Dataverse_assignment_email": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "bb64be7e-45eb-4f7f-a5e9-b6ec6365608e"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "PerformBoundAction"
+                        },
+                        "parameters": {
+                          "entityName": "emails",
+                          "actionName": "Microsoft.Dynamics.CRM.SendEmail",
+                          "recordId": "@outputs('Create_Dataverse_assignment_email')?['body/activityid']",
+                          "item": {
+                            "IssueSend": true,
+                            "TrackingToken": ""
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "Respond_to_Power_Pages_Assignment": {
+                      "runAfter": {
+                        "Send_Dataverse_assignment_email": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "0ee92a99-7dfe-4241-b785-25deb49ccb4a"
+                      },
+                      "type": "Response",
+                      "kind": "PowerPages",
+                      "inputs": {
+                        "statusCode": 200,
+                        "body": {
+                          "status": "dataverse-assignment-notification-sent",
+                          "message": "@{concat('Dataverse assignment notification requested for ', body('Parse_JSON')?['email'])}",
+                          "requestId": "@body('Parse_JSON')?['requestId']"
+                        }
+                      }
+                    },
+                    "Respond_to_Power_Pages_Assignment_Email_Create_Failed": {
+                      "runAfter": {
+                        "Create_Dataverse_assignment_email": [
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+                      },
+                      "type": "Response",
+                      "kind": "PowerPages",
+                      "inputs": {
+                        "statusCode": 200,
+                        "body": {
+                          "status": "dataverse-assignment-email-create-failed",
+                          "message": "@{coalesce(actions('Create_Dataverse_assignment_email')?['error']?['message'], 'Dataverse assignment email create failed.')}",
+                          "requestId": "@body('Parse_JSON')?['requestId']"
+                        }
+                      }
+                    },
+                    "Respond_to_Power_Pages_Assignment_Email_Send_Failed": {
+                      "runAfter": {
+                        "Send_Dataverse_assignment_email": [
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "07fe6f8c-5664-4c4d-84bf-f8252d861f75"
+                      },
+                      "type": "Response",
+                      "kind": "PowerPages",
+                      "inputs": {
+                        "statusCode": 200,
+                        "body": {
+                          "status": "dataverse-assignment-email-send-failed",
+                          "message": "@{coalesce(actions('Send_Dataverse_assignment_email')?['error']?['message'], 'Dataverse assignment email send failed.')}",
+                          "requestId": "@body('Parse_JSON')?['requestId']"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

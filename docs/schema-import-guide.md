@@ -1,3 +1,7 @@
+# Schema Import Guide Supersession Note
+
+Status: fallback. The active July 7 MVP uses the Dataverse schema definition in `docs/dataverse-schema-cli/schema-definition.md` and `schemas/dataverse/mvp-schema-definition.json`; Microsoft Lists import guidance below is retained only as fallback.
+
 # Microsoft Lists Schema Import Guide
 
 ## Generated artifacts

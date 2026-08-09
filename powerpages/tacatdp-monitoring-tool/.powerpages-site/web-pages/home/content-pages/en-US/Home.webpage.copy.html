@@ -1,0 +1,27 @@
+<script>
+  window.__TACATDP_POWERPAGES__ = {
+    isAuthenticated: {% if user %}true{% else %}false{% endif %},
+    userEmail: {% if user %}"{{ user.emailaddress1 | escape }}"{% else %}""{% endif %},
+    userName: {% if user %}"{{ user.fullname | escape }}"{% else %}""{% endif %},
+    roles: [{% if user %}{% for role in user.roles %}"{{ role | escape }}"{% unless forloop.last %},{% endunless %}{% endfor %}{% endif %}]
+  };
+</script>
+<style id="tacatdp-portal-chrome-reset">
+  body {
+    margin: 0;
+  }
+
+  body > header,
+  body > footer,
+  .navbar.navbar-static-top,
+  .navbar.navbar-inverse,
+  footer.footer {
+    display: none !important;
+  }
+</style>
+<link rel="modulepreload" crossorigin href="/assets/vendor-icons-Cg1Ykr2a.mjs?v=access-role-link-lookup-20260804-004">
+<link rel="modulepreload" crossorigin href="/assets/preload-helper-Czpn1I53.mjs?v=access-role-link-lookup-20260804-004">
+<link rel="stylesheet" crossorigin href="/assets/vendor-datepicker-D7vsgEFT.css?v=access-role-link-lookup-20260804-004">
+<link rel="stylesheet" crossorigin href="/assets/index-YToFp3tf.css?v=access-role-link-lookup-20260804-004">
+<div id="app"></div>
+<script type="module" crossorigin src="/assets/index-BKXPZQih.mjs?v=access-role-link-lookup-20260804-004"></script>

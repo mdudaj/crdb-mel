@@ -1,0 +1,27 @@
+{
+  "name": "tacatdp-webforms-spa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "build:mshirika-access": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true VITE_TACATDP_ODK_RUNTIME_ENABLED=false vite build",
+    "build:mshirika-runtime": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@getodk/web-forms": "1.0.0",
+    "@getodk/xforms-engine": "1.0.0",
+    "@lucide/vue": "^1.24.0",
+    "@vuepic/vue-datepicker": "^14.0.0",
+    "vue": "3.5.39"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.7",
+    "typescript": "5.9.3",
+    "vite": "8.1.4",
+    "vue-tsc": "3.3.7"
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "generated_for_review_only": true,
+  "contract_name": "metadata-driven-form-renderer",
+  "version": "0.2.0",
+  "purpose": "Define the July 7 MVP renderer contract for one assigned published form rendered from Dataverse metadata, with drafts, submit, edit-until-locked, history, and one attachment field.",
+  "source_documents": [
+    "docs/multi-project-monitoring/form-renderer-ux.md",
+    "docs/multi-project-monitoring/data-model.md",
+    "schemas/dataverse/tacatdp-field-definitions.csv"
+  ],
+  "environment_write": false,
+  "renderer_surfaces": [
+    {
+      "surface": "assigned_forms",
+      "responsibility": "Show active published forms assigned to the signed-in Dataverse user/email."
+    },
+    {
+      "surface": "submission_history",
+      "responsibility": "Show the current user's own Draft, Submitted, and Locked submissions for a selected form."
+    },
+    {
+      "surface": "form_runner_shell",
+      "responsibility": "Load ordered Sections and Questions, manage progress, validation, save state, submit, and read-only locked state."
+    },
+    {
+      "surface": "field_renderer",
+      "responsibility": "Render MVP field types from Questions, Choices, and ValidationRules metadata."
+    },
+    {
+      "surface": "attachment_capture",
+      "responsibility": "Attach one photo/file to a Submission and Question through SubmissionFiles."
+    }
+  ],
+  "dataverse_metadata_extensions": {
+    "mp_GroupDefinition": [
+      {
+        "column": "RenderMode",
+        "type": "Choice",
+        "values": [
+          "Page",
+          "FieldList",
+          "RepeatList",
+          "ReviewOnly"
+        ],
+        "default": "Page",
+        "purpose": "Controls whether the group renders as a page, a multi-field page, a repeat manager/list, or a review-only summary."
+      },
+      {
+        "column": "NavigationMode",
+        "type": "Choice",
+        "values": [
+          "Linear",
+          "SectionJumpAllowed",
+          "ReviewOnly"
+        ],
+        "default": "Linear",
+        "purpose": "Controls back/next behavior and whether users can jump to this group from a section index."
+      },
+      {
+        "column": "VisibleExpression",
+        "type": "MultilineText",
+        "purpose": "Optional group-level relevance expression evaluated against the current answer context."
+      },
+      {
+        "column": "LayoutDensity",
+        "type": "Choice",
+        "values": [
+          "Comfortable",
+          "Compact"
+        ],
+        "default": "Comfortable",
+        "purpose": "Controls vertical spacing; one field per row remains the default within the chosen density."
+      },
+      {
+        "column": "ProgressLabel",
+        "type": "Text",
+        "purpose": "Short label for progress display, breadcrumbs, and section index."
+      }
+    ],
+    "mp_FieldDefinition": [
+      {
+        "column": "ControlKind",
+        "type": "Choice",
+        "values": [
+          "TextInput",
+          "NumberInput",
+          "DecimalInput",
+          "CurrencyInput",
+          "DatePicker",
+          "DateTimeInput",
+          "Toggle",
+          "SingleSelect",
+          "MultiSelect",
+          "ReferenceLookup",
+          "Geopoint",
+          "Attachment",
+          "Note",
+          "Computed"
+        ],
+        "purpose": "Renderer control family selected after data type, appearance, and reference binding are resolved."
+      },
+      {
+        "column": "Appearance",
+        "type": "Text",
+        "purpose": "XLSForm/renderer appearance hint such as numbers_phone, placement-map, minimal, search, or field-list-derived behavior."
+      },
+      {
+        "column": "HelperText",
+        "type": "MultilineText",
+        "purpose": "Resolved helper text shown below the visible label and above inline errors."
+      },
+      {
+        "column": "VisibleExpression",
+        "type": "MultilineText",
+        "purpose": "Field-level relevance expression evaluated before required/constraint validation."
+      },
+      {
+        "column": "LookupProviderType",
+        "type": "Choice",
+        "values": [
+          "None",
+          "VocabularyTerm",
+          "ReferenceTable"
+        ],
+        "default": "None",
+        "purpose": "Controls whether choices come from vocabulary terms or a dedicated delegated reference table."
+      },
+      {
+        "column": "LookupSource",
+        "type": "Text",
+        "purpose": "Vocabulary scheme code or reference table logical name such as mp_VillageReference."
+      },
+      {
+        "column": "ChoiceFilterExpression",
+        "type": "MultilineText",
+        "purpose": "Delegation-safe cascade/filter expression derived from XLSForm choice_filter where supported."
+      },
+      {
+        "column": "ConstraintExpression",
+        "type": "MultilineText",
+        "purpose": "Supported constraint expression evaluated before navigation/save."
+      },
+      {
+        "column": "CalculationExpression",
+        "type": "MultilineText",
+        "purpose": "Supported calculated/default expression for computed or prefilled values."
+      }
+    ]
+  },
+  "supported_rule_expression_subset": [
+    {
+      "rule_type": "required",
+      "supported_first_slice": true,
+      "notes": "Required is enforced only when the group and field are visible/relevant."
+    },
+    {
+      "rule_type": "relevance",
+      "supported_first_slice": true,
+      "operators": [
+        "IsBlank",
+        "Not",
+        "=",
+        "<>",
+        ">",
+        ">=",
+        "<",
+        "<=",
+        "And",
+        "Or",
+        "selected"
+      ],
+      "notes": "First implementation should translate a reviewed subset of XLSForm relevance expressions to Power Fx."
+    },
+    {
+      "rule_type": "constraint",
+      "supported_first_slice": true,
+      "operators": [
+        "=",
+        "<>",
+        ">",
+        ">=",
+        "<",
+        "<=",
+        "regex",
+        "string-length"
+      ],
+      "notes": "Use explicit visible errors; do not silently accept invalid values."
+    },
+    {
+      "rule_type": "choice_filter",
+      "supported_first_slice": true,
+      "notes": "Must be delegation-safe for Dataverse. Village filters use mp_VillageReference RegionCode, DistrictCode, and WardCode indexes."
+    },
+    {
+      "rule_type": "calculation",
+      "supported_first_slice": "limited",
+      "notes": "Support simple arithmetic and selected-count summaries first; defer complex XPath/repeat calculations."
+    }
+  ],
+  "control_mapping": [
+    {
+      "question_type": "text",
+      "default_control_kind": "TextInput",
+      "answer_storage": "SubmissionAnswers.ValueText"
+    },
+    {
+      "question_type": "integer",
+      "default_control_kind": "NumberInput",
+      "answer_storage": "SubmissionAnswers.ValueNumber"
+    },
+    {
+      "question_type": "decimal",
+      "default_control_kind": "DecimalInput",
+      "answer_storage": "SubmissionAnswers.ValueDecimal"
+    },
+    {
+      "question_type": "date",
+      "default_control_kind": "DatePicker",
+      "answer_storage": "SubmissionAnswers.ValueDate"
+    },
+    {
+      "question_type": "select_one",
+      "default_control_kind": "SingleSelect",
+      "answer_storage": "SubmissionAnswers.ValueText with choice code/label snapshot"
+    },
+    {
+      "question_type": "select_many",
+      "default_control_kind": "MultiSelect",
+      "answer_storage": "SubmissionAnswers.ValueJson for MVP"
+    },
+    {
+      "question_type": "file_photo_attachment",
+      "default_control_kind": "Attachment",
+      "answer_storage": "SubmissionFiles"
+    },
+    {
+      "question_type": "gps",
+      "default_control_kind": "Geopoint",
+      "answer_storage": "SubmissionAnswers.ValueJson if included"
+    }
+  ],
+  "pilot_flows": [
+    {
+      "flow": "july_7_vertical_slice",
+      "form": "one seeded TACATDP form",
+      "goals": [
+        "Show one assigned published form for one user.",
+        "Render supported questions from metadata.",
+        "Save Draft to Submissions and SubmissionAnswers.",
+        "Attach one file/photo via SubmissionFiles.",
+        "Submit and preserve edit-until-locked behavior.",
+        "Show current user submission history."
+      ]
+    }
+  ],
+  "deferred": [
+    "Full XLSForm parser/compiler",
+    "Repeat groups",
+    "Nested repeats",
+    "Complex XPath evaluator",
+    "Offline-first sync conflict resolution",
+    "Barcode",
+    "Admin publishing UI",
+    "Version migration",
+    "Dashboards",
+    "Richer locking workflow"
+  ],
+  "mvp_scope": {
+    "target_date": "2026-07-07",
+    "vertical_slice": "One published form assigned to one user, rendered dynamically in Canvas from Dataverse metadata, with draft/save/submit/history and one attachment field.",
+    "tables": [
+      "Forms",
+      "FormVersions",
+      "Sections",
+      "Questions",
+      "Choices",
+      "ValidationRules",
+      "FormAssignments",
+      "Submissions",
+      "SubmissionAnswers",
+      "SubmissionFiles"
+    ],
+    "supported_field_types": [
+      "text",
+      "integer",
+      "decimal",
+      "date",
+      "select_one",
+      "select_many",
+      "file_photo_attachment",
+      "gps_if_quick"
+    ],
+    "submission_statuses": [
+      "Draft",
+      "Submitted",
+      "Locked"
+    ],
+    "rule_subset": [
+      "required true/false",
+      "relevant depends on one prior answer",
+      "simple numeric/text constraint"
+    ],
+    "deferred": [
+      "full XLSForm parser/compiler",
+      "repeat groups",
+      "nested repeats",
+      "complex XPath expressions",
+      "offline-first sync",
+      "barcode",
+      "admin publishing UI",
+      "version migration",
+      "dashboards",
+      "locking workflow beyond simple status"
+    ]
+  }
+}

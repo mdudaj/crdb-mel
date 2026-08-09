@@ -1,0 +1,11 @@
+{
+  "cssBundle": "index-B7Yqis7I.css",
+  "checks": {
+    "access workflow inputs scoped": true,
+    "48px min height": true,
+    "16px input text": true,
+    "24px line height": true,
+    "112px textarea": true,
+    "primary checkbox accent": true
+  }
+}

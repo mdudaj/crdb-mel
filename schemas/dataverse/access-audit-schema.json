@@ -1,0 +1,263 @@
+{
+  "generated_for_review_only": true,
+  "generated_on": "2026-07-21",
+  "schema_name": "tacatdp_access_audit_schema",
+  "target_host": "Monitoring Tool User & Access workspace",
+  "environment_write": false,
+  "solution_header": "MSCRM.SolutionUniqueName=$POWER_PLATFORM_SOLUTION_UNIQUE_NAME",
+  "publisher_prefix": "$POWER_PLATFORM_PUBLISHER_PREFIX",
+  "scope": "Additive access-management audit log for portal user, role, project, and form assignment changes. This schema does not enable portal writes by itself.",
+  "source_model": "Portal User & Access management with Power Pages role-gated administration and Dataverse audit persistence.",
+  "tables": [
+    {
+      "name": "AccessAuditLogs",
+      "display_name": "AccessAuditLogs",
+      "singular_name": "AccessAuditLog",
+      "purpose": "Append-only audit record for every attempted or completed User & Access change.",
+      "ownership_type": "OrganizationOwned",
+      "primary_name_column": "AuditKey",
+      "columns": [
+        {
+          "name": "AuditKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable event key. Recommended format: access:{utcTimestamp}:{actorEmail}:{action}:{affectedEmail}:{requestId}."
+        },
+        {
+          "name": "Action",
+          "type": "Choice",
+          "required": true,
+          "notes": "Business action being audited.",
+          "choices": [
+            "InviteUser",
+            "AssignProject",
+            "AssignForm",
+            "ChangeRole",
+            "SuspendAccess",
+            "ReactivateAccess",
+            "RemoveAssignment",
+            "RollbackAccessChange"
+          ]
+        },
+        {
+          "name": "ResultStatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Outcome of the attempted operation.",
+          "choices": [
+            "Requested",
+            "Succeeded",
+            "Failed",
+            "Rejected",
+            "RolledBack"
+          ]
+        },
+        {
+          "name": "ActorEmail",
+          "type": "Text",
+          "required": true,
+          "notes": "Signed-in administrator email from the Power Pages session."
+        },
+        {
+          "name": "ActorContact",
+          "type": "Lookup:Contacts",
+          "required": false,
+          "notes": "Power Pages contact for the administrator when available."
+        },
+        {
+          "name": "ActorRolesJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Snapshot of detected Power Pages roles used for route/action authorization."
+        },
+        {
+          "name": "AffectedEmail",
+          "type": "Text",
+          "required": true,
+          "notes": "Email of the user whose access is being changed."
+        },
+        {
+          "name": "AffectedContact",
+          "type": "Lookup:Contacts",
+          "required": false,
+          "notes": "Power Pages contact for the affected user when available."
+        },
+        {
+          "name": "TargetRole",
+          "type": "Text",
+          "required": false,
+          "notes": "Target business role label, for example Data Collector / Bank Officer."
+        },
+        {
+          "name": "ScopeType",
+          "type": "Choice",
+          "required": true,
+          "notes": "Scope touched by the change.",
+          "choices": [
+            "Platform",
+            "Project",
+            "Form",
+            "FormVersion",
+            "Assignment"
+          ]
+        },
+        {
+          "name": "Project",
+          "type": "Lookup:Projects",
+          "required": false,
+          "notes": "Project scope when the change is project-scoped."
+        },
+        {
+          "name": "Form",
+          "type": "Lookup:Forms",
+          "required": false,
+          "notes": "Form scope when the change affects a form."
+        },
+        {
+          "name": "FormVersion",
+          "type": "Lookup:FormVersions",
+          "required": false,
+          "notes": "Form version scope when assignment is version-specific."
+        },
+        {
+          "name": "FormAssignment",
+          "type": "Lookup:FormAssignments",
+          "required": false,
+          "notes": "Assignment row touched by the access change when available."
+        },
+        {
+          "name": "PreviousStateJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Before snapshot of relevant assignment/contact/role fields. Required by policy for mutation actions."
+        },
+        {
+          "name": "NewStateJson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "After snapshot of relevant assignment/contact/role fields. Required by policy for mutation actions."
+        },
+        {
+          "name": "Reason",
+          "type": "MultilineText",
+          "required": true,
+          "notes": "Business reason entered by the administrator before the change is submitted."
+        },
+        {
+          "name": "SourceRoute",
+          "type": "Text",
+          "required": true,
+          "notes": "Portal route/action source, for example UserAccess:AddUser or UserAccess:Suspend."
+        },
+        {
+          "name": "RequestId",
+          "type": "Text",
+          "required": true,
+          "notes": "Client-generated operation id used to correlate access mutation and audit records."
+        },
+        {
+          "name": "CorrelationId",
+          "type": "Text",
+          "required": false,
+          "notes": "Optional server, flow, or Dataverse correlation id when available."
+        },
+        {
+          "name": "RollbackOf",
+          "type": "Lookup:AccessAuditLogs",
+          "required": false,
+          "notes": "Original audit event being rolled back when Action is RollbackAccessChange."
+        },
+        {
+          "name": "OccurredAt",
+          "type": "DateTime",
+          "required": true,
+          "notes": "UTC timestamp when the administrator requested or completed the action."
+        },
+        {
+          "name": "ResultMessage",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Short failure, rejection, or post-action note. Must not contain secrets or raw tokens."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "referenced_table": "Contacts",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "ActorContact",
+      "required": false,
+      "notes": "Optional administrator contact snapshot."
+    },
+    {
+      "referenced_table": "Contacts",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "AffectedContact",
+      "required": false,
+      "notes": "Optional affected user contact snapshot."
+    },
+    {
+      "referenced_table": "Projects",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "Project",
+      "required": false,
+      "notes": "Project-scoped access event."
+    },
+    {
+      "referenced_table": "Forms",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "Form",
+      "required": false,
+      "notes": "Form-scoped access event."
+    },
+    {
+      "referenced_table": "FormVersions",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "FormVersion",
+      "required": false,
+      "notes": "Form-version scoped assignment event."
+    },
+    {
+      "referenced_table": "FormAssignments",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "FormAssignment",
+      "required": false,
+      "notes": "Assignment row touched by the audited operation."
+    },
+    {
+      "referenced_table": "AccessAuditLogs",
+      "referencing_table": "AccessAuditLogs",
+      "lookup_column": "RollbackOf",
+      "required": false,
+      "notes": "Self-reference for rollback audit events."
+    }
+  ],
+  "alternate_keys": [
+    {
+      "table": "AccessAuditLogs",
+      "name": "ak_access_audit_log",
+      "columns": [
+        "AuditKey"
+      ],
+      "notes": "Stable audit event key for idempotent audit persistence."
+    },
+    {
+      "table": "AccessAuditLogs",
+      "name": "ak_access_audit_request",
+      "columns": [
+        "RequestId"
+      ],
+      "notes": "Prevents duplicate audit rows for the same portal operation request."
+    }
+  ],
+  "write_path_policy": {
+    "audit_before_mutation": true,
+    "reason_required": true,
+    "actor_required": true,
+    "affected_user_required": true,
+    "before_after_required_for_mutations": true,
+    "rollback_must_create_new_audit_row": true,
+    "portal_write_enabled": false
+  }
+}

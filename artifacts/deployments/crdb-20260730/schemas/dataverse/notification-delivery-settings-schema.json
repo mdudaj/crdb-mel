@@ -1,0 +1,124 @@
+{
+  "generated_for_review_only": true,
+  "generated_on": "2026-07-30",
+  "schema_name": "tacatdp_notification_delivery_settings_schema",
+  "target_host": "Monitoring Tool User & Access configuration workspace",
+  "environment_write": false,
+  "solution_header": "MSCRM.SolutionUniqueName=$POWER_PLATFORM_SOLUTION_UNIQUE_NAME",
+  "publisher_prefix": "$POWER_PLATFORM_PUBLISHER_PREFIX",
+  "scope": "Additive notification delivery settings table for onboarding invitation delivery mode and mailbox readiness.",
+  "source_model": "Portal User & Access onboarding delivery configuration.",
+  "tables": [
+    {
+      "name": "NotificationDeliverySettings",
+      "display_name": "NotificationDeliverySettings",
+      "singular_name": "NotificationDeliverySetting",
+      "purpose": "Administrator-owned configuration record describing how onboarding invitations and assignment notifications are delivered.",
+      "ownership_type": "OrganizationOwned",
+      "primary_name_column": "SettingKey",
+      "columns": [
+        {
+          "name": "SettingKey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable singleton key. Use onboarding-delivery for the active onboarding configuration."
+        },
+        {
+          "name": "DeliveryMode",
+          "type": "Choice",
+          "required": true,
+          "notes": "Active new-user invitation delivery mode. Codes: ManualCode=100000000, Email=100000001.",
+          "choices": [
+            "ManualCode",
+            "Email"
+          ]
+        },
+        {
+          "name": "SenderMailbox",
+          "type": "Text",
+          "required": false,
+          "notes": "Approved sender mailbox address when mailbox delivery is enabled."
+        },
+        {
+          "name": "MailboxStatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Mailbox readiness. Codes: NotConfigured=100000000, PendingAdminSetup=100000001, Approved=100000002, TestedAndEnabled=100000003, Failed=100000004.",
+          "choices": [
+            "NotConfigured",
+            "PendingAdminSetup",
+            "Approved",
+            "TestedAndEnabled",
+            "Failed"
+          ]
+        },
+        {
+          "name": "NativeInvitationWorkflowId",
+          "type": "Text",
+          "required": false,
+          "notes": "Native Power Pages Send Invitation workflow id validated by administrator."
+        },
+        {
+          "name": "LastTestedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Last mailbox or delivery smoke-test timestamp."
+        },
+        {
+          "name": "LastTestResult",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Business-readable readiness or smoke-test result. Do not store credentials or token-bearing URLs."
+        },
+        {
+          "name": "Instructions",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Administrator-facing operational note for the selected delivery mode."
+        },
+        {
+          "name": "UpdatedByEmail",
+          "type": "Text",
+          "required": false,
+          "notes": "Signed-in administrator email that last updated the configuration from the portal."
+        },
+        {
+          "name": "UpdatedAt",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Portal configuration update timestamp."
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "alternate_keys": [
+    {
+      "table": "NotificationDeliverySettings",
+      "name": "Ak_notification_delivery_setting_key",
+      "columns": [
+        "SettingKey"
+      ]
+    }
+  ],
+  "portal_permission_intent": {
+    "platform_administrator": [
+      "read",
+      "create",
+      "write"
+    ],
+    "data_collector": []
+  },
+  "write_path_policy": {
+    "browser_can_write_business_config_only": true,
+    "browser_cannot_approve_or_test_mailboxes": true,
+    "mailbox_admin_setup_required_outside_portal": true,
+    "must_not_store": [
+      "passwords",
+      "client secrets",
+      "tokens",
+      "authorization headers",
+      "credential-bearing URLs"
+    ]
+  }
+}

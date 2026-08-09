@@ -1,0 +1,4 @@
+id: 71c40fcd-5af2-4488-8eda-40e2f625f28f
+name: Webapi/mp_onboardingrequest/fields
+source: 0
+value: mp_requestkey,mp_requestid,mp_status,mp_requesttype,mp_fullname,mp_email,mp_targetrole,mp_projectid,mp_projectname,mp_formscopejson,mp_reason,mp_actoremail,mp_actorrolesjson,mp_sourceroute,mp_contactid,mp_processingattempts,mp_lastattemptat,mp_completedat,mp_resultmessage,mp_errorcategory,mp_errorjson,mp_auditkey
