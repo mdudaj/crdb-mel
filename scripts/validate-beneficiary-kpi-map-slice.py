@@ -50,6 +50,14 @@ def validate_route_split() -> None:
 
 def validate_dashboard_component() -> None:
     for expected in (
+        "import DashboardCard from './DashboardCard.vue';",
+        "import DashboardPage from './DashboardPage.vue';",
+        "import KpiCard from './KpiCard.vue';",
+        "<DashboardPage>",
+        "<KpiCard",
+        "<DashboardCard :span=\"6\" title=\"Climate Resilience Outcomes\">",
+        "<DashboardCard :span=\"12\" variant=\"goal\" title=\"Program Impact Goal\">",
+        "insights-grid",
         "core.registerMap('tanzania-adm1'",
         "charts.MapChart",
         "Loan Portfolio by Type",

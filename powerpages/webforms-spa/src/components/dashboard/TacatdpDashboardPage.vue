@@ -17,6 +17,9 @@ import type { ComposeOption } from 'echarts/core';
 import type { BarSeriesOption, LineSeriesOption, MapSeriesOption, PieSeriesOption } from 'echarts/charts';
 import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
+import DashboardCard from './DashboardCard.vue';
+import DashboardPage from './DashboardPage.vue';
+import KpiCard from './KpiCard.vue';
 import {
   climateOutcomes,
   dashboardKpis,
@@ -220,7 +223,7 @@ function iconFor(metric: KpiMetric) {
 </script>
 
 <template>
-  <section class="tacatdp-dashboard" aria-label="TACATDP dashboard visualization">
+  <DashboardPage>
     <header class="tacatdp-dashboard__header">
       <div class="tacatdp-dashboard__header-actions" aria-label="Dashboard controls">
         <button class="dashboard-control" type="button">
@@ -241,21 +244,19 @@ function iconFor(metric: KpiMetric) {
     <p class="dashboard-demo-note">Prototype dashboard using demonstration data for TACATDP visualisation design. Figures are not official CRDB Bank or Green Climate Fund statistics.</p>
 
     <section class="kpi-row" aria-label="TACATDP KPI summary">
-      <article v-for="metric in dashboardKpis" :key="metric.id" class="kpi-card">
-        <span class="kpi-card__icon" :class="`kpi-card__icon--${metric.tone}`">
-          <component :is="iconFor(metric)" aria-hidden="true" />
-        </span>
-        <div>
-          <span>{{ metric.label }}</span>
-          <strong>{{ metric.value }}</strong>
-          <small>↑ {{ metric.change }}</small>
-        </div>
-      </article>
+      <KpiCard
+        v-for="metric in dashboardKpis"
+        :key="metric.id"
+        :label="metric.label"
+        :value="metric.value"
+        :change="metric.change"
+        :tone="metric.tone"
+        :icon="iconFor(metric)"
+      />
     </section>
 
     <section class="analytics-grid" aria-label="TACATDP analytics">
-      <article class="dashboard-card dashboard-card--span-4" aria-labelledby="loan-portfolio-title">
-        <h2 id="loan-portfolio-title">Loan Portfolio by Type</h2>
+      <DashboardCard :span="3" title="Loan Portfolio by Type">
         <div class="chart-with-center">
           <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
           <div class="donut-center">
@@ -264,17 +265,17 @@ function iconFor(metric: KpiMetric) {
           </div>
         </div>
         <a href="#reporting">View full report →</a>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-4" aria-labelledby="disbursement-trend-title">
+      <DashboardCard :span="5">
         <div class="card-heading-row">
           <h2 id="disbursement-trend-title">Disbursement Trend (TZS)</h2>
           <span>Monthly</span>
         </div>
         <DashboardChart class="chart chart--line" :option="disbursementTrendOption" autoresize />
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-4 dashboard-card--map" aria-labelledby="regional-map-title">
+      <DashboardCard :span="4" :row-span="2">
         <div class="card-heading-row">
           <h2 id="regional-map-title">Loans by Region</h2>
           <button class="text-action" type="button">Reset map</button>
@@ -295,16 +296,14 @@ function iconFor(metric: KpiMetric) {
           </div>
           <MapPinned aria-hidden="true" />
         </div>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-4" aria-labelledby="technologies-title">
-        <h2 id="technologies-title">Technologies Financed</h2>
+      <DashboardCard :span="4" title="Technologies Financed">
         <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize />
         <a href="#reporting">View full breakdown →</a>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-4" aria-labelledby="loan-performance-title">
-        <h2 id="loan-performance-title">Loan Performance</h2>
+      <DashboardCard :span="4" title="Loan Performance">
         <div class="chart-with-center">
           <DashboardChart class="chart chart--donut" :option="loanPerformanceOption" autoresize />
           <div class="donut-center">
@@ -313,10 +312,11 @@ function iconFor(metric: KpiMetric) {
           </div>
         </div>
         <a href="#reporting">View portfolio quality →</a>
-      </article>
+      </DashboardCard>
+    </section>
 
-      <article class="dashboard-card dashboard-card--span-4 dashboard-card--outcomes" aria-labelledby="climate-outcomes-title">
-        <h2 id="climate-outcomes-title">Climate Resilience Outcomes</h2>
+    <section class="insights-grid" aria-label="TACATDP monitoring insights">
+      <DashboardCard :span="6" title="Climate Resilience Outcomes">
         <div class="outcome-grid">
           <section class="outcome-metric" :title="climateOutcomes[0].definition">
             <span class="outcome-metric__icon outcome-metric__icon--blue" aria-hidden="true">
@@ -351,10 +351,9 @@ function iconFor(metric: KpiMetric) {
             <em>↑ 19% vs Apr</em>
           </section>
         </div>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-2" aria-labelledby="training-title">
-        <h2 id="training-title">Training &amp; Capacity Building</h2>
+      <DashboardCard :span="3" title="Training &amp; Capacity Building">
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
@@ -368,10 +367,9 @@ function iconFor(metric: KpiMetric) {
           </div>
         </div>
         <a href="#reporting">View training report →</a>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-3" aria-labelledby="submissions-title">
-        <h2 id="submissions-title">Recent Data Submissions</h2>
+      <DashboardCard :span="3" title="Recent Data Submissions">
         <div class="submission-list">
           <section v-for="submission in recentSubmissions" :key="submission.region">
             <div>
@@ -385,11 +383,10 @@ function iconFor(metric: KpiMetric) {
           </section>
         </div>
         <a href="#records">View all submissions →</a>
-      </article>
+      </DashboardCard>
 
-      <article class="dashboard-card dashboard-card--span-3 programme-goal" aria-labelledby="goal-title">
-        <h2 id="goal-title">Program Impact Goal</h2>
-        <p>Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
+      <DashboardCard :span="12" variant="goal" title="Program Impact Goal">
+        <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
         <svg class="goal-illustration" viewBox="0 0 360 168" preserveAspectRatio="none" aria-hidden="true">
           <path class="goal-hill goal-hill--back" d="M0 78c44-32 81-32 126 0 38 27 80 28 122 0 43-28 75-26 112 0v90H0Z" />
           <path class="goal-hill goal-hill--mid" d="M0 100c52-40 94-38 143 0 42 32 81 34 125 4 35-25 63-25 92-5v69H0Z" />
@@ -409,28 +406,12 @@ function iconFor(metric: KpiMetric) {
             <path class="goal-hoe" d="m216 75 16 12" />
           </g>
         </svg>
-      </article>
+      </DashboardCard>
     </section>
-  </section>
+  </DashboardPage>
 </template>
 
 <style scoped>
-.tacatdp-dashboard {
-  --dash-dark: #064E3B;
-  --dash-primary: #15803D;
-  --dash-positive: #16A34A;
-  --dash-bg: #F5F7F6;
-  --dash-text: #17211C;
-  --dash-muted: #64706A;
-  --dash-border: #E3E8E5;
-  display: grid;
-  gap: 18px;
-  min-height: calc(100vh - 126px);
-  padding: 24px;
-  background: var(--dash-bg);
-  color: var(--dash-text);
-}
-
 .tacatdp-dashboard__header,
 .tacatdp-dashboard__header-actions,
 .card-heading-row,
@@ -443,32 +424,35 @@ function iconFor(metric: KpiMetric) {
 
 .tacatdp-dashboard__header {
   justify-content: flex-end;
-  gap: 20px;
+  gap: var(--dash-space-4);
 }
 
-.tacatdp-dashboard__header p,
 .dashboard-demo-note,
-.dashboard-card span,
-.dashboard-card small {
+.card-heading-row span,
+.donut-center span,
+.selected-region-card span,
+.selected-region-card small,
+.training-grid span,
+.submission-list span,
+.submission-list small {
   color: var(--dash-muted);
 }
 
-.tacatdp-dashboard__header p,
 .dashboard-demo-note {
   margin: 4px 0 0;
   font-size: 0.84rem;
 }
 
 .tacatdp-dashboard__header-actions {
-  gap: 12px;
+  gap: var(--dash-space-3);
 }
 
 .dashboard-control {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--dash-space-2);
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 var(--dash-space-4);
   border: 1px solid var(--dash-border);
   border-radius: 10px;
   background: #FFFFFF;
@@ -489,7 +473,7 @@ function iconFor(metric: KpiMetric) {
 }
 
 .dashboard-demo-note {
-  padding: 10px 14px;
+  padding: var(--dash-space-2) var(--dash-space-3);
   border: 1px solid rgba(245, 158, 11, 0.28);
   border-radius: 10px;
   background: rgba(245, 158, 11, 0.08);
@@ -498,97 +482,24 @@ function iconFor(metric: KpiMetric) {
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--dash-space-4);
 }
 
-.kpi-card,
-.dashboard-card {
-  border: 1px solid var(--dash-border);
-  border-radius: 12px;
-  background: #FFFFFF;
-  box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
-}
-
-.kpi-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 112px;
-  padding: 16px;
-}
-
-.kpi-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 50px;
-  height: 50px;
-  border-radius: 50%;
-}
-
-.kpi-card__icon svg {
-  width: 23px;
-  height: 23px;
-}
-
-.kpi-card__icon--green { background: #EAF7EE; color: #15803D; }
-.kpi-card__icon--blue { background: #DBEAFE; color: #2563EB; }
-.kpi-card__icon--amber { background: #FEF3C7; color: #B45309; }
-.kpi-card__icon--purple { background: #EDE9FE; color: #7C3AED; }
-
-.kpi-card span,
-.kpi-card small {
-  display: block;
-  white-space: nowrap;
-  font-size: 0.72rem;
-}
-
-.kpi-card strong {
-  display: block;
-  margin: 6px 0;
-  white-space: nowrap;
-  font-size: 1.28rem;
-  letter-spacing: -0.03em;
-}
-
-.kpi-card small {
-  color: #15803D;
-  font-weight: 700;
-}
-
-.kpi-card > div {
-  min-width: 0;
-}
-
-.analytics-grid {
+.analytics-grid,
+.insights-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--dash-space-4);
 }
 
-.dashboard-card {
-  display: grid;
-  gap: 12px;
-  align-content: start;
-  min-height: 196px;
-  padding: 16px;
-}
-
-.dashboard-card--span-2 { grid-column: span 2; }
-.dashboard-card--span-3 { grid-column: span 3; }
-.dashboard-card--span-4 { grid-column: span 4; }
-.dashboard-card--map {
-  grid-row: span 2;
-  min-height: 470px;
-}
-
-.dashboard-card h2 {
+.card-heading-row h2 {
   margin: 0;
   color: var(--dash-text);
   font-size: 0.98rem;
+  white-space: nowrap;
 }
 
-.dashboard-card a,
+a,
 .text-action {
   color: var(--dash-dark);
   font-weight: 800;
@@ -644,8 +555,8 @@ function iconFor(metric: KpiMetric) {
 }
 
 .selected-region-card {
-  gap: 16px;
-  padding: 14px;
+  gap: var(--dash-space-4);
+  padding: var(--dash-space-3);
   border: 1px solid var(--dash-border);
   border-radius: 10px;
 }
@@ -667,12 +578,12 @@ function iconFor(metric: KpiMetric) {
 .outcome-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--dash-space-3);
 }
 
 .outcome-metric {
   display: grid;
-  gap: 6px;
+  gap: var(--dash-space-2);
   justify-items: start;
   min-width: 0;
 }
@@ -748,19 +659,19 @@ function iconFor(metric: KpiMetric) {
 
 .training-grid {
   align-items: stretch;
-  gap: 18px;
+  gap: var(--dash-space-4);
 }
 
 .training-grid div {
   display: grid;
-  gap: 8px;
+  gap: var(--dash-space-2);
   min-width: 0;
 }
 
 .training-value-with-icon {
   display: inline-flex !important;
   align-items: center;
-  gap: 8px;
+  gap: var(--dash-space-2);
 }
 
 .training-value-with-icon svg {
@@ -772,12 +683,12 @@ function iconFor(metric: KpiMetric) {
 
 .submission-list {
   display: grid;
-  gap: 12px;
+  gap: var(--dash-space-3);
 }
 
 .submission-list section {
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--dash-space-3);
 }
 
 .submission-list div {
@@ -796,23 +707,17 @@ function iconFor(metric: KpiMetric) {
   font-weight: 800;
 }
 
-.programme-goal {
-  overflow: hidden;
-  min-height: 196px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #EAF7EE 58%, #DDF2E4 100%);
-}
-
-.programme-goal p {
+.programme-goal-copy {
   margin: 0;
   color: var(--dash-text);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   line-height: 1.45;
 }
 
 .goal-illustration {
   width: calc(100% + 32px);
-  min-height: 86px;
-  margin: -2px -16px -16px;
+  height: 154px;
+  margin: -12px -16px -16px;
   align-self: end;
 }
 
@@ -855,23 +760,9 @@ function iconFor(metric: KpiMetric) {
   .kpi-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .dashboard-card--span-2,
-  .dashboard-card--span-3,
-  .dashboard-card--span-4 {
-    grid-column: span 6;
-  }
-
-  .dashboard-card--map {
-    grid-column: span 12;
-  }
 }
 
 @media (max-width: 760px) {
-  .tacatdp-dashboard {
-    padding: 14px;
-  }
-
   .tacatdp-dashboard__header,
   .tacatdp-dashboard__header-actions {
     align-items: stretch;
@@ -880,15 +771,9 @@ function iconFor(metric: KpiMetric) {
 
   .kpi-row,
   .analytics-grid,
+  .insights-grid,
   .outcome-grid {
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-card--span-2,
-  .dashboard-card--span-3,
-  .dashboard-card--span-4,
-  .dashboard-card--map {
-    grid-column: span 1;
   }
 }
 </style>
