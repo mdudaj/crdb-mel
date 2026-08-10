@@ -88,4 +88,37 @@ Known build warnings:
 - `@getodk/web-forms` still emits direct `eval` warnings from the upstream ODK runtime bundle.
 - Some built chunks exceed 500 KB.
 
-No deployment is included in this slice.
+## Mshirika deployment
+
+Deployment approval was given on 2026-08-10.
+
+Target:
+
+- Environment: `PowerPagesDeveloper-070926-125720`
+- Environment URL: `https://orga3cf4b37.crm4.dynamics.com/`
+- Website: `TACATDP Monitoring Tool`
+- Website ID: `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`
+- PAC user: `john.mduda@mshirikacorp.onmicrosoft.com`
+
+The upload used the PAC 2.9.3 fresh-package workaround:
+
+1. Downloaded a fresh Enhanced-model package from Mshirika.
+2. Overlaid the approved Home fragments and SPA web-files.
+3. Uploaded the fresh-format package with `pac pages upload --modelVersion Enhanced --forceUploadAll`.
+
+Result:
+
+```text
+Power Pages website upload succeeded in 247.89 secs.
+```
+
+Post-upload verification downloaded the site again and confirmed both Home fragments reference:
+
+```text
+/assets/index-B4OQ5yHn.mjs?v=tacatdp-dashboard-20260810-001
+/assets/index-iJm6_0ke.css?v=tacatdp-dashboard-20260810-001
+```
+
+The downloaded `index-B4OQ5yHn.mjs` bundle passed `node --check`.
+
+If the browser still shows stale content, purge Power Pages cache or restart the site, then reload with browser cache disabled.
