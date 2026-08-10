@@ -58,13 +58,26 @@ def validate_dashboard_component() -> None:
         "Technologies Financed",
         "Loan Performance",
         "Climate Resilience Outcomes",
+        "Area Under Improved<br>Practices (ha)",
+        "Soil Fertility Improved<br>(Reports)",
         "Training &amp; Capacity Building",
+        "training-value-with-icon",
         "Recent Data Submissions",
-        "Programme Impact Goal",
+        "Program Impact Goal",
+        "Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.",
+        "goal-farmer",
         "Prototype dashboard using demonstration data",
         "May 1 – May 31, 2025",
     ):
         require_text(DASHBOARD, expected)
+    for forbidden in (
+        "aria-labelledby=\"tacatdp-dashboard-title\"",
+        "<h1 id=\"tacatdp-dashboard-title\">Dashboard</h1>",
+        "Programme Impact Goal",
+        "dashboard-status-footer",
+    ):
+        if forbidden in DASHBOARD.read_text():
+            fail(f"dashboard component must not keep retired content/header/footer pattern: {forbidden}")
 
 
 def validate_prototype_data() -> None:

@@ -23,7 +23,6 @@ import {
   disbursementTrend,
   loanPerformance,
   loanPortfolio,
-  programmeGoal,
   recentSubmissions,
   regionalMetrics,
   technologyFinancing,
@@ -221,12 +220,8 @@ function iconFor(metric: KpiMetric) {
 </script>
 
 <template>
-  <section class="tacatdp-dashboard" aria-labelledby="tacatdp-dashboard-title">
+  <section class="tacatdp-dashboard" aria-label="TACATDP dashboard visualization">
     <header class="tacatdp-dashboard__header">
-      <div>
-        <h1 id="tacatdp-dashboard-title">Dashboard</h1>
-        <p>Monitoring sustainability outcomes and loan performance across Tanzania.</p>
-      </div>
       <div class="tacatdp-dashboard__header-actions" aria-label="Dashboard controls">
         <button class="dashboard-control" type="button">
           <CalendarDays aria-hidden="true" />
@@ -323,21 +318,47 @@ function iconFor(metric: KpiMetric) {
       <article class="dashboard-card dashboard-card--span-4 dashboard-card--outcomes" aria-labelledby="climate-outcomes-title">
         <h2 id="climate-outcomes-title">Climate Resilience Outcomes</h2>
         <div class="outcome-grid">
-          <section v-for="outcome in climateOutcomes" :key="outcome.label" class="outcome-metric" :title="outcome.definition">
-            <span :class="`outcome-metric__icon outcome-metric__icon--${outcome.tone}`">{{ outcome.icon === 'co2' ? 'CO₂' : '●' }}</span>
-            <small>{{ outcome.label }}</small>
-            <strong>{{ outcome.value }}</strong>
-            <em>↑ {{ outcome.change }}</em>
+          <section class="outcome-metric" :title="climateOutcomes[0].definition">
+            <span class="outcome-metric__icon outcome-metric__icon--blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.7 6.1 6 9.7 6 13a6 6 0 0 0 12 0c0-3.3-2.7-6.9-6-11Z" /></svg>
+            </span>
+            <small>Area Under Improved<br>Practices (ha)</small>
+            <strong>26,842</strong>
+            <em>↑ 18% vs Apr</em>
+          </section>
+          <section class="outcome-metric" :title="climateOutcomes[1].definition">
+            <span class="outcome-metric__icon outcome-metric__icon--green" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 21V10" /><path d="M12 13c-4.2 0-6.8-2.3-7.8-6.8C8.7 6.2 11 8.6 12 13Z" /><path d="M12 11c1-4.4 3.3-6.7 7.8-6.8C18.8 8.8 16.2 11 12 11Z" /></svg>
+            </span>
+            <small>Yield Increase<br>(Avg %)</small>
+            <strong>28%</strong>
+            <em>↑ 6pp vs Apr</em>
+          </section>
+          <section class="outcome-metric" :title="climateOutcomes[2].definition">
+            <span class="outcome-metric__icon outcome-metric__icon--amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7.5 7.5h9l2.2 11.5H5.3L7.5 7.5Z" /><path d="M9 7.5 10.2 4h3.6L15 7.5" /><path d="M12 17v-4" /><path d="M12 14.4c-1.8 0-2.9-1-3.4-2.9 2 .1 3.1 1 3.4 2.9Z" /><path d="M12 14.2c.5-1.8 1.6-2.7 3.4-2.7-.5 1.9-1.6 2.8-3.4 2.7Z" /></svg>
+            </span>
+            <small>Soil Fertility Improved<br>(Reports)</small>
+            <strong>5,642</strong>
+            <em>↑ 15% vs Apr</em>
+          </section>
+          <section class="outcome-metric" :title="climateOutcomes[3].definition">
+            <span class="outcome-metric__icon outcome-metric__icon--teal" aria-hidden="true">
+              <svg viewBox="0 0 30 24"><path d="M9 19h13.2a5.3 5.3 0 0 0 .8-10.5A7.1 7.1 0 0 0 9.8 6 5.8 5.8 0 0 0 9 19Z" /><text x="14.8" y="15.3" text-anchor="middle">CO₂</text></svg>
+            </span>
+            <small>tCO₂e Avoided<br>(Cumulative)</small>
+            <strong>32,184</strong>
+            <em>↑ 19% vs Apr</em>
           </section>
         </div>
       </article>
 
-      <article class="dashboard-card dashboard-card--span-3" aria-labelledby="training-title">
+      <article class="dashboard-card dashboard-card--span-2" aria-labelledby="training-title">
         <h2 id="training-title">Training &amp; Capacity Building</h2>
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
-            <strong>8,452</strong>
+            <strong class="training-value-with-icon">8,452 <Users aria-hidden="true" /></strong>
             <small>↑ 21% vs Apr</small>
           </div>
           <div>
@@ -366,25 +387,30 @@ function iconFor(metric: KpiMetric) {
         <a href="#records">View all submissions →</a>
       </article>
 
-      <article class="dashboard-card dashboard-card--span-2 programme-goal" aria-labelledby="goal-title">
-        <h2 id="goal-title">Programme Impact Goal</h2>
-        <p>{{ programmeGoal }}</p>
-        <div class="goal-illustration" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+      <article class="dashboard-card dashboard-card--span-3 programme-goal" aria-labelledby="goal-title">
+        <h2 id="goal-title">Program Impact Goal</h2>
+        <p>Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
+        <svg class="goal-illustration" viewBox="0 0 360 168" preserveAspectRatio="none" aria-hidden="true">
+          <path class="goal-hill goal-hill--back" d="M0 78c44-32 81-32 126 0 38 27 80 28 122 0 43-28 75-26 112 0v90H0Z" />
+          <path class="goal-hill goal-hill--mid" d="M0 100c52-40 94-38 143 0 42 32 81 34 125 4 35-25 63-25 92-5v69H0Z" />
+          <path class="goal-hill goal-hill--front" d="M0 126c48-28 92-29 137-2 48 28 95 29 145 0 31-18 56-19 78-6v50H0Z" />
+          <g class="goal-crops">
+            <path d="M0 153c12-22 22-22 34 0M23 158c13-29 25-29 37 0M51 160c11-25 22-25 34 0M78 160c15-36 28-36 42 0M115 160c11-28 22-28 33 0M146 160c15-30 28-30 42 0M184 160c12-28 24-28 36 0M219 160c11-28 22-28 34 0M248 160c15-34 29-34 43 0M286 160c13-29 25-29 37 0M321 160c12-24 24-24 36 0" />
+            <path d="M8 168v-30M20 168v-38M40 168v-34M65 168v-42M93 168v-46M125 168v-37M157 168v-43M191 168v-36M226 168v-43M258 168v-48M295 168v-39M330 168v-36" />
+          </g>
+          <g class="goal-farmer">
+            <path class="goal-farmer__hat" d="M260 53c12-14 32-14 44 0l18 4c-21 9-53 9-80 0Z" />
+            <circle cx="282" cy="65" r="9" />
+            <path d="M270 76c16-4 30 1 42 15l-10 18c-12-13-25-19-39-16Z" />
+            <path d="M265 91c-10 17-18 28-29 37l-8-8c11-8 19-19 28-34Z" />
+            <path d="M302 108c5 18 8 35 8 52h-13c-1-16-4-31-10-45Z" />
+            <path d="M282 111c-9 16-18 31-30 49h-14c13-18 24-36 32-54Z" />
+            <path class="goal-hoe" d="M227 81 318 148" />
+            <path class="goal-hoe" d="m216 75 16 12" />
+          </g>
+        </svg>
       </article>
     </section>
-
-    <footer class="dashboard-status-footer">
-      <div>
-        <span>Last updated: May 31, 2025 10:45 AM</span>
-        <span class="sync-dot" aria-hidden="true"></span>
-        <span>Data synced</span>
-      </div>
-      <span>© 2025 CRDB Bank — Sustainable Finance Unit. All rights reserved.</span>
-    </footer>
   </section>
 </template>
 
@@ -408,7 +434,6 @@ function iconFor(metric: KpiMetric) {
 .tacatdp-dashboard__header,
 .tacatdp-dashboard__header-actions,
 .card-heading-row,
-.dashboard-status-footer,
 .selected-region-card,
 .training-grid,
 .submission-list section {
@@ -417,13 +442,8 @@ function iconFor(metric: KpiMetric) {
 }
 
 .tacatdp-dashboard__header {
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 20px;
-}
-
-.tacatdp-dashboard__header h1 {
-  margin: 0;
-  font-size: 1.55rem;
 }
 
 .tacatdp-dashboard__header p,
@@ -492,23 +512,23 @@ function iconFor(metric: KpiMetric) {
 .kpi-card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-height: 112px;
-  padding: 18px;
+  padding: 16px;
 }
 
 .kpi-card__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 54px;
-  height: 54px;
+  flex: 0 0 50px;
+  height: 50px;
   border-radius: 50%;
 }
 
 .kpi-card__icon svg {
-  width: 25px;
-  height: 25px;
+  width: 23px;
+  height: 23px;
 }
 
 .kpi-card__icon--green { background: #EAF7EE; color: #15803D; }
@@ -519,19 +539,25 @@ function iconFor(metric: KpiMetric) {
 .kpi-card span,
 .kpi-card small {
   display: block;
-  font-size: 0.78rem;
+  white-space: nowrap;
+  font-size: 0.72rem;
 }
 
 .kpi-card strong {
   display: block;
   margin: 6px 0;
-  font-size: 1.42rem;
+  white-space: nowrap;
+  font-size: 1.28rem;
   letter-spacing: -0.03em;
 }
 
 .kpi-card small {
   color: #15803D;
   font-weight: 700;
+}
+
+.kpi-card > div {
+  min-width: 0;
 }
 
 .analytics-grid {
@@ -578,8 +604,7 @@ function iconFor(metric: KpiMetric) {
 }
 
 .card-heading-row,
-.selected-region-card,
-.dashboard-status-footer {
+.selected-region-card {
   justify-content: space-between;
 }
 
@@ -647,7 +672,9 @@ function iconFor(metric: KpiMetric) {
 
 .outcome-metric {
   display: grid;
-  gap: 7px;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
 }
 
 .outcome-metric__icon {
@@ -659,6 +686,26 @@ function iconFor(metric: KpiMetric) {
   font-weight: 900;
 }
 
+.outcome-metric__icon svg {
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+}
+
+.outcome-metric__icon path {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.outcome-metric__icon text {
+  fill: #064E3B;
+  font-size: 7px;
+  font-weight: 900;
+}
+
 .outcome-metric__icon--blue { background: #DBEAFE; color: #2563EB; }
 .outcome-metric__icon--green { background: #DCFCE7; color: #15803D; }
 .outcome-metric__icon--amber { background: #FEF3C7; color: #92400E; }
@@ -667,6 +714,28 @@ function iconFor(metric: KpiMetric) {
 .outcome-metric strong,
 .training-grid strong {
   font-size: 1.45rem;
+}
+
+.outcome-metric small,
+.outcome-metric strong,
+.outcome-metric em,
+.training-grid span,
+.training-grid strong,
+.training-grid small,
+.submission-list strong,
+.submission-list span,
+.submission-list small,
+.dashboard-card h2 {
+  white-space: nowrap;
+}
+
+.outcome-metric small {
+  font-size: 0.62rem;
+  line-height: 1.2;
+}
+
+.training-grid span {
+  font-size: 0.68rem;
 }
 
 .outcome-metric em,
@@ -686,6 +755,19 @@ function iconFor(metric: KpiMetric) {
   display: grid;
   gap: 8px;
   min-width: 0;
+}
+
+.training-value-with-icon {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.training-value-with-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #15803D;
+  stroke-width: 2.6;
 }
 
 .submission-list {
@@ -716,54 +798,57 @@ function iconFor(metric: KpiMetric) {
 
 .programme-goal {
   overflow: hidden;
-  background: linear-gradient(180deg, #FFFFFF 0%, #EAF7EE 100%);
+  min-height: 196px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #EAF7EE 58%, #DDF2E4 100%);
 }
 
 .programme-goal p {
   margin: 0;
   color: var(--dash-text);
-  font-size: 0.82rem;
-  line-height: 1.55;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .goal-illustration {
-  position: relative;
-  min-height: 82px;
-  margin: 4px -16px -16px;
-  background: linear-gradient(135deg, rgba(21, 128, 61, 0.18), rgba(6, 78, 59, 0.24));
+  width: calc(100% + 32px);
+  min-height: 86px;
+  margin: -2px -16px -16px;
+  align-self: end;
 }
 
-.goal-illustration span {
-  position: absolute;
-  bottom: 0;
-  width: 45%;
-  height: 56px;
-  border-radius: 50% 50% 0 0;
-  background: rgba(21, 128, 61, 0.25);
+.goal-hill--back { fill: #D8F0DD; }
+.goal-hill--mid { fill: #BFE5C8; }
+.goal-hill--front { fill: #9ED4AE; }
+
+.goal-crops path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.goal-illustration span:nth-child(1) { left: -8%; }
-.goal-illustration span:nth-child(2) { left: 26%; height: 70px; }
-.goal-illustration span:nth-child(3) { right: -10%; height: 60px; }
-
-.dashboard-status-footer {
-  gap: 16px;
-  padding: 10px 6px 0;
-  color: var(--dash-muted);
-  font-size: 0.78rem;
+.goal-crops path:first-child {
+  stroke: #1F7A31;
+  stroke-width: 5;
 }
 
-.dashboard-status-footer div {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
+.goal-crops path:last-child {
+  stroke: #43A047;
+  stroke-width: 3;
 }
 
-.sync-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #15803D;
+.goal-farmer {
+  fill: #0F5C36;
+}
+
+.goal-farmer__hat {
+  fill: #1F7A31;
+}
+
+.goal-hoe {
+  fill: none;
+  stroke: #064E3B;
+  stroke-linecap: round;
+  stroke-width: 4;
 }
 
 @media (max-width: 1280px) {
@@ -788,8 +873,7 @@ function iconFor(metric: KpiMetric) {
   }
 
   .tacatdp-dashboard__header,
-  .tacatdp-dashboard__header-actions,
-  .dashboard-status-footer {
+  .tacatdp-dashboard__header-actions {
     align-items: stretch;
     flex-direction: column;
   }

@@ -654,7 +654,8 @@ const shellPageEyebrow = computed(() => {
   if (activeView.value === 'records') return 'Project';
   if (activeView.value === 'runner') return runnerTitle.value;
   if (activeView.value === 'workspace') return 'Field operations';
-  return 'SFU operational workspace';
+  if (activeView.value === 'dashboard') return 'Monitoring sustainability outcomes and loan performance across Tanzania.';
+  return 'MEL platform';
 });
 const selectedProjectAssignments = computed(() => selectedProject.value?.assignments ?? []);
 const primaryAssignment = computed(() => selectedProjectAssignments.value[0] ?? assignments.value[0] ?? null);
@@ -2330,9 +2331,9 @@ onUnmounted(() => {
       />
       <aside class="managed-side-nav" aria-label="MEL Tool navigation">
         <div class="managed-side-nav__brand">
-          <span class="managed-side-nav__mark" aria-hidden="true">🌱</span>
+          <img class="managed-side-nav__logo" :src="crdbLogoUrl" alt="CRDB Bank">
           <div class="managed-side-nav__brand-text">
-            <strong>TACATDP</strong>
+            <strong>TACATDP <span aria-hidden="true">🌱</span></strong>
             <small>CRDB · Green Climate Fund</small>
           </div>
         </div>
@@ -4648,8 +4649,12 @@ onUnmounted(() => {
     </section>
         </div>
         <footer class="managed-app-footer" aria-label="Application footer">
-          <span>CRDB Bank</span>
-          <span>Copyright 2026</span>
+          <span class="managed-app-footer__status">
+            <span>Last updated: May 31, 2025 10:45 AM</span>
+            <span class="managed-app-footer__dot" aria-hidden="true"></span>
+            <span>Data synced</span>
+          </span>
+          <span>© 2025 CRDB Bank — Sustainable Finance Unit. All rights reserved.</span>
         </footer>
       </section>
     </div>
