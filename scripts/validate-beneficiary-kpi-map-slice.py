@@ -55,10 +55,14 @@ def validate_dashboard_component() -> None:
         "import KpiCard from './KpiCard.vue';",
         "<DashboardPage>",
         "<KpiCard",
-        "<DashboardCard :span=\"6\" title=\"Climate Resilience Outcomes\">",
-        "<DashboardCard :span=\"12\" variant=\"goal\" title=\"Program Impact Goal\">",
+        "zanzibarRegionNames",
+        "core.registerMap('tanzania-mainland-adm1'",
+        "map: 'tanzania-mainland-adm1'",
+        "<DashboardCard :span=\"8\" title=\"Climate Resilience Outcomes\">",
+        "<DashboardCard :span=\"4\" title=\"Training &amp; Capacity Building\">",
+        "<DashboardCard :span=\"7\" title=\"Recent Data Submissions\">",
+        "<DashboardCard :span=\"5\" variant=\"goal\" title=\"Program Impact Goal\">",
         "insights-grid",
-        "core.registerMap('tanzania-adm1'",
         "charts.MapChart",
         "Loan Portfolio by Type",
         "Disbursement Trend (TZS)",
@@ -83,6 +87,7 @@ def validate_dashboard_component() -> None:
         "<h1 id=\"tacatdp-dashboard-title\">Dashboard</h1>",
         "Programme Impact Goal",
         "dashboard-status-footer",
+        "map: 'tanzania-adm1'",
     ):
         if forbidden in DASHBOARD.read_text():
             fail(f"dashboard component must not keep retired content/header/footer pattern: {forbidden}")

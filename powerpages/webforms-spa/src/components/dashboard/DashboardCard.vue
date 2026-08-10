@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(defineProps<{
   title?: string;
-  span?: 2 | 3 | 4 | 5 | 6 | 8 | 12;
+  span?: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 12;
   rowSpan?: 1 | 2;
   variant?: 'default' | 'goal';
 }>(), {
@@ -52,6 +52,7 @@ withDefaults(defineProps<{
 .dashboard-card--span-4 { grid-column: span 4; }
 .dashboard-card--span-5 { grid-column: span 5; }
 .dashboard-card--span-6 { grid-column: span 6; }
+.dashboard-card--span-7 { grid-column: span 7; }
 .dashboard-card--span-8 { grid-column: span 8; }
 .dashboard-card--span-12 { grid-column: span 12; }
 
@@ -72,6 +73,7 @@ withDefaults(defineProps<{
   .dashboard-card--span-4,
   .dashboard-card--span-5,
   .dashboard-card--span-6,
+  .dashboard-card--span-7,
   .dashboard-card--span-8 {
     grid-column: span 6;
   }
@@ -89,6 +91,7 @@ withDefaults(defineProps<{
   .dashboard-card--span-4,
   .dashboard-card--span-5,
   .dashboard-card--span-6,
+  .dashboard-card--span-7,
   .dashboard-card--span-8,
   .dashboard-card--span-12,
   .dashboard-card--row-span-2 {

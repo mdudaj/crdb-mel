@@ -43,6 +43,33 @@ type DashboardChartOption = ComposeOption<
   | VisualMapComponentOption
 >;
 
+type TanzaniaAdm1Feature = {
+  properties?: {
+    shapeName?: string;
+  };
+};
+
+type TanzaniaAdm1FeatureCollection = {
+  type: string;
+  features: TanzaniaAdm1Feature[];
+  [key: string]: unknown;
+};
+
+const zanzibarRegionNames = new Set([
+  'Zanzibar South & Central',
+  'North Pemba',
+  'Zanzibar North',
+  'Zanzibar Urban/West',
+  'South Pemba',
+]);
+
+const mainlandTanzaniaAdm1 = {
+  ...(tanzaniaAdm1 as TanzaniaAdm1FeatureCollection),
+  features: (tanzaniaAdm1 as TanzaniaAdm1FeatureCollection).features.filter(
+    (feature) => !zanzibarRegionNames.has(feature.properties?.shapeName ?? ''),
+  ),
+};
+
 const DashboardChart = defineAsyncComponent(async () => {
   const [
     core,
@@ -72,7 +99,7 @@ const DashboardChart = defineAsyncComponent(async () => {
     features.LabelLayout,
     renderers.CanvasRenderer,
   ]);
-  core.registerMap('tanzania-adm1', tanzaniaAdm1 as never);
+  core.registerMap('tanzania-mainland-adm1', mainlandTanzaniaAdm1 as never);
   return vueECharts.default as Component;
 });
 
@@ -200,7 +227,7 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
   },
   series: [{
     type: 'map',
-    map: 'tanzania-adm1',
+    map: 'tanzania-mainland-adm1',
     roam: false,
     nameProperty: 'shapeName',
     selectedMode: 'single',
@@ -316,7 +343,7 @@ function iconFor(metric: KpiMetric) {
     </section>
 
     <section class="insights-grid" aria-label="TACATDP monitoring insights">
-      <DashboardCard :span="6" title="Climate Resilience Outcomes">
+      <DashboardCard :span="8" title="Climate Resilience Outcomes">
         <div class="outcome-grid">
           <section class="outcome-metric" :title="climateOutcomes[0].definition">
             <span class="outcome-metric__icon outcome-metric__icon--blue" aria-hidden="true">
@@ -353,7 +380,7 @@ function iconFor(metric: KpiMetric) {
         </div>
       </DashboardCard>
 
-      <DashboardCard :span="3" title="Training &amp; Capacity Building">
+      <DashboardCard :span="4" title="Training &amp; Capacity Building">
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
@@ -369,7 +396,7 @@ function iconFor(metric: KpiMetric) {
         <a href="#reporting">View training report →</a>
       </DashboardCard>
 
-      <DashboardCard :span="3" title="Recent Data Submissions">
+      <DashboardCard :span="7" title="Recent Data Submissions">
         <div class="submission-list">
           <section v-for="submission in recentSubmissions" :key="submission.region">
             <div>
@@ -385,7 +412,7 @@ function iconFor(metric: KpiMetric) {
         <a href="#records">View all submissions →</a>
       </DashboardCard>
 
-      <DashboardCard :span="12" variant="goal" title="Program Impact Goal">
+      <DashboardCard :span="5" variant="goal" title="Program Impact Goal">
         <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
         <svg class="goal-illustration" viewBox="0 0 360 168" preserveAspectRatio="none" aria-hidden="true">
           <path class="goal-hill goal-hill--back" d="M0 78c44-32 81-32 126 0 38 27 80 28 122 0 43-28 75-26 112 0v90H0Z" />
