@@ -122,3 +122,31 @@ Post-upload verification downloaded the site again and confirmed both Home fragm
 The downloaded `index-B4OQ5yHn.mjs` bundle passed `node --check`.
 
 If the browser still shows stale content, purge Power Pages cache or restart the site, then reload with browser cache disabled.
+
+## Mshirika dashboard layout revision
+
+On 2026-08-10, the revised shell/dashboard layout was deployed to Mshirika.
+
+Revision scope:
+
+- moved the dashboard title/subtitle out of the dashboard content and into the shell header;
+- restored the CRDB logo to the sidenav brand area and moved the leaf symbol beside the TACATDP label;
+- compacted the sidenav and enabled drawer scrolling so lower menu items are not clipped on shorter screens;
+- kept first-row KPI labels, values, and change lines on single lines;
+- rebuilt the final-row climate, training, submission, and program-goal cards to match the requested text/icon/illustration treatment;
+- moved the “Last updated / Data synced / copyright” footer content to the persistent shell footer.
+
+Result:
+
+```text
+Power Pages website upload succeeded in 212.88 secs.
+```
+
+Post-upload verification downloaded the site again and confirmed both Home fragments reference:
+
+```text
+/assets/index-D18L6wsc.mjs?v=tacatdp-dashboard-20260810-002
+/assets/index-BFYDxzL8.css?v=tacatdp-dashboard-20260810-002
+```
+
+The downloaded `index-D18L6wsc.mjs` bundle passed `node --check`.
