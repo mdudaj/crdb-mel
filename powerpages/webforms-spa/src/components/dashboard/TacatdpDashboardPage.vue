@@ -15,7 +15,7 @@ import {
 import { computed, defineAsyncComponent, type Component } from 'vue';
 import type { ComposeOption } from 'echarts/core';
 import type { BarSeriesOption, LineSeriesOption, MapSeriesOption, PieSeriesOption } from 'echarts/charts';
-import type { GridComponentOption, LegendComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
+import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
@@ -39,6 +39,7 @@ type DashboardChartOption = ComposeOption<
   | PieSeriesOption
   | GridComponentOption
   | LegendComponentOption
+  | TitleComponentOption
   | TooltipComponentOption
   | VisualMapComponentOption
 >;
@@ -94,6 +95,7 @@ const DashboardChart = defineAsyncComponent(async () => {
     charts.PieChart,
     components.GridComponent,
     components.LegendComponent,
+    components.TitleComponent,
     components.TooltipComponent,
     components.VisualMapComponent,
     features.LabelLayout,
@@ -120,6 +122,15 @@ function chartParam(params: unknown): { name: string; value: number; percent: nu
 }
 
 const loanPortfolioOption = computed<DashboardChartOption>(() => ({
+  title: {
+    text: '12,458',
+    subtext: 'Total Loans',
+    left: '34%',
+    top: '35%',
+    textAlign: 'center',
+    textStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
+    subtextStyle: { color: '#64706A', fontSize: 11 },
+  },
   tooltip: {
     trigger: 'item',
     formatter: (params: unknown) => {
@@ -128,12 +139,27 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
       return `${itemParams.name}<br>${itemParams.value.toLocaleString()} loans (${itemParams.percent}%)<br>${row?.amount ?? 'Prototype amount'} disbursed`;
     },
   },
+  legend: {
+    orient: 'vertical',
+    right: 0,
+    bottom: 0,
+    itemWidth: 9,
+    itemHeight: 9,
+    itemGap: 8,
+    textStyle: { color: '#64706A', fontSize: 11 },
+    formatter: (name: string) => {
+      const item = loanPortfolio.find((entry) => entry.name === name);
+      return item ? `${item.name}\n${item.value.toLocaleString()} (${item.percent}%)` : name;
+    },
+  },
   series: [{
     type: 'pie',
-    radius: ['48%', '72%'],
-    center: ['50%', '50%'],
+    radius: ['42%', '66%'],
+    center: ['34%', '46%'],
+    avoidLabelOverlap: false,
     data: loanPortfolio.map((item) => ({ name: item.name, value: item.value, itemStyle: { color: item.color } })),
-    label: { show: false },
+    label: { show: false, position: 'center' },
+    labelLine: { show: false },
   }],
 }));
 
@@ -283,22 +309,7 @@ function iconFor(metric: KpiMetric) {
 
     <section class="analytics-grid" aria-label="TACATDP analytics">
       <DashboardCard :span="3" title="Loan Portfolio by Type">
-        <div class="donut-summary">
-          <div class="chart-with-center">
-            <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
-            <div class="donut-center">
-              <span>Total</span>
-              <strong>12,458</strong>
-            </div>
-          </div>
-          <ul class="donut-legend" aria-label="Loan portfolio by type legend">
-            <li v-for="item in loanPortfolio" :key="item.name">
-              <span class="donut-legend__marker" :style="{ backgroundColor: item.color }" aria-hidden="true"></span>
-              <span class="donut-legend__label">{{ item.name }}</span>
-              <strong>{{ item.value.toLocaleString() }} ({{ item.percent }}%)</strong>
-            </li>
-          </ul>
-        </div>
+        <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
         <template #footer>
           <a href="#reporting">View full report →</a>
         </template>
@@ -582,14 +593,6 @@ a,
   min-height: 360px;
 }
 
-.donut-summary {
-  display: grid;
-  grid-template-columns: minmax(128px, 0.9fr) minmax(116px, 1fr);
-  gap: var(--dash-space-3);
-  align-items: center;
-  min-width: 0;
-}
-
 .chart-with-center {
   position: relative;
 }
@@ -609,48 +612,6 @@ a,
 
 .donut-center strong {
   font-size: 1.2rem;
-}
-
-.donut-legend {
-  display: grid;
-  gap: var(--dash-space-2);
-  align-self: end;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.donut-legend li {
-  display: grid;
-  grid-template-columns: 9px minmax(0, 1fr);
-  gap: 4px 8px;
-  align-items: start;
-  min-width: 0;
-}
-
-.donut-legend__marker {
-  width: 8px;
-  height: 8px;
-  margin-top: 4px;
-  border-radius: 50%;
-}
-
-.donut-legend__label,
-.donut-legend strong {
-  min-width: 0;
-  color: var(--dash-muted);
-  font-size: 0.68rem;
-  line-height: 1.25;
-}
-
-.donut-legend__label {
-  color: var(--dash-text);
-}
-
-.donut-legend strong {
-  grid-column: 2;
-  font-weight: 600;
 }
 
 .selected-region-card {
@@ -871,8 +832,7 @@ a,
   .kpi-row,
   .analytics-grid,
   .insights-grid,
-  .outcome-grid,
-  .donut-summary {
+  .outcome-grid {
     grid-template-columns: 1fr;
   }
 }
