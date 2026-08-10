@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   LogIn,
   Mail,
-  MapPinned,
   Menu,
   MoreVertical,
   NotepadText,
@@ -31,7 +30,7 @@ import {
   Users,
 } from '@lucide/vue';
 import { computed, defineAsyncComponent, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { Component } from 'vue';
+import TacatdpDashboardPage from '../components/dashboard/TacatdpDashboardPage.vue';
 import { draftStore, type LocalDraft } from '../offline/drafts';
 import { PowerPagesApiClient } from '../powerpages-api/client';
 import type {
@@ -53,7 +52,7 @@ import type {
 } from '../powerpages-api/types';
 import { measureAsync } from '../performance';
 
-type AppView = 'dashboard' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
+type AppView = 'dashboard' | 'workspace' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
 type FormSection = 'summary' | 'data' | 'exports' | 'powerbi';
 type AccessSection = 'users' | 'add' | 'roles' | 'activity' | 'configuration';
 type AccessChangeAction = 'email' | 'role' | 'suspend' | 'reactivate';
@@ -136,50 +135,6 @@ const VueDatePicker = defineAsyncComponent(async () => {
   const module = await import('@vuepic/vue-datepicker');
   return module.VueDatePicker;
 });
-const DashboardChart = defineAsyncComponent(async () => {
-  const [
-    core,
-    charts,
-    components,
-    features,
-    renderers,
-    vueECharts,
-  ] = await Promise.all([
-    import('echarts/core'),
-    import('echarts/charts'),
-    import('echarts/components'),
-    import('echarts/features'),
-    import('echarts/renderers'),
-    import('vue-echarts'),
-  ]);
-  core.use([
-    charts.BarChart,
-    charts.PieChart,
-    components.GridComponent,
-    components.LegendComponent,
-    components.TooltipComponent,
-    features.LabelLayout,
-    renderers.CanvasRenderer,
-  ]);
-  return vueECharts.default as Component;
-});
-const LeafletMap = defineAsyncComponent(async () => {
-  await import('leaflet/dist/leaflet.css');
-  const module = await import('@vue-leaflet/vue-leaflet');
-  return module.LMap as Component;
-});
-const LeafletTileLayer = defineAsyncComponent(async () => {
-  const module = await import('@vue-leaflet/vue-leaflet');
-  return module.LTileLayer as Component;
-});
-const LeafletMarker = defineAsyncComponent(async () => {
-  const module = await import('@vue-leaflet/vue-leaflet');
-  return module.LMarker as Component;
-});
-const LeafletPopup = defineAsyncComponent(async () => {
-  const module = await import('@vue-leaflet/vue-leaflet');
-  return module.LPopup as Component;
-});
 const pageSize = 10;
 const loading = ref(false);
 const workspaceHydrating = ref(false);
@@ -196,7 +151,6 @@ const selectedRoadmapModule = ref('Programmes');
 const activeFormSection = ref<FormSection>('summary');
 const shellNavCollapsed = ref(false);
 const mobileNavOpen = ref(false);
-const melPlatformNavOpen = ref(false);
 const recordSearch = ref('');
 const reportDateFrom = ref('');
 const reportDateTo = ref('');
@@ -338,22 +292,6 @@ const powerBiTables = [
   { logical: 'mp_submissionanswer', label: 'Submission answers', purpose: 'Long-format answer facts' },
 ];
 
-interface PrototypeBeneficiaryInsight {
-  id: string;
-  name: string;
-  district: string;
-  ward: string;
-  type: string;
-  gender: string;
-  submittedAt?: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-interface PrototypeBeneficiaryMapPoint extends PrototypeBeneficiaryInsight {
-  latitude: number;
-  longitude: number;
-}
 const accessRoleReference = [
   { role: 'Platform Administrator', summary: 'Manages users, projects, forms, reporting, and configuration.' },
   { role: 'Project Manager', summary: 'Manages users and form access for assigned projects.' },
@@ -701,6 +639,7 @@ const accessWorkflowCanSubmit = computed(() => (
 const selectedProject = computed(() => projectWorkspaces.value.find((project) => project.id === selectedProjectId.value) ?? null);
 const shellPageTitle = computed(() => {
   if (activeView.value === 'dashboard') return 'Dashboard';
+  if (activeView.value === 'workspace') return 'Workspace';
   if (activeView.value === 'access') return 'User & Access';
   if (activeView.value === 'system-activity') return 'System Activity';
   if (activeView.value === 'reporting') return 'Reporting';
@@ -714,6 +653,7 @@ const shellPageEyebrow = computed(() => {
   if (activeView.value === 'reporting' || activeView.value === 'roadmap') return 'MEL platform';
   if (activeView.value === 'records') return 'Project';
   if (activeView.value === 'runner') return runnerTitle.value;
+  if (activeView.value === 'workspace') return 'Field operations';
   return 'SFU operational workspace';
 });
 const selectedProjectAssignments = computed(() => selectedProject.value?.assignments ?? []);
@@ -752,133 +692,6 @@ const signedInUserInitials = computed(() => {
 });
 const signedInUserRoleLabel = computed(() => (canManageAccess.value ? 'Platform Administrator' : 'MEL User'));
 
-function parseReportRootAnswers(row: SubmissionReportRow): Record<string, unknown> {
-  if (!row.mp_rootanswersjson) {
-    return {};
-  }
-
-  try {
-    const parsed = JSON.parse(row.mp_rootanswersjson);
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
-  } catch {
-    return {};
-  }
-}
-
-function firstTextValue(source: Record<string, unknown>, keys: string[], fallback = ''): string {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return String(value);
-    }
-  }
-  return fallback;
-}
-
-function firstNumberValue(source: Record<string, unknown>, keys: string[]): number | undefined {
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string' && value.trim()) {
-      const parsed = Number(value.trim());
-      if (Number.isFinite(parsed)) {
-        return parsed;
-      }
-    }
-  }
-  return undefined;
-}
-
-function normalizeChartLabel(value: string, fallback: string): string {
-  return value.trim() || fallback;
-}
-
-function countBy<T>(items: T[], resolveKey: (item: T) => string): Array<{ name: string; value: number }> {
-  const counts = new Map<string, number>();
-  for (const item of items) {
-    const key = resolveKey(item);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((left, right) => right.value - left.value || left.name.localeCompare(right.name));
-}
-
-const prototypeBeneficiaries = computed<PrototypeBeneficiaryInsight[]>(() => reportRows.value.map((row) => {
-  const answers = parseReportRootAnswers(row);
-  const id = firstTextValue(answers, ['beneficiary_id', 'customer_id', 'participant_id', 'respondent_id'], row.mp_instanceid);
-  const name = firstTextValue(answers, ['beneficiary_name', 'customer_name', 'respondent_name', 'full_name'], row.mp_displayname || id);
-  return {
-    id,
-    name,
-    district: firstTextValue(answers, ['district', 'district_name', 'District'], 'Unspecified district'),
-    ward: firstTextValue(answers, ['ward', 'ward_name', 'Ward'], 'Unspecified ward'),
-    type: firstTextValue(answers, ['beneficiary_type', 'customer_type', 'respondent_type'], 'Baseline respondent'),
-    gender: firstTextValue(answers, ['gender', 'sex'], 'Not specified'),
-    submittedAt: row.mp_submittedat,
-    latitude: firstNumberValue(answers, ['latitude', 'lat', 'gps_latitude', 'geopoint_latitude']),
-    longitude: firstNumberValue(answers, ['longitude', 'lon', 'lng', 'gps_longitude', 'geopoint_longitude']),
-  };
-}).filter((beneficiary, index, list) => (
-  list.findIndex((candidate) => candidate.id === beneficiary.id) === index
-)));
-
-const beneficiaryDistrictCoverage = computed(() => countBy(prototypeBeneficiaries.value, (beneficiary) => normalizeChartLabel(beneficiary.district, 'Unspecified district')));
-const beneficiaryTypeBreakdown = computed(() => countBy(prototypeBeneficiaries.value, (beneficiary) => normalizeChartLabel(beneficiary.type, 'Baseline respondent')));
-const beneficiaryMapPoints = computed<PrototypeBeneficiaryMapPoint[]>(() => prototypeBeneficiaries.value.flatMap((beneficiary) => {
-  if (
-    typeof beneficiary.latitude === 'number'
-    && typeof beneficiary.longitude === 'number'
-    && beneficiary.latitude >= -90
-    && beneficiary.latitude <= 90
-    && beneficiary.longitude >= -180
-    && beneficiary.longitude <= 180
-  ) {
-    return [{ ...beneficiary, latitude: beneficiary.latitude, longitude: beneficiary.longitude }];
-  }
-  return [];
-}));
-const beneficiaryMapCenter = computed<[number, number]>(() => {
-  if (beneficiaryMapPoints.value.length === 0) {
-    return [-6.369, 34.8888];
-  }
-  const latitude = beneficiaryMapPoints.value.reduce((sum, point) => sum + (point.latitude ?? 0), 0) / beneficiaryMapPoints.value.length;
-  const longitude = beneficiaryMapPoints.value.reduce((sum, point) => sum + (point.longitude ?? 0), 0) / beneficiaryMapPoints.value.length;
-  return [latitude, longitude];
-});
-const beneficiaryTypeChartOption = computed<Record<string, unknown>>(() => ({
-  tooltip: { trigger: 'item' },
-  legend: { bottom: 0, left: 'center', itemWidth: 10, itemHeight: 10 },
-  series: [{
-    name: 'Beneficiaries',
-    type: 'pie',
-    radius: ['42%', '68%'],
-    center: ['50%', '43%'],
-    avoidLabelOverlap: true,
-    data: beneficiaryTypeBreakdown.value,
-  }],
-}));
-const beneficiaryDistrictChartOption = computed<Record<string, unknown>>(() => ({
-  tooltip: { trigger: 'axis' },
-  grid: { left: 8, right: 12, top: 12, bottom: 4, containLabel: true },
-  xAxis: { type: 'value', minInterval: 1 },
-  yAxis: {
-    type: 'category',
-    data: beneficiaryDistrictCoverage.value.slice(0, 6).map((item) => item.name),
-    axisLabel: { width: 110, overflow: 'truncate' },
-  },
-  series: [{
-    name: 'Beneficiaries',
-    type: 'bar',
-    data: beneficiaryDistrictCoverage.value.slice(0, 6).map((item) => item.value),
-    itemStyle: { borderRadius: [0, 6, 6, 0], color: '#007a3d' },
-  }],
-}));
 const dashboardMetricItems = computed(() => [
   {
     id: 'active-projects',
@@ -893,20 +706,6 @@ const dashboardMetricItems = computed(() => [
     label: 'Assigned forms',
     detail: 'Available to collect',
     tone: 'neutral',
-  },
-  {
-    id: 'beneficiaries',
-    value: reportLoading.value ? '...' : String(prototypeBeneficiaries.value.length),
-    label: 'Beneficiaries',
-    detail: prototypeBeneficiaries.value.length > 0 ? 'Mapped from baseline records' : 'Awaiting baseline records',
-    tone: prototypeBeneficiaries.value.length > 0 ? 'success' : 'neutral',
-  },
-  {
-    id: 'coverage',
-    value: reportLoading.value ? '...' : String(beneficiaryDistrictCoverage.value.length),
-    label: 'Districts covered',
-    detail: beneficiaryMapPoints.value.length > 0 ? `${beneficiaryMapPoints.value.length} mapped point${beneficiaryMapPoints.value.length === 1 ? '' : 's'}` : 'Map uses coverage table until coordinates exist',
-    tone: beneficiaryDistrictCoverage.value.length > 0 ? 'success' : 'neutral',
   },
   {
     id: 'local-drafts',
@@ -1325,6 +1124,14 @@ function openDashboard() {
   postSubmitMessage.value = '';
   accessRouteDenied.value = false;
   activeView.value = 'dashboard';
+  mobileNavOpen.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openWorkspace() {
+  postSubmitMessage.value = '';
+  accessRouteDenied.value = false;
+  activeView.value = 'workspace';
   mobileNavOpen.value = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2523,109 +2330,133 @@ onUnmounted(() => {
       />
       <aside class="managed-side-nav" aria-label="MEL Tool navigation">
         <div class="managed-side-nav__brand">
-          <img :src="crdbLogoUrl" alt="CRDB Bank">
+          <span class="managed-side-nav__mark" aria-hidden="true">🌱</span>
           <div class="managed-side-nav__brand-text">
-            <strong>MEL Tool</strong>
+            <strong>TACATDP</strong>
+            <small>CRDB · Green Climate Fund</small>
           </div>
         </div>
 
-        <nav class="managed-side-nav__section managed-side-nav__section--primary" aria-label="Field operations navigation">
-          <h2>Field Operations</h2>
+        <nav class="managed-side-nav__section managed-side-nav__section--primary" aria-label="Overview navigation">
+          <h2>Overview</h2>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'dashboard' }"
             type="button"
-            aria-label="Dashboard"
+            aria-label="Overview"
             @click="openDashboard"
           >
             <LayoutDashboard class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Dashboard</span>
-            <span class="action-tooltip" role="tooltip">Dashboard</span>
+            <span>Overview</span>
+            <span class="action-tooltip" role="tooltip">Overview</span>
+          </button>
+        </nav>
+
+        <nav class="managed-side-nav__section" aria-label="Programme navigation">
+          <h2>Programme</h2>
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'projects' || activeView === 'records' }"
+            type="button"
+            aria-label="Programmes"
+            @click="openRoadmapModule('Programmes')"
+          >
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Programmes</span>
+            <span class="action-tooltip" role="tooltip">Programmes</span>
           </button>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'projects' || activeView === 'records' }"
             type="button"
-            aria-label="Projects"
+            aria-label="Projects and loans"
             @click="backToProjects"
           >
             <FolderOpen class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Projects</span>
-            <span class="action-tooltip" role="tooltip">Projects</span>
+            <span>Projects / Loans</span>
+            <span class="action-tooltip" role="tooltip">Projects / Loans</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Beneficiaries" @click="openRoadmapModule('Beneficiaries')">
+            <Users class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Beneficiaries</span>
+            <span class="action-tooltip" role="tooltip">Beneficiaries</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Disbursements" @click="openRoadmapModule('Disbursements')">
+            <Database class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Disbursements</span>
+            <span class="action-tooltip" role="tooltip">Disbursements</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Repayments" @click="openRoadmapModule('Repayments')">
+            <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Repayments</span>
+            <span class="action-tooltip" role="tooltip">Repayments</span>
           </button>
         </nav>
 
-        <nav class="managed-side-nav__section" aria-label="Results and reporting navigation">
-          <h2>Results &amp; Reporting</h2>
+        <nav class="managed-side-nav__section" aria-label="Monitoring and evaluation navigation">
+          <h2>Monitoring &amp; Evaluation</h2>
+          <button class="managed-nav-item" type="button" aria-label="Indicators" @click="openRoadmapModule('Indicators')">
+            <Database class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Indicators</span>
+            <span class="action-tooltip" role="tooltip">Indicators</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Impact Logframe" @click="openRoadmapModule('Impact Logframe')">
+            <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Impact Logframe</span>
+            <span class="action-tooltip" role="tooltip">Impact Logframe</span>
+          </button>
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'workspace' }"
+            type="button"
+            aria-label="Data Submissions"
+            @click="openWorkspace"
+          >
+            <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Data Submissions</span>
+            <span class="action-tooltip" role="tooltip">Data Submissions</span>
+          </button>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'reporting' }"
             type="button"
-            aria-label="Reporting"
+            aria-label="Reports"
             @click="openReportingDestination"
           >
             <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Reporting</span>
-            <span class="action-tooltip" role="tooltip">Reporting</span>
-          </button>
-          <button class="managed-nav-item" type="button" aria-label="Power BI" @click="openRoadmapModule('Power BI')">
-            <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Power BI</span>
-            <span class="action-tooltip" role="tooltip">Power BI</span>
+            <span>Reports</span>
+            <span class="action-tooltip" role="tooltip">Reports</span>
           </button>
         </nav>
 
-        <nav class="managed-side-nav__section managed-side-nav__section--roadmap" aria-label="MEL platform roadmap navigation">
-          <h2>MEL Platform</h2>
+        <nav class="managed-side-nav__section" aria-label="Insights navigation">
+          <h2>Insights</h2>
           <button
-            class="managed-nav-item managed-nav-item--disclosure"
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'dashboard' }"
             type="button"
-            aria-label="Toggle MEL Platform modules"
-            :aria-expanded="melPlatformNavOpen"
-            @click="melPlatformNavOpen = !melPlatformNavOpen"
+            aria-label="Dashboards"
+            @click="openDashboard"
           >
-            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Future modules</span>
-            <ChevronDown class="managed-nav-item__chevron" aria-hidden="true" />
-            <span class="action-tooltip" role="tooltip">MEL Platform</span>
+            <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Dashboards</span>
+            <span class="action-tooltip" role="tooltip">Dashboards</span>
           </button>
-          <div v-if="melPlatformNavOpen" class="managed-nav-subgroup" aria-label="Future MEL Platform modules">
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Programmes" @click="openRoadmapModule('Programmes')">
-              <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Programmes</span>
-              <span class="action-tooltip" role="tooltip">Programmes</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Beneficiaries" @click="openRoadmapModule('Beneficiaries')">
-              <Users class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Beneficiaries</span>
-              <span class="action-tooltip" role="tooltip">Beneficiaries</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Field Data" @click="openRoadmapModule('Field Data')">
-              <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Field Data</span>
-              <span class="action-tooltip" role="tooltip">Field Data</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Indicators" @click="openRoadmapModule('Indicators')">
-              <Database class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Indicators</span>
-              <span class="action-tooltip" role="tooltip">Indicators</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Evidence" @click="openRoadmapModule('Evidence')">
-              <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Evidence</span>
-              <span class="action-tooltip" role="tooltip">Evidence</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Learning" @click="openRoadmapModule('Learning')">
-              <Activity class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Learning</span>
-              <span class="action-tooltip" role="tooltip">Learning</span>
-            </button>
-          </div>
+          <button class="managed-nav-item" type="button" aria-label="Maps" @click="openRoadmapModule('Maps')">
+            <Activity class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Maps</span>
+            <span class="action-tooltip" role="tooltip">Maps</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Learning and Insights" @click="openRoadmapModule('Learning & Insights')">
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Learning &amp; Insights</span>
+            <span class="action-tooltip" role="tooltip">Learning &amp; Insights</span>
+          </button>
         </nav>
 
 
         <nav class="managed-side-nav__section managed-side-nav__section--admin" aria-label="Administration navigation">
-          <h2>Administration</h2>
+          <h2>Admin</h2>
           <button
             v-if="canManageAccess"
             class="managed-nav-item"
@@ -2647,8 +2478,13 @@ onUnmounted(() => {
             @click="openAccessManagement"
           >
             <UserCog class="managed-nav-item__icon" aria-hidden="true" />
-            <span>User &amp; Access</span>
-            <span class="action-tooltip" role="tooltip">User &amp; Access</span>
+            <span>Users</span>
+            <span class="action-tooltip" role="tooltip">Users</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Organizations" @click="openRoadmapModule('Organizations')">
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Organizations</span>
+            <span class="action-tooltip" role="tooltip">Organizations</span>
           </button>
           <button class="managed-nav-item" type="button" aria-label="Settings" @click="openRoadmapModule('Settings')">
             <Settings class="managed-nav-item__icon" aria-hidden="true" />
@@ -2659,7 +2495,7 @@ onUnmounted(() => {
 
         <button class="managed-side-nav__org" type="button" aria-label="Current organization and branch">
           <span>Sustainable Finance Unit</span>
-          <strong>Head Office</strong>
+          <strong>CRDB Bank</strong>
           <ChevronDown class="managed-side-nav__org-icon" aria-hidden="true" />
         </button>
       </aside>
@@ -2695,6 +2531,10 @@ onUnmounted(() => {
 
         <div class="managed-workspace-body">
     <template v-if="activeView === 'dashboard'">
+      <TacatdpDashboardPage />
+    </template>
+
+    <template v-else-if="activeView === 'workspace'">
       <section class="sync-status-strip" aria-label="Device and assignment status">
         <span class="state-dot" :class="{ 'state-dot--offline': !online }" aria-hidden="true"></span>
         <strong>{{ online ? 'Device connected' : 'Device offline' }}</strong>
@@ -2822,89 +2662,10 @@ onUnmounted(() => {
             <span class="operational-metric__icon" aria-hidden="true">
               <FolderOpen v-if="metric.id === 'active-projects'" />
               <Clipboard v-else-if="metric.id === 'forms-action'" />
-              <Users v-else-if="metric.id === 'beneficiaries'" />
-              <MapPinned v-else-if="metric.id === 'coverage'" />
               <FileSpreadsheet v-else-if="metric.id === 'local-drafts'" />
               <UserCog v-else />
             </span>
           </article>
-        </section>
-
-        <section class="beneficiary-insights-panel" aria-labelledby="beneficiary-insights-title">
-          <header class="section-heading">
-            <div>
-              <p class="eyebrow">Prototype insights</p>
-              <h2 id="beneficiary-insights-title">Beneficiary baseline view</h2>
-            </div>
-            <span class="state-chip state-chip--neutral">Portal visualisation</span>
-          </header>
-
-          <div v-if="reportLoading" class="loading-panel loading-panel--inline" aria-live="polite">
-            <h2>Loading beneficiary insights</h2>
-            <p>Preparing KPI charts and location coverage from projected baseline records.</p>
-          </div>
-
-          <div v-else-if="prototypeBeneficiaries.length > 0" class="beneficiary-insights-grid">
-            <section class="insight-card insight-card--chart" aria-labelledby="beneficiary-type-chart-title">
-              <div>
-                <p class="eyebrow">Beneficiary model</p>
-                <h3 id="beneficiary-type-chart-title">Type breakdown</h3>
-              </div>
-              <DashboardChart class="insight-chart" :option="beneficiaryTypeChartOption" autoresize />
-            </section>
-
-            <section class="insight-card insight-card--chart" aria-labelledby="beneficiary-coverage-chart-title">
-              <div>
-                <p class="eyebrow">Coverage</p>
-                <h3 id="beneficiary-coverage-chart-title">District distribution</h3>
-              </div>
-              <DashboardChart class="insight-chart" :option="beneficiaryDistrictChartOption" autoresize />
-            </section>
-
-            <section class="insight-card insight-card--map" aria-labelledby="beneficiary-map-title">
-              <div>
-                <p class="eyebrow">Mapping</p>
-                <h3 id="beneficiary-map-title">Location coverage</h3>
-              </div>
-              <div v-if="beneficiaryMapPoints.length > 0" class="beneficiary-map-shell">
-                <LeafletMap :zoom="6" :center="beneficiaryMapCenter" :use-global-leaflet="false">
-                  <LeafletTileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution="&copy; OpenStreetMap contributors"
-                  />
-                  <LeafletMarker
-                    v-for="point in beneficiaryMapPoints"
-                    :key="`beneficiary-map:${point.id}`"
-                    :lat-lng="[point.latitude, point.longitude]"
-                  >
-                    <LeafletPopup>
-                      <strong>{{ point.name }}</strong><br>
-                      {{ point.district }}<template v-if="point.ward !== 'Unspecified ward'"> · {{ point.ward }}</template>
-                    </LeafletPopup>
-                  </LeafletMarker>
-                </LeafletMap>
-              </div>
-              <div v-else class="coverage-table" role="region" aria-label="Beneficiary coverage by district">
-                <p class="data-entry-summary">Coordinates are not available in the current projected records. The map panel falls back to district coverage until geopoints are captured or projected.</p>
-                <table>
-                  <thead>
-                    <tr>
-                      <th scope="col">District</th>
-                      <th scope="col">Beneficiaries</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="item in beneficiaryDistrictCoverage.slice(0, 6)" :key="`coverage:${item.name}`">
-                      <td>{{ item.name }}</td>
-                      <td>{{ item.value }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
-
-          <p v-else class="data-entry-empty-note">Beneficiary KPI and map panels will populate after baseline records are projected into reporting rows.</p>
         </section>
 
         <section class="dashboard-grid dashboard-grid--with-rail">

@@ -2,6 +2,10 @@
 
 Date: 2026-08-09
 
+Status: superseded by `tacatdp-dashboard-echarts-slice-20260810.md`.
+
+The beneficiary-derived KPI panel and Leaflet marker map were retired from the main dashboard on 2026-08-10. The prototype dashboard is now a dedicated TACATDP operational visualization route using Apache ECharts, structured demonstration data, and a Tanzania ADM1 choropleth. Keep this file only as historical context for why direct portal visualization was introduced before Power BI access was available.
+
 ## Scope
 
 This slice adds a lightweight beneficiary insight layer to the existing Power Pages Vue SPA. It does not create or deploy new Dataverse tables.

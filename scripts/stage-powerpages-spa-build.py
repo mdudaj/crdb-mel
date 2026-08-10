@@ -22,7 +22,7 @@ PARENT_PAGE_ID = "60efc37d-aded-4014-912d-8a1cdefa876d"
 PUBLISHING_STATE_ID = "357decb2-7d20-468f-9898-1da7459f66b9"
 WEBFILE_NAMESPACE = uuid.UUID("b3107b66-8078-4bfe-bd96-e84ad7e46111")
 ANNOTATION_NAMESPACE = uuid.UUID("d2e9a15c-80fb-4828-b8b7-4e8646df75a8")
-BUILD_MARKER = "beneficiary-kpi-map-20260809-001"
+BUILD_MARKER = "tacatdp-dashboard-20260810-001"
 
 
 def fail(message: str) -> None:
@@ -99,8 +99,8 @@ def update_home_fragments() -> None:
     for home in HOME_FILES:
         text = home.read_text()
         text = re.sub(
-            r'(?ms)<link rel="modulepreload".*?<div id="app"></div>\n<script type="module".*?</script>',
-            f"{asset_block}\n<div id=\"app\"></div>",
+            r'(?ms)(</style>)\s*(?:(?:<script[^>]+/assets/[^>]+></script>)|(?:<link[^>]+/assets/[^>]+>))\s*(?:(?:<script[^>]+/assets/[^>]+></script>)|(?:<link[^>]+/assets/[^>]+>))?\s*(?:(?:<script[^>]+/assets/[^>]+></script>)|(?:<link[^>]+/assets/[^>]+>))?\s*(?:(?:<script[^>]+/assets/[^>]+></script>)|(?:<link[^>]+/assets/[^>]+>))?\s*(?:(?:<script[^>]+/assets/[^>]+></script>)|(?:<link[^>]+/assets/[^>]+>))?\s*<div id="app"></div>',
+            f"\\1\n{asset_block}\n<div id=\"app\"></div>",
             text,
         )
         if asset_block not in text:

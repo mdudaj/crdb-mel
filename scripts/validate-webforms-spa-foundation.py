@@ -220,21 +220,26 @@ def validate_powerpages_session_contract() -> None:
     if "await import('@vuepic/vue-datepicker')" not in view:
         fail("Date picker must remain available through an async component import")
     for required in (
-        "type AppView = 'dashboard' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap'",
+        "type AppView = 'dashboard' | 'workspace' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap'",
         "const activeView = ref<AppView>('dashboard')",
         "const activeAccessSection = ref<AccessSection>('users')",
         "const platformName = 'MEL Tool'",
+        "import TacatdpDashboardPage from '../components/dashboard/TacatdpDashboardPage.vue';",
+        "<TacatdpDashboardPage />",
+        "activeView === 'workspace'",
         ':aria-label="platformName"',
         "{{ shellPageEyebrow }}",
         "shellPageEyebrow",
         "managed-top-bar__actions",
         "signedInUserName",
         "Use your Microsoft account to continue to the MEL Tool.",
-        "Field Operations",
-        "Results &amp; Reporting",
-        "MEL Platform",
+        "Monitoring &amp; Evaluation",
+        "Projects / Loans",
+        "Data Submissions",
+        "Learning &amp; Insights",
+        "Organizations",
         "Beneficiaries",
-        "openRoadmapModule('Learning')",
+        "openRoadmapModule('Learning & Insights')",
         "Microsoft Entra",
         "managed-user-chip",
         "Sustainable Finance Unit",
@@ -474,7 +479,7 @@ def validate_powerpages_session_contract() -> None:
         if required not in client:
             fail(f"Power Pages access-admin authorisation guard missing required contract: {required}")
     for required in (
-        "type AppView = 'dashboard' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity'",
+        "type AppView = 'dashboard' | 'workspace' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity'",
         "User &amp; Access",
         "getCurrentUserAccessAuthorization",
         "accessAuthorizationSourceLabel",

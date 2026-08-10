@@ -114,6 +114,18 @@ body {
   transition: width 160ms ease;
 }
 
+.managed-side-nav__mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  background: rgba(22, 163, 74, 0.18);
+  font-size: 1.45rem;
+}
+
 .managed-side-nav__brand-text {
   display: grid;
   gap: 2px;
@@ -124,6 +136,12 @@ body {
 .managed-side-nav__brand-text strong {
   font-size: 0.94rem;
   line-height: 1.1;
+}
+
+.managed-side-nav__brand-text small {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.72rem;
+  line-height: 1.25;
 }
 
 .managed-nav-item {
@@ -302,6 +320,10 @@ body {
 
 .managed-app-shell--collapsed .managed-side-nav__brand img {
   width: 48px;
+}
+
+.managed-app-shell--collapsed .managed-side-nav__mark {
+  flex-basis: 44px;
 }
 
 .managed-app-shell--collapsed .managed-side-nav__brand-text,
@@ -1117,87 +1139,6 @@ body {
 
 .operational-metric--warning {
   border-left: 5px solid var(--mt-color-warning);
-}
-
-.beneficiary-insights-panel {
-  display: grid;
-  gap: var(--mt-space-4);
-  padding: var(--mt-space-4);
-  border: 1px solid var(--mt-color-border);
-  border-radius: var(--mt-radius-md);
-  background:
-    radial-gradient(circle at top right, rgba(0, 122, 61, 0.1), transparent 34%),
-    var(--mt-color-surface);
-  box-shadow: var(--mt-shadow-soft);
-}
-
-.beneficiary-insights-grid {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(280px, 1fr) minmax(320px, 1.2fr);
-  gap: var(--mt-space-4);
-  align-items: stretch;
-}
-
-.insight-card {
-  display: grid;
-  gap: var(--mt-space-3);
-  min-height: 280px;
-  padding: var(--mt-space-4);
-  border: 1px solid var(--mt-color-border);
-  border-radius: var(--mt-radius-md);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.insight-card h3,
-.insight-card p {
-  margin: 0;
-}
-
-.insight-card h3 {
-  color: var(--mt-color-primary-strong);
-  font-size: 0.95rem;
-}
-
-.insight-chart {
-  min-height: 220px;
-  width: 100%;
-}
-
-.beneficiary-map-shell {
-  min-height: 238px;
-  overflow: hidden;
-  border: 1px solid var(--mt-color-border);
-  border-radius: var(--mt-radius-sm);
-}
-
-.beneficiary-map-shell .leaflet-container {
-  min-height: 238px;
-  font: inherit;
-}
-
-.coverage-table {
-  display: grid;
-  gap: var(--mt-space-3);
-}
-
-.coverage-table table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-
-.coverage-table th,
-.coverage-table td {
-  padding: var(--mt-space-2);
-  border-bottom: 1px solid var(--mt-color-border);
-  text-align: left;
-}
-
-.coverage-table th {
-  color: var(--mt-color-text-muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .dashboard-grid {
@@ -4159,7 +4100,6 @@ body {
   .route-header,
   .route-status-strip,
   .operational-metric-strip,
-  .beneficiary-insights-grid,
   .dashboard-grid,
   .dashboard-grid--with-rail,
   .admin-section-header,
