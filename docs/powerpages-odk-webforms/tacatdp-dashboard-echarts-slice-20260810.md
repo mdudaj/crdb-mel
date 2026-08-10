@@ -150,3 +150,31 @@ Post-upload verification downloaded the site again and confirmed both Home fragm
 ```
 
 The downloaded `index-D18L6wsc.mjs` bundle passed `node --check`.
+
+## Mshirika loan portfolio legend revision
+
+On 2026-08-11, the Loan Portfolio by Type legend fix was deployed to Mshirika.
+
+Revision scope:
+
+- removed the ECharts legend from the Loan Portfolio by Type donut canvas;
+- rendered the legend as HTML beside/bottom-right of the donut area;
+- recentered the donut and centre value;
+- kept the card action in the shared card footer.
+
+Build and package marker:
+
+```text
+tacatdp-dashboard-20260811-002
+```
+
+Post-upload verification downloaded the site again and confirmed the deployed Home fragments reference:
+
+```text
+/assets/index-_YAHDKxX.mjs?v=tacatdp-dashboard-20260811-002
+/assets/index-B7MyrjMt.css?v=tacatdp-dashboard-20260811-002
+```
+
+The downloaded `index-_YAHDKxX.mjs` bundle passed `node --check`.
+
+Deployment note: with PAC 2.9.3, the successful upload used a clean fresh Enhanced-model package. The overlay replaced the fresh package's existing Home copy files in place and copied only the required Home-referenced web files. Do not copy the repository `web-pages/home` folder wholesale into a fresh package, because the fresh download may use `content-pages/Home.en-US...` while the repository mirror uses `content-pages/en-US/...`; mixing both creates duplicate or primary-key-missing webpage records.
