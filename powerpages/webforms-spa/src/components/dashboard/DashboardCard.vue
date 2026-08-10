@@ -21,16 +21,25 @@ withDefaults(defineProps<{
       variant === 'goal' ? 'dashboard-card--goal' : '',
     ]"
   >
-    <h2 v-if="title">{{ title }}</h2>
-    <slot />
+    <header v-if="title || $slots.header" class="dashboard-card__header">
+      <slot name="header">
+        <h2>{{ title }}</h2>
+      </slot>
+    </header>
+    <div class="dashboard-card__content">
+      <slot />
+    </div>
+    <footer v-if="$slots.footer" class="dashboard-card__footer">
+      <slot name="footer" />
+    </footer>
   </article>
 </template>
 
 <style scoped>
 .dashboard-card {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--dash-space-3, 12px);
-  align-content: start;
   min-width: 0;
   min-height: 196px;
   padding: var(--dash-space-4, 16px);
@@ -40,7 +49,26 @@ withDefaults(defineProps<{
   box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
 }
 
-.dashboard-card h2 {
+.dashboard-card__header,
+.dashboard-card__footer {
+  min-width: 0;
+}
+
+.dashboard-card__content {
+  display: grid;
+  gap: var(--dash-space-3, 12px);
+  align-content: start;
+  min-width: 0;
+}
+
+.dashboard-card__footer {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: auto;
+}
+
+.dashboard-card__header h2 {
   margin: 0;
   color: var(--dash-text, #17211C);
   font-size: 0.98rem;

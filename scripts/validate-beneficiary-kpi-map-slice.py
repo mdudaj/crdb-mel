@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SPA = ROOT / "powerpages/webforms-spa"
 VIEW = SPA / "src/views/AssignedFormsView.vue"
 DASHBOARD = SPA / "src/components/dashboard/TacatdpDashboardPage.vue"
+DASHBOARD_CARD = SPA / "src/components/dashboard/DashboardCard.vue"
 DATA = SPA / "src/prototype/tacatdpDashboardData.ts"
 MAP = SPA / "src/assets/maps/tanzania-adm1.json"
 
@@ -55,6 +56,7 @@ def validate_dashboard_component() -> None:
         "import KpiCard from './KpiCard.vue';",
         "<DashboardPage>",
         "<KpiCard",
+        "<template #footer>",
         "zanzibarRegionNames",
         "core.registerMap('tanzania-mainland-adm1'",
         "map: 'tanzania-mainland-adm1'",
@@ -91,6 +93,14 @@ def validate_dashboard_component() -> None:
     ):
         if forbidden in DASHBOARD.read_text():
             fail(f"dashboard component must not keep retired content/header/footer pattern: {forbidden}")
+    for expected in (
+        "dashboard-card__header",
+        "dashboard-card__content",
+        "dashboard-card__footer",
+        "<slot name=\"header\">",
+        "<slot name=\"footer\" />",
+    ):
+        require_text(DASHBOARD_CARD, expected)
 
 
 def validate_prototype_data() -> None:

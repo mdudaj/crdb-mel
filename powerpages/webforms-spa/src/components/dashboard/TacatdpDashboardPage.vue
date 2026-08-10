@@ -291,22 +291,28 @@ function iconFor(metric: KpiMetric) {
             <strong>12,458</strong>
           </div>
         </div>
-        <a href="#reporting">View full report →</a>
+        <template #footer>
+          <a href="#reporting">View full report →</a>
+        </template>
       </DashboardCard>
 
       <DashboardCard :span="5">
-        <div class="card-heading-row">
-          <h2 id="disbursement-trend-title">Disbursement Trend (TZS)</h2>
-          <span>Monthly</span>
-        </div>
+        <template #header>
+          <div class="card-heading-row">
+            <h2 id="disbursement-trend-title">Disbursement Trend (TZS)</h2>
+            <span>Monthly</span>
+          </div>
+        </template>
         <DashboardChart class="chart chart--line" :option="disbursementTrendOption" autoresize />
       </DashboardCard>
 
       <DashboardCard :span="4" :row-span="2">
-        <div class="card-heading-row">
-          <h2 id="regional-map-title">Loans by Region</h2>
-          <button class="text-action" type="button">Reset map</button>
-        </div>
+        <template #header>
+          <div class="card-heading-row">
+            <h2 id="regional-map-title">Loans by Region</h2>
+            <button class="text-action" type="button">Reset map</button>
+          </div>
+        </template>
         <DashboardChart class="chart chart--map" :option="regionalMapOption" autoresize aria-label="Tanzania regional choropleth map showing prototype disbursement by region" />
         <div class="selected-region-card">
           <div>
@@ -327,7 +333,9 @@ function iconFor(metric: KpiMetric) {
 
       <DashboardCard :span="4" title="Technologies Financed">
         <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize />
-        <a href="#reporting">View full breakdown →</a>
+        <template #footer>
+          <a href="#reporting">View full breakdown →</a>
+        </template>
       </DashboardCard>
 
       <DashboardCard :span="4" title="Loan Performance">
@@ -338,7 +346,9 @@ function iconFor(metric: KpiMetric) {
             <strong>12,458</strong>
           </div>
         </div>
-        <a href="#reporting">View portfolio quality →</a>
+        <template #footer>
+          <a href="#reporting">View portfolio quality →</a>
+        </template>
       </DashboardCard>
     </section>
 
@@ -393,7 +403,9 @@ function iconFor(metric: KpiMetric) {
             <small>↑ 15% vs Apr</small>
           </div>
         </div>
-        <a href="#reporting">View training report →</a>
+        <template #footer>
+          <a href="#reporting">View training report →</a>
+        </template>
       </DashboardCard>
 
       <DashboardCard :span="7" title="Recent Data Submissions">
@@ -409,7 +421,9 @@ function iconFor(metric: KpiMetric) {
             </div>
           </section>
         </div>
-        <a href="#records">View all submissions →</a>
+        <template #footer>
+          <a href="#records">View all submissions →</a>
+        </template>
       </DashboardCard>
 
       <DashboardCard :span="5" variant="goal" title="Program Impact Goal">
