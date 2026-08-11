@@ -8,9 +8,11 @@ const repoRoot = resolve(scriptDir, '..');
 const chartOptionsPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/chartOptions.ts');
 const dashboardCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/DashboardCard.vue');
 const kpiCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/KpiCard.vue');
+const dashboardPagePath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/TacatdpDashboardPage.vue');
 const source = readFileSync(chartOptionsPath, 'utf8');
 const dashboardCardSource = readFileSync(dashboardCardPath, 'utf8');
 const kpiCardSource = readFileSync(kpiCardPath, 'utf8');
+const dashboardPageSource = readFileSync(dashboardPagePath, 'utf8');
 
 function assertIncludes(fragment, message) {
   if (!source.includes(fragment)) {
@@ -56,6 +58,22 @@ if (!kpiCardSource.includes('.kpi-card::before') || !kpiCardSource.includes('--k
 
 if (/axisLabel:\s*{[\s\S]*formatter:\s*['"`]{value}B['"`]/.test(source)) {
   throw new Error('Disbursement Trend y-axis must not repeat B on every tick; use the unit label instead.');
+}
+
+if (!dashboardPageSource.includes('object-fit: contain;')) {
+  throw new Error('Program Impact Goal illustration must use object-fit: contain so the supplied farmer image is not cropped.');
+}
+
+if (dashboardPageSource.includes('object-fit: cover;')) {
+  throw new Error('Program Impact Goal illustration must not use object-fit: cover; it crops the supplied farmer image.');
+}
+
+if (!dashboardPageSource.includes('object-position: center bottom;')) {
+  throw new Error('Program Impact Goal illustration must stay anchored to the card bottom.');
+}
+
+if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashboardPageSource)) {
+  throw new Error('Program Impact Goal copy must keep a subtle scrim for readability over the illustration.');
 }
 
 console.log('Dashboard visual spacing validation passed.');

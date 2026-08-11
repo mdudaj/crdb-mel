@@ -842,12 +842,15 @@ a,
 .programme-goal-copy {
   position: relative;
   z-index: 1;
-  max-width: 18rem;
-  margin: 0;
+  max-width: 20rem;
+  margin: -4px 0 0 -4px;
+  padding: var(--dash-space-2) var(--dash-space-3);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.62) 72%, rgba(255, 255, 255, 0) 100%);
   color: var(--dash-text);
   font-size: 0.88rem;
   line-height: 1.45;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .goal-illustration {
@@ -856,9 +859,9 @@ a,
   z-index: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center bottom;
-  opacity: 0.92;
+  opacity: 0.98;
   pointer-events: none;
 }
 
