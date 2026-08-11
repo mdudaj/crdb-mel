@@ -11,6 +11,16 @@ const selectedBeneficiaryId = ref('');
 
 const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryRecords.map((record) => record.region))).sort()]);
 const verificationStatuses = ['All statuses', 'Verified', 'Under review', 'Incomplete'];
+const beneficiaryDataverseTargets = [
+  'mp_TrackedEntity',
+  'mp_BeneficiaryProfile',
+  'mp_BeneficiaryProgrammeParticipation',
+  'mp_BeneficiaryFinanceLink',
+  'mp_BeneficiaryTechnologyAdoption',
+  'mp_BeneficiaryTrainingParticipation',
+  'mp_BeneficiaryOutcomeSnapshot',
+  'mp_BeneficiarySubmissionLink',
+];
 
 const filteredBeneficiaries = computed(() => {
   const search = searchTerm.value.trim().toLowerCase();
@@ -266,7 +276,7 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
         </button>
       </header>
 
-      <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the proposed entity shape for prototype review.</p>
+      <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
       <section class="beneficiary-detail-section" aria-label="Profile summary">
         <h3>Profile summary</h3>
@@ -348,8 +358,8 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
         </ul>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Training and latest submission">
-        <h3>Training and data submission</h3>
+      <section class="beneficiary-detail-section" aria-label="Training summary">
+        <h3>Training summary</h3>
         <dl class="beneficiary-detail-grid">
           <div>
             <dt>Sessions attended</dt>
@@ -364,13 +374,35 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
             <dd>{{ selectedBeneficiary.trainingSummary.lastTopic }}</dd>
           </div>
           <div>
-            <dt>Submission</dt>
-            <dd>{{ selectedBeneficiary.latestSubmission.status }} · {{ selectedBeneficiary.latestSubmission.completeness }}</dd>
+            <dt>Last training</dt>
+            <dd>{{ selectedBeneficiary.trainingSummary.lastTrainingDate }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Data lineage">
+        <h3>Data lineage</h3>
+        <dl class="beneficiary-detail-grid">
+          <div>
+            <dt>Latest submission</dt>
+            <dd>{{ selectedBeneficiary.latestSubmission.form }}</dd>
+          </div>
+          <div>
+            <dt>Reporting period</dt>
+            <dd>{{ selectedBeneficiary.latestSubmission.reportingPeriod }}</dd>
+          </div>
+          <div>
+            <dt>Completeness</dt>
+            <dd>{{ selectedBeneficiary.latestSubmission.completeness }}</dd>
+          </div>
+          <div>
+            <dt>Verification state</dt>
+            <dd>{{ selectedBeneficiary.latestSubmission.status }}</dd>
           </div>
         </dl>
         <p class="beneficiary-detail-secondary">
-          {{ selectedBeneficiary.latestSubmission.form }} · {{ selectedBeneficiary.latestSubmission.reportingPeriod }} ·
-          {{ selectedBeneficiary.latestSubmission.dataSource }}
+          Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links through
+          mp_BeneficiarySubmissionLink to the source mp_Submission record.
         </p>
       </section>
 
@@ -392,11 +424,14 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Future Dataverse mapping">
-        <h3>Future Dataverse mapping</h3>
+      <section class="beneficiary-detail-section" aria-label="Dataverse mapping">
+        <h3>Dataverse mapping</h3>
+        <ul class="beneficiary-mapping-targets" aria-label="Mapped Dataverse tables">
+          <li v-for="target in beneficiaryDataverseTargets" :key="target">{{ target }}</li>
+        </ul>
         <dl class="beneficiary-detail-list">
           <div>
-            <dt>Target table</dt>
+            <dt>Primary target</dt>
             <dd>{{ selectedBeneficiary.futureDataverseMapping.table }}</dd>
           </div>
           <div>
@@ -894,6 +929,26 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
   color: var(--m3-on-surface-variant);
   font-size: 0.76rem;
   font-weight: 750;
+}
+
+.beneficiary-mapping-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.beneficiary-mapping-targets li {
+  padding: 6px 10px;
+  border: 1px solid #B7D6BF;
+  border-radius: 999px;
+  background: #EAF7EE;
+  color: var(--m3-primary-dark);
+  font-size: 0.72rem;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 @media (max-width: 1180px) {

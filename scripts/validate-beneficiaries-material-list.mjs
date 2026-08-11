@@ -48,7 +48,21 @@ assertIncludes(viewSource, 'beneficiary-detail-drawer', 'Beneficiary details mus
 assertIncludes(viewSource, 'role="dialog"', 'Beneficiary details drawer must use dialog semantics.');
 assertIncludes(viewSource, 'aria-modal="true"', 'Beneficiary details drawer must be marked modal for assistive technology.');
 assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must label values as demonstration data.');
-assertIncludes(viewSource, 'Future Dataverse mapping', 'Beneficiary detail drawer must document the future Dataverse entity mapping.');
+assertIncludes(viewSource, 'reviewed Dataverse-ready entity shape', 'Beneficiary detail drawer must align with the reviewed schema plan.');
+assertIncludes(viewSource, 'Data lineage', 'Beneficiary detail drawer must expose source submission lineage.');
+assertIncludes(viewSource, 'Dataverse mapping', 'Beneficiary detail drawer must document the reviewed Dataverse mapping.');
+assertIncludes(viewSource, 'beneficiaryDataverseTargets', 'Beneficiary detail drawer must use an explicit Dataverse target list.');
+assertIncludes(viewSource, 'mp_TrackedEntity', 'Beneficiary detail drawer must show the central tracked entity target.');
+assertIncludes(viewSource, 'mp_BeneficiaryProfile', 'Beneficiary detail drawer must show the profile extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryProgrammeParticipation', 'Beneficiary detail drawer must show the participation extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryFinanceLink', 'Beneficiary detail drawer must show the finance extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryTechnologyAdoption', 'Beneficiary detail drawer must show the technology extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryTrainingParticipation', 'Beneficiary detail drawer must show the training extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryOutcomeSnapshot', 'Beneficiary detail drawer must show the outcome extension target.');
+assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Beneficiary detail drawer must show the submission-lineage extension target.');
+if (viewSource.includes('Future Dataverse mapping')) {
+  throw new Error('Beneficiary detail drawer must not use stale Future Dataverse mapping wording after schema review.');
+}
 assertIncludes(viewSource, 'beneficiary-detail-scrim', 'Beneficiary detail drawer must provide a scrim close target.');
 assertIncludes(viewSource, 'beneficiary-status-chip', 'Verification status must be rendered as a text status chip.');
 assertIncludes(viewSource, 'Prototype data only', 'Prototype figures must be explicitly labelled as non-official demonstration data.');
