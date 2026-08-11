@@ -4,11 +4,13 @@ withDefaults(defineProps<{
   span?: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 12;
   rowSpan?: 1 | 2;
   variant?: 'default' | 'goal';
+  accent?: 'green' | 'blue' | 'amber' | 'purple' | 'red' | 'neutral';
 }>(), {
   title: undefined,
   span: 4,
   rowSpan: 1,
   variant: 'default',
+  accent: 'green',
 });
 </script>
 
@@ -17,6 +19,7 @@ withDefaults(defineProps<{
     class="dashboard-card"
     :class="[
       `dashboard-card--span-${span}`,
+      `dashboard-card--accent-${accent}`,
       rowSpan === 2 ? 'dashboard-card--row-span-2' : '',
       variant === 'goal' ? 'dashboard-card--goal' : '',
     ]"
@@ -40,7 +43,9 @@ withDefaults(defineProps<{
 
 <style scoped>
 .dashboard-card {
+  --dashboard-card-accent: var(--dash-primary, #15803D);
   position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--dash-space-3, 12px);
@@ -53,10 +58,19 @@ withDefaults(defineProps<{
   box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
 }
 
+.dashboard-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--dashboard-card-accent) 82%, #FFFFFF), var(--dashboard-card-accent));
+  content: "";
+}
+
 .dashboard-card__header,
 .dashboard-card__footer {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   min-width: 0;
 }
 
@@ -101,6 +115,13 @@ withDefaults(defineProps<{
 .dashboard-card--span-7 { grid-column: span 7; }
 .dashboard-card--span-8 { grid-column: span 8; }
 .dashboard-card--span-12 { grid-column: span 12; }
+
+.dashboard-card--accent-green { --dashboard-card-accent: #15803D; }
+.dashboard-card--accent-blue { --dashboard-card-accent: #2563EB; }
+.dashboard-card--accent-amber { --dashboard-card-accent: #F59E0B; }
+.dashboard-card--accent-purple { --dashboard-card-accent: #7C3AED; }
+.dashboard-card--accent-red { --dashboard-card-accent: #DC2626; }
+.dashboard-card--accent-neutral { --dashboard-card-accent: #9CA3AF; }
 
 .dashboard-card--row-span-2 {
   grid-row: span 2;

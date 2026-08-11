@@ -31,6 +31,10 @@ assertIncludes(shellSource, '<BeneficiariesView />', 'Shell must render Benefici
 assertIncludes(shellSource, "return 'beneficiaries';", 'Hash route parsing must support #/beneficiaries.');
 
 assertIncludes(viewSource, 'role="search"', 'Beneficiaries filters must expose a search landmark.');
+assertIncludes(viewSource, "import SurfaceCard from '../components/ui/SurfaceCard.vue';", 'Beneficiaries page must use the shared SurfaceCard abstraction.');
+assertIncludes(viewSource, '<SurfaceCard as="section" accent="green" class="beneficiaries-hero">', 'Beneficiaries hero must use an accented SurfaceCard.');
+assertIncludes(viewSource, 'class="beneficiary-metric"', 'Beneficiary summary metrics must use shared card styling.');
+assertIncludes(viewSource, 'class="beneficiary-list"', 'Beneficiary list surface must use shared card styling.');
 assertIncludes(viewSource, 'Search beneficiaries', 'Search control must have a visible label.');
 assertIncludes(viewSource, '<table class="beneficiary-table" aria-label="Beneficiary records">', 'Desktop record surface must use a semantic table with an accessible label.');
 assertIncludes(viewSource, '<thead>', 'Beneficiary table must include a table header.');
@@ -43,6 +47,11 @@ assertIncludes(viewSource, 'beneficiary-card-list', 'Mobile layout must provide 
 assertPattern(viewSource, /@media \(max-width: 760px\)[\s\S]*\.beneficiary-table-wrap\s*{\s*display: none;/, 'Responsive rule must hide the desktop table on narrow screens.');
 assertPattern(viewSource, /@media \(max-width: 760px\)[\s\S]*\.beneficiary-card-list\s*{\s*display: grid;/, 'Responsive rule must show record cards on narrow screens.');
 assertPattern(dataSource, /export const beneficiaryRecords: BeneficiaryRecord\[] = \[[\s\S]*BEN-/, 'Prototype beneficiary data must live in a separate structured data file.');
+
+const surfaceCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/ui/SurfaceCard.vue');
+const surfaceCardSource = readFileSync(surfaceCardPath, 'utf8');
+assertIncludes(surfaceCardSource, '.surface-card::before', 'Shared SurfaceCard must keep the reusable left accent rail.');
+assertIncludes(surfaceCardSource, '--surface-card-accent', 'Shared SurfaceCard must expose an accent token.');
 
 if (/official CRDB Bank or Green Climate Fund statistics/.test(dataSource)) {
   throw new Error('Official-statistics disclaimer belongs in UI/documentation, not inside prototype data values.');

@@ -6,7 +6,11 @@ import { dirname, resolve } from 'node:path';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
 const chartOptionsPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/chartOptions.ts');
+const dashboardCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/DashboardCard.vue');
+const kpiCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/KpiCard.vue');
 const source = readFileSync(chartOptionsPath, 'utf8');
+const dashboardCardSource = readFileSync(dashboardCardPath, 'utf8');
+const kpiCardSource = readFileSync(kpiCardPath, 'utf8');
 
 function assertIncludes(fragment, message) {
   if (!source.includes(fragment)) {
@@ -41,6 +45,14 @@ assertIncludes('margin: 12', 'Disbursement Trend y-axis labels must keep a margi
 assertIncludes("position: 'top'", 'Disbursement Trend point labels must be positioned above points, not left/default.');
 assertIncludes('hideOverlap: true', 'Disbursement Trend must keep labelLayout.hideOverlap enabled.');
 assertIncludes('right: 24', 'Disbursement Trend right gutter must reserve room for the final point label.');
+
+if (!dashboardCardSource.includes('.dashboard-card::before') || !dashboardCardSource.includes('--dashboard-card-accent')) {
+  throw new Error('DashboardCard must keep the reusable left accent rail and accent token.');
+}
+
+if (!kpiCardSource.includes('.kpi-card::before') || !kpiCardSource.includes('--kpi-card-accent')) {
+  throw new Error('KpiCard must keep the reusable left accent rail and accent token.');
+}
 
 if (/axisLabel:\s*{[\s\S]*formatter:\s*['"`]{value}B['"`]/.test(source)) {
   throw new Error('Disbursement Trend y-axis must not repeat B on every tick; use the unit label instead.');

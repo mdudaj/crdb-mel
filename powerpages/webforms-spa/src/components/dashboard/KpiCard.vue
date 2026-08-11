@@ -13,7 +13,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <article class="kpi-card">
+  <article class="kpi-card" :class="`kpi-card--${tone}`">
     <span class="kpi-card__icon" :class="`kpi-card__icon--${tone}`">
       <component :is="icon" aria-hidden="true" />
     </span>
@@ -27,6 +27,9 @@ withDefaults(defineProps<{
 
 <style scoped>
 .kpi-card {
+  --kpi-card-accent: #15803D;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: var(--dash-space-3, 12px);
@@ -37,6 +40,14 @@ withDefaults(defineProps<{
   border-radius: 12px;
   background: var(--dash-surface, #FFFFFF);
   box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
+}
+
+.kpi-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kpi-card-accent) 82%, #FFFFFF), var(--kpi-card-accent));
+  content: "";
 }
 
 .kpi-card__icon {
@@ -53,6 +64,11 @@ withDefaults(defineProps<{
   width: 22px;
   height: 22px;
 }
+
+.kpi-card--green { --kpi-card-accent: #15803D; }
+.kpi-card--blue { --kpi-card-accent: #2563EB; }
+.kpi-card--amber { --kpi-card-accent: #F59E0B; }
+.kpi-card--purple { --kpi-card-accent: #7C3AED; }
 
 .kpi-card__icon--green { background: #EAF7EE; color: #15803D; }
 .kpi-card__icon--blue { background: #DBEAFE; color: #2563EB; }

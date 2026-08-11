@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Filter, Search, SlidersHorizontal, Users } from '@lucide/vue';
+import SurfaceCard from '../components/ui/SurfaceCard.vue';
 import { beneficiaryRecords, type BeneficiaryRecord } from '../prototype/beneficiaries';
 
 const searchTerm = ref('');
@@ -69,7 +70,7 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 
 <template>
   <section class="beneficiaries-page" aria-labelledby="beneficiaries-title">
-    <section class="beneficiaries-hero material-surface">
+    <SurfaceCard as="section" accent="green" class="beneficiaries-hero">
       <div>
         <p class="beneficiaries-eyebrow">Beneficiary registry</p>
         <h1 id="beneficiaries-title">Beneficiaries</h1>
@@ -80,17 +81,17 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
       <span class="beneficiaries-hero__icon" aria-hidden="true">
         <Users />
       </span>
-    </section>
+    </SurfaceCard>
 
     <section class="beneficiaries-summary" aria-label="Beneficiary summary">
-      <article v-for="metric in summaryMetrics" :key="metric.label" class="beneficiary-metric material-surface">
+      <SurfaceCard v-for="metric in summaryMetrics" :key="metric.label" as="article" accent="green" class="beneficiary-metric">
         <span>{{ metric.label }}</span>
         <strong>{{ metric.value }}</strong>
         <small>{{ metric.detail }}</small>
-      </article>
+      </SurfaceCard>
     </section>
 
-    <section class="beneficiary-list material-surface" aria-labelledby="beneficiary-list-title">
+    <SurfaceCard as="section" accent="green" class="beneficiary-list" aria-labelledby="beneficiary-list-title">
       <header class="beneficiary-list__header">
         <div>
           <p class="beneficiaries-eyebrow">Material list surface</p>
@@ -209,7 +210,7 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
           </footer>
         </article>
       </div>
-    </section>
+    </SurfaceCard>
   </section>
 </template>
 
@@ -228,13 +229,6 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
   --m3-warning: #9A6500;
   display: grid;
   gap: 24px;
-}
-
-.material-surface {
-  border: 1px solid var(--m3-outline);
-  border-radius: 16px;
-  background: var(--m3-surface);
-  box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
 }
 
 .beneficiaries-hero {
