@@ -1465,6 +1465,51 @@ body {
   gap: var(--mt-space-4);
 }
 
+.project-list-surface {
+  display: grid;
+  gap: var(--mt-space-4);
+  min-width: 0;
+  padding: var(--mt-space-4);
+  border: 1px solid var(--mt-color-border);
+  border-radius: var(--mt-radius-md);
+  background: var(--mt-color-surface);
+  box-shadow: var(--mt-shadow-soft);
+}
+
+.project-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mt-space-4);
+  align-items: flex-start;
+}
+
+.project-list-header h2,
+.project-list-header p {
+  margin: 0;
+}
+
+.project-list-header p:not(.eyebrow) {
+  max-width: 760px;
+  margin-top: var(--mt-space-1);
+  color: var(--mt-color-text-muted);
+  line-height: 1.5;
+}
+
+.project-list-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: 999px;
+  background: var(--mt-color-surface-muted);
+  color: var(--mt-color-primary-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .project-card,
 .form-card,
 .data-card {
@@ -1486,6 +1531,49 @@ body {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--mt-space-4);
   align-items: center;
+}
+
+.project-card--material {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  padding: var(--mt-space-4);
+}
+
+.project-card--material:hover,
+.project-card--material:focus-visible {
+  border-color: var(--mt-color-border-strong);
+  box-shadow: var(--mt-shadow-surface);
+  outline: none;
+}
+
+.project-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mt-space-3);
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.project-card__header h2,
+.project-card__header p {
+  margin: 0;
+}
+
+.project-card__content {
+  min-width: 0;
+}
+
+.project-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mt-space-2);
+  align-items: center;
+  padding-top: var(--mt-space-1);
+}
+
+.project-empty-state {
+  margin: 0;
+  box-shadow: none;
 }
 
 .compact-facts {
@@ -4239,6 +4327,8 @@ body {
   .active-assignment-panel,
   .active-assignment-actions,
   .project-command-card,
+  .project-list-header,
+  .project-card__header,
   .data-card,
   .route-header,
   .route-status-strip,
@@ -4283,6 +4373,10 @@ body {
   }
 
   .data-card__actions {
+    justify-content: flex-start;
+  }
+
+  .project-card__footer {
     justify-content: flex-start;
   }
 

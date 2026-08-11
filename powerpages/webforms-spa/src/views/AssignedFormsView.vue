@@ -2833,49 +2833,68 @@ onUnmounted(() => {
         {{ error }}
       </section>
 
-      <section v-if="workspaceHydrating && assignments.length === 0" class="project-list" aria-live="polite" aria-label="Loading available projects">
-        <article v-for="index in 3" :key="`project-skeleton:${index}`" class="project-card project-card--entry project-card--skeleton" aria-hidden="true">
+      <section class="project-list-surface" aria-labelledby="projects-list-title">
+        <header class="project-list-header">
           <div>
-            <span class="skeleton-line skeleton-line--eyebrow"></span>
-            <span class="skeleton-line skeleton-line--title"></span>
-            <span class="skeleton-line skeleton-line--body"></span>
-            <span class="skeleton-line skeleton-line--body skeleton-line--short"></span>
+            <p class="eyebrow">Projects</p>
+            <h2 id="projects-list-title">Assigned projects</h2>
+            <p>Open a project workspace to collect data, review submitted records, export CSV files, or inspect reporting setup.</p>
           </div>
-          <span class="skeleton-action"></span>
-        </article>
-      </section>
+          <span class="project-list-count">{{ projectWorkspaces.length }} assigned</span>
+        </header>
 
-      <section v-if="projectWorkspaces.length > 0" class="project-list" aria-label="Available projects">
-        <article
-          v-for="project in projectWorkspaces"
-          :key="project.id"
-          class="project-card project-card--entry"
-        >
-          <div>
-            <p class="eyebrow">Project</p>
-            <h2>{{ project.name }}</h2>
-            <p>{{ project.description }}</p>
-            <dl class="compact-facts">
-              <div>
-                <dt>Forms</dt>
-                <dd>{{ project.assignments.length }}</dd>
-              </div>
-              <div>
-                <dt>Local drafts</dt>
-                <dd>{{ draftCount }}</dd>
-              </div>
-            </dl>
-          </div>
-          <button class="icon-action" type="button" :aria-label="`Open ${project.name}`" @click="openProject(project)">
-            <FolderOpen class="action-icon" aria-hidden="true" />
-            Open
-          </button>
-        </article>
-      </section>
+        <section v-if="workspaceHydrating && assignments.length === 0" class="project-list" aria-live="polite" aria-label="Loading available projects">
+          <article v-for="index in 3" :key="`project-skeleton:${index}`" class="project-card project-card--entry project-card--skeleton" aria-hidden="true">
+            <div>
+              <span class="skeleton-line skeleton-line--eyebrow"></span>
+              <span class="skeleton-line skeleton-line--title"></span>
+              <span class="skeleton-line skeleton-line--body"></span>
+              <span class="skeleton-line skeleton-line--body skeleton-line--short"></span>
+            </div>
+            <span class="skeleton-action"></span>
+          </article>
+        </section>
 
-      <section v-else-if="!workspaceHydrating && !error" class="empty-state" aria-label="No projects">
-        <h2>No projects</h2>
-        <p>No project assignments were returned for this Power Pages session.</p>
+        <section v-else-if="projectWorkspaces.length > 0" class="project-list" aria-label="Available projects">
+          <article
+            v-for="project in projectWorkspaces"
+            :key="project.id"
+            class="project-card project-card--entry project-card--material"
+            tabindex="0"
+          >
+            <header class="project-card__header">
+              <div>
+                <p class="eyebrow">Project</p>
+                <h2>{{ project.name }}</h2>
+              </div>
+              <span class="state-chip state-chip--success">Assigned</span>
+            </header>
+            <div class="project-card__content">
+              <p>{{ project.description }}</p>
+              <dl class="compact-facts">
+                <div>
+                  <dt>Forms</dt>
+                  <dd>{{ project.assignments.length }}</dd>
+                </div>
+                <div>
+                  <dt>Local drafts</dt>
+                  <dd>{{ draftCount }}</dd>
+                </div>
+              </dl>
+            </div>
+            <footer class="project-card__footer">
+              <button class="icon-action" type="button" :aria-label="`Open ${project.name}`" @click="openProject(project)">
+                <FolderOpen class="action-icon" aria-hidden="true" />
+                Open project
+              </button>
+            </footer>
+          </article>
+        </section>
+
+        <section v-else-if="!workspaceHydrating && !error" class="empty-state empty-state--inline project-empty-state" aria-label="No projects">
+          <h2>No projects</h2>
+          <p>No project assignments were returned for this Power Pages session.</p>
+        </section>
       </section>
     </template>
 
