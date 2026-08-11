@@ -123,13 +123,14 @@ function chartParam(params: unknown): { name: string; value: number; percent: nu
 
 const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   title: {
-    text: '12,458',
-    subtext: 'Total Loans',
+    text: 'Total',
+    subtext: '12,458',
     left: '28%',
-    top: '35%',
+    top: '34%',
     textAlign: 'center',
-    textStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
-    subtextStyle: { color: '#64706A', fontSize: 11 },
+    itemGap: 2,
+    textStyle: { color: '#64706A', fontSize: 11, fontWeight: 600 },
+    subtextStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
   },
   tooltip: {
     trigger: 'item',
@@ -165,7 +166,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
 
 const disbursementTrendOption = computed<DashboardChartOption>(() => ({
   tooltip: { trigger: 'axis', valueFormatter: (value) => `TZS ${value}B` },
-  grid: { left: 40, right: 18, top: 20, bottom: 28 },
+  grid: { left: 56, right: 18, top: 20, bottom: 28 },
   xAxis: { type: 'category', data: disbursementTrend.map((point) => point.month), boundaryGap: false },
   yAxis: { type: 'value', axisLabel: { formatter: '{value}B' }, splitLine: { lineStyle: { color: '#E3E8E5' } } },
   series: [{
@@ -182,13 +183,14 @@ const disbursementTrendOption = computed<DashboardChartOption>(() => ({
 
 const loanPerformanceOption = computed<DashboardChartOption>(() => ({
   title: {
-    text: '12,458',
-    subtext: 'Total Loans',
+    text: 'Total Loans',
+    subtext: '12,458',
     left: '30%',
     top: '39%',
     textAlign: 'center',
-    textStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
-    subtextStyle: { color: '#64706A', fontSize: 11 },
+    itemGap: 2,
+    textStyle: { color: '#64706A', fontSize: 11, fontWeight: 600 },
+    subtextStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
   },
   tooltip: {
     trigger: 'item',
@@ -285,12 +287,13 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
   series: [{
     type: 'map',
     map: 'tanzania-mainland-adm1',
+    aspectScale: 1.08,
     roam: false,
     nameProperty: 'shapeName',
     selectedMode: 'single',
     data: regionData,
-    layoutCenter: ['36%', '52%'],
-    layoutSize: '78%',
+    layoutCenter: ['38%', '52%'],
+    layoutSize: '82%',
     label: { show: true, color: '#214036', fontSize: 9 },
     emphasis: { label: { color: '#064E3B', fontWeight: 700 }, itemStyle: { areaColor: '#8FD19E' } },
     select: { itemStyle: { areaColor: '#15803D' }, label: { color: '#FFFFFF' } },
@@ -455,7 +458,7 @@ function iconFor(metric: KpiMetric) {
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="7" title="Recent Data Submissions">
+      <DashboardCard :span="6" title="Recent Data Submissions">
         <div class="submission-list">
           <section v-for="submission in recentSubmissions" :key="submission.region">
             <div>
@@ -473,25 +476,46 @@ function iconFor(metric: KpiMetric) {
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="5" variant="goal" title="Program Impact Goal">
+      <DashboardCard :span="6" variant="goal" title="Program Impact Goal">
         <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
-        <svg class="goal-illustration" viewBox="0 0 360 168" preserveAspectRatio="none" aria-hidden="true">
-          <path class="goal-hill goal-hill--back" d="M0 78c44-32 81-32 126 0 38 27 80 28 122 0 43-28 75-26 112 0v90H0Z" />
-          <path class="goal-hill goal-hill--mid" d="M0 100c52-40 94-38 143 0 42 32 81 34 125 4 35-25 63-25 92-5v69H0Z" />
-          <path class="goal-hill goal-hill--front" d="M0 126c48-28 92-29 137-2 48 28 95 29 145 0 31-18 56-19 78-6v50H0Z" />
-          <g class="goal-crops">
-            <path d="M0 153c12-22 22-22 34 0M23 158c13-29 25-29 37 0M51 160c11-25 22-25 34 0M78 160c15-36 28-36 42 0M115 160c11-28 22-28 33 0M146 160c15-30 28-30 42 0M184 160c12-28 24-28 36 0M219 160c11-28 22-28 34 0M248 160c15-34 29-34 43 0M286 160c13-29 25-29 37 0M321 160c12-24 24-24 36 0" />
-            <path d="M8 168v-30M20 168v-38M40 168v-34M65 168v-42M93 168v-46M125 168v-37M157 168v-43M191 168v-36M226 168v-43M258 168v-48M295 168v-39M330 168v-36" />
+        <svg class="goal-illustration" viewBox="0 0 420 168" preserveAspectRatio="none" aria-hidden="true">
+          <path class="goal-sky-hill goal-sky-hill--back" d="M0 72c46-28 86-30 130-2 37 24 72 24 111 0 45-28 89-28 137 1 17 10 31 18 42 21v76H0Z" />
+          <path class="goal-sky-hill goal-sky-hill--mid" d="M0 96c54-34 104-36 153-2 39 27 77 27 121-1 43-28 88-26 146 8v67H0Z" />
+          <path class="goal-sky-hill goal-sky-hill--front" d="M0 124c45-20 91-21 139-2 48 20 96 20 146 0 47-19 87-18 135 5v41H0Z" />
+          <g class="goal-field-rows">
+            <path d="M0 146c74-13 146-13 216 0 70 13 138 13 204 0" />
+            <path d="M0 158c80-12 152-12 219 0 67 12 134 12 201 0" />
           </g>
-          <g class="goal-farmer">
-            <path class="goal-farmer__hat" d="M260 53c12-14 32-14 44 0l18 4c-21 9-53 9-80 0Z" />
-            <circle cx="282" cy="65" r="9" />
-            <path d="M270 76c16-4 30 1 42 15l-10 18c-12-13-25-19-39-16Z" />
-            <path d="M265 91c-10 17-18 28-29 37l-8-8c11-8 19-19 28-34Z" />
-            <path d="M302 108c5 18 8 35 8 52h-13c-1-16-4-31-10-45Z" />
-            <path d="M282 111c-9 16-18 31-30 49h-14c13-18 24-36 32-54Z" />
-            <path class="goal-hoe" d="M227 81 318 148" />
-            <path class="goal-hoe" d="m216 75 16 12" />
+          <g class="goal-plants">
+            <path d="M16 168v-30m0 14c-9-7-13-15-12-25 10 2 16 9 18 20m-6 5c9-7 15-15 17-25 7 8 6 17-3 27" />
+            <path d="M54 168v-34m0 15c-10-8-15-17-14-28 12 3 19 11 21 22m-7 7c10-8 17-18 20-29 8 9 6 20-5 31" />
+            <path d="M96 168v-31m0 14c-8-7-13-15-12-25 10 2 16 9 18 20m-6 5c9-7 15-15 17-25 7 8 6 17-3 27" />
+            <path d="M139 168v-38m0 17c-12-9-18-20-17-33 14 4 22 13 24 27m-7 6c11-9 19-20 22-33 9 10 7 23-6 36" />
+            <path d="M181 168v-32m0 15c-10-7-15-16-14-27 12 3 18 11 20 22m-6 5c9-7 16-16 19-27 7 9 5 19-5 29" />
+            <path d="M226 168v-35m0 16c-10-8-16-18-15-30 13 3 20 12 22 24m-7 6c11-8 18-18 21-30 8 10 6 21-6 32" />
+            <path d="M379 168v-34m0 15c-10-8-15-17-14-28 12 3 19 11 21 22m-7 7c10-8 17-18 20-29 8 9 6 20-5 31" />
+          </g>
+          <g class="goal-person goal-person--woman">
+            <path class="goal-person__hat" d="M236 60c9-11 28-11 39 0l16 4c-22 8-48 8-70 0Z" />
+            <circle cx="256" cy="72" r="8" />
+            <path class="goal-person__body" d="M245 82c15-5 29 2 38 18l-13 29h-39Z" />
+            <path class="goal-person__arm" d="M247 94c-13 11-23 20-33 29" />
+            <path class="goal-person__arm" d="M276 98c11 8 20 17 28 27" />
+            <path class="goal-person__leg" d="M244 127l-15 35" />
+            <path class="goal-person__leg" d="M269 128l10 34" />
+            <path class="goal-tool" d="M210 106l78 47" />
+            <path class="goal-tool" d="M201 101l17 10" />
+          </g>
+          <g class="goal-person goal-person--man">
+            <path class="goal-person__hat" d="M316 52c10-12 29-12 42 0l18 4c-26 8-54 8-78 0Z" />
+            <circle cx="337" cy="65" r="8" />
+            <path class="goal-person__body" d="M326 76c16-4 30 2 40 17l-11 27c-14-11-27-16-42-13Z" />
+            <path class="goal-person__arm" d="M321 91c-14 9-25 19-37 33" />
+            <path class="goal-person__arm" d="M357 93c13 9 22 20 30 33" />
+            <path class="goal-person__leg" d="M327 116l-18 46" />
+            <path class="goal-person__leg" d="M354 118l13 44" />
+            <path class="goal-tool" d="M287 84l93 78" />
+            <path class="goal-tool" d="M278 78l17 14" />
           </g>
         </svg>
       </DashboardCard>
@@ -746,14 +770,22 @@ a,
 }
 
 .training-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
-  gap: var(--dash-space-4);
+  gap: var(--dash-space-3);
+  height: 100%;
 }
 
 .training-grid div {
   display: grid;
+  align-content: center;
   gap: var(--dash-space-2);
   min-width: 0;
+  padding: var(--dash-space-3);
+  border: 1px solid var(--dash-border);
+  border-radius: 10px;
+  background: #F8FBF9;
 }
 
 .training-value-with-icon {
@@ -776,12 +808,17 @@ a,
 
 .submission-list section {
   justify-content: space-between;
-  gap: var(--dash-space-3);
+  gap: var(--dash-space-4);
 }
 
 .submission-list div {
   display: grid;
   gap: 4px;
+}
+
+.submission-list div:last-child {
+  justify-items: end;
+  min-width: 86px;
 }
 
 .status-chip {
@@ -809,39 +846,63 @@ a,
   align-self: end;
 }
 
-.goal-hill--back { fill: #D8F0DD; }
-.goal-hill--mid { fill: #BFE5C8; }
-.goal-hill--front { fill: #9ED4AE; }
+.goal-sky-hill--back { fill: #D8F0DD; }
+.goal-sky-hill--mid { fill: #BFE5C8; }
+.goal-sky-hill--front { fill: #9ED4AE; }
 
-.goal-crops path {
+.goal-field-rows path {
   fill: none;
+  stroke: rgba(31, 122, 49, 0.22);
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.goal-crops path:first-child {
-  stroke: #1F7A31;
-  stroke-width: 5;
-}
-
-.goal-crops path:last-child {
-  stroke: #43A047;
   stroke-width: 3;
 }
 
-.goal-farmer {
+.goal-plants path {
+  fill: none;
+  stroke: #1F7A31;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.2;
+}
+
+.goal-plants path:nth-child(even) {
+  stroke: #43A047;
+}
+
+.goal-person {
   fill: #0F5C36;
 }
 
-.goal-farmer__hat {
+.goal-person--woman {
+  fill: #146C43;
+}
+
+.goal-person__hat {
   fill: #1F7A31;
 }
 
-.goal-hoe {
+.goal-person__body {
+  fill: currentColor;
+}
+
+.goal-person__arm,
+.goal-person__leg,
+.goal-tool {
   fill: none;
   stroke: #064E3B;
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-width: 4;
+}
+
+.goal-person--woman .goal-person__arm,
+.goal-person--woman .goal-person__leg {
+  stroke: #146C43;
+}
+
+.goal-tool {
+  stroke-width: 3.4;
 }
 
 @media (max-width: 1280px) {

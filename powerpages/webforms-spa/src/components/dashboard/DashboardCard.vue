@@ -64,6 +64,7 @@ withDefaults(defineProps<{
 .dashboard-card__footer {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   min-height: 24px;
   margin-top: auto;
 }
