@@ -54,7 +54,8 @@ assertIncludes(viewSource, 'aria-modal="true"', 'Beneficiary details drawer must
 assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must label values as demonstration data.');
 assertIncludes(viewSource, 'reviewed Dataverse-ready entity shape', 'Beneficiary detail drawer must align with the reviewed schema plan.');
 assertIncludes(viewSource, 'Data lineage', 'Beneficiary detail drawer must expose source submission lineage.');
-assertIncludes(viewSource, 'Dataverse mapping', 'Beneficiary detail drawer must document the reviewed Dataverse mapping.');
+assertIncludes(viewSource, 'Technical mapping', 'Beneficiary detail drawer must document the reviewed mapping behind a compact disclosure.');
+assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical mapping must be a disclosure instead of an always-visible section.');
 assertIncludes(viewSource, 'beneficiaryDataverseTargets', 'Beneficiary detail drawer must use an explicit Dataverse target list.');
 assertIncludes(viewSource, 'mp_TrackedEntity', 'Beneficiary detail drawer must show the central tracked entity target.');
 assertIncludes(viewSource, 'mp_BeneficiaryProfile', 'Beneficiary detail drawer must show the profile extension target.');

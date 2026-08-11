@@ -42,18 +42,28 @@ assertIncludes(viewSource, 'class="material-detail-section beneficiary-detail-se
 assertIncludes(viewSource, 'class="material-detail-list beneficiary-detail-grid"', 'Beneficiary detail grids must use the shared Material detail list abstraction.');
 assertIncludes(viewSource, 'class="material-detail-row"', 'Beneficiary detail fields must use the shared Material detail row abstraction.');
 assertIncludes(viewSource, 'aria-label="Beneficiary identity summary"', 'Beneficiary detail identity tags must be labelled for assistive technology.');
-for (const heading of ['Profile', 'Identity governance', 'Group membership', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Location history', 'Technical Dataverse mapping']) {
+for (const heading of ['Profile', 'Record matching', 'Group/member links', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Location history']) {
   assertPattern(viewSource, new RegExp(`<h3>${heading}</h3>`), `Beneficiary detail drawer must include the ${heading} section.`);
+}
+
+assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical mapping must be hidden behind a compact disclosure summary.');
+assertIncludes(viewSource, 'beneficiary-detail-section--technical[open] summary::after', 'Technical mapping disclosure must expose open/closed state text.');
+assertIncludes(viewSource, 'beneficiary-detail-section--accented::before', 'Beneficiary drawer section cards must have a scoped left accent rail.');
+if (viewSource.includes('<h3>Technical Dataverse mapping</h3>')) {
+  throw new Error('Technical Dataverse mapping must not remain as an always-visible drawer section heading.');
+}
+if (viewSource.includes('<h3>Identity governance</h3>') || viewSource.includes('<h3>Group membership</h3>')) {
+  throw new Error('Beneficiary model sections must use business-friendly labels.');
 }
 
 assertIncludes(viewSource, 'beneficiary-detail-list--nested', 'Programme participation must be grouped under Profile instead of isolated as a competing drawer section.');
 assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must preserve prototype data disclosure.');
 assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Data lineage must keep the future Dataverse submission relationship visible.');
-assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Identity governance must expose the future Dataverse identity-match relationship.');
-assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Group membership must expose the future Dataverse group-membership relationship.');
+assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Record matching must expose the future Dataverse identity-match relationship.');
+assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Group/member links must expose the future Dataverse group-membership relationship.');
 assertIncludes(viewSource, 'mp_BeneficiaryLocationHistory', 'Location history must expose the future Dataverse location-history relationship.');
-assertIncludes(viewSource, 'No reviewer decision recorded', 'Identity governance must have a clear fallback state for records not yet reviewed.');
-assertIncludes(viewSource, 'No member linkage in prototype data', 'Group membership must have a clear fallback state for records not yet modelled.');
+assertIncludes(viewSource, 'No reviewer decision recorded', 'Record matching must have a clear fallback state for records not yet reviewed.');
+assertIncludes(viewSource, 'No member linkage in prototype data', 'Group/member links must have a clear fallback state for records not yet modelled.');
 assertIncludes(viewSource, 'Production location changes are stored in mp_BeneficiaryLocationHistory', 'Location history must explain current-location versus historical evidence.');
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-beneficiary-detail-refinement.mjs')) {

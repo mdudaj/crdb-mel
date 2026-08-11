@@ -490,8 +490,8 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Identity governance">
-        <h3>Identity governance</h3>
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Record matching">
+        <h3>Record matching</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
             <dt>Match state</dt>
@@ -512,8 +512,8 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Group membership">
-        <h3>Group membership</h3>
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Group/member links">
+        <h3>Group/member links</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
             <dt>Membership type</dt>
@@ -534,7 +534,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Finance">
         <h3>Finance</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -556,7 +556,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Technology">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Technology">
         <h3>Technology</h3>
         <ul class="beneficiary-technology-list">
           <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
@@ -566,7 +566,7 @@ onUnmounted(() => {
         </ul>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Training">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Training">
         <h3>Training</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -588,7 +588,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Outcomes">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Outcomes">
         <h3>Outcomes</h3>
         <dl class="material-detail-list beneficiary-detail-list">
           <div class="material-detail-row">
@@ -606,7 +606,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Data lineage">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Data lineage">
         <h3>Data lineage</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -632,7 +632,7 @@ onUnmounted(() => {
         </p>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Location history">
+      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Location history">
         <h3>Location history</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -657,8 +657,8 @@ onUnmounted(() => {
         </p>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Technical Dataverse mapping">
-        <h3>Technical Dataverse mapping</h3>
+      <details class="material-detail-section beneficiary-detail-section beneficiary-detail-section--technical" aria-label="Technical mapping">
+        <summary>Technical mapping</summary>
         <ul class="beneficiary-mapping-targets" aria-label="Mapped Dataverse tables">
           <li v-for="target in beneficiaryDataverseTargets" :key="target">{{ target }}</li>
         </ul>
@@ -676,7 +676,7 @@ onUnmounted(() => {
             <dd>{{ selectedBeneficiary.futureDataverseMapping.relationshipNotes }}</dd>
           </div>
         </dl>
-      </section>
+      </details>
     </aside>
   </section>
 </template>
@@ -1198,12 +1198,26 @@ onUnmounted(() => {
 }
 
 .beneficiary-detail-section {
+  position: relative;
   display: grid;
   gap: 10px;
   padding: 14px;
+  overflow: hidden;
   border: 1px solid var(--m3-outline);
   border-radius: 16px;
   background: var(--m3-surface-container);
+}
+
+.beneficiary-detail-section--accented {
+  padding-left: 18px;
+}
+
+.beneficiary-detail-section--accented::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #34A853, var(--m3-primary));
+  content: "";
 }
 
 .beneficiary-detail-section h3 {
@@ -1211,6 +1225,45 @@ onUnmounted(() => {
   color: var(--m3-on-surface);
   font-size: 0.9rem;
   line-height: 1.25;
+}
+
+.beneficiary-detail-section--technical {
+  background: #FFFFFF;
+}
+
+.beneficiary-detail-section--technical summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -4px;
+  padding: 4px;
+  color: var(--m3-primary-dark);
+  font-size: 0.88rem;
+  font-weight: 850;
+  line-height: 1.25;
+  cursor: pointer;
+  list-style: none;
+}
+
+.beneficiary-detail-section--technical summary::-webkit-details-marker {
+  display: none;
+}
+
+.beneficiary-detail-section--technical summary::after {
+  color: var(--m3-on-surface-variant);
+  font-size: 0.78rem;
+  font-weight: 800;
+  content: "Show";
+}
+
+.beneficiary-detail-section--technical[open] summary::after {
+  content: "Hide";
+}
+
+.beneficiary-detail-section--technical summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--m3-primary) 32%, transparent);
+  outline-offset: 3px;
 }
 
 .beneficiary-detail-grid,

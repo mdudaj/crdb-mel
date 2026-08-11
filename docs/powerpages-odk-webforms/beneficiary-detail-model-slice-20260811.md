@@ -35,11 +35,13 @@ The future production direction is a central `mp_TrackedEntity` beneficiary iden
 
 The Beneficiaries route keeps the summary metrics and searchable list. Each desktop row and mobile card now has a clear `View details` action. The detail opens in a right-side dialog drawer with explicit demonstration-data wording so prototype values are not mistaken for official CRDB Bank or Green Climate Fund statistics.
 
-The detail drawer now includes compact governance sections for:
+The detail drawer includes compact governance sections for:
 
-- `Identity governance`: candidate match state, matching signals, and reviewer decision. This previews `mp_BeneficiaryIdentityMatch` without enabling automatic fuzzy-match merges.
-- `Group membership`: beneficiary type, member linkage, and membership state. This previews `mp_BeneficiaryGroupMembership` while keeping group beneficiaries valid as entities in their own right.
+- `Record matching`: candidate match state, matching signals, and reviewer decision. This previews `mp_BeneficiaryIdentityMatch` without enabling automatic fuzzy-match merges.
+- `Group/member links`: beneficiary type, member linkage, and membership state. This previews `mp_BeneficiaryGroupMembership` while keeping group beneficiaries valid as entities in their own right.
 - `Location history`: current location, source, effective date, and history state. This previews `mp_BeneficiaryLocationHistory` so location corrections remain auditable.
+
+After Mshirika review, the technical Dataverse table mapping was moved behind a compact `Technical mapping` disclosure so business users see the operational sections first. Drawer section cards use a scoped left accent rail for visual scanability; the global `SurfaceCard` metric-card accent rule remains unchanged.
 
 ## Verification
 
