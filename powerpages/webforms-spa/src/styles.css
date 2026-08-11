@@ -1530,6 +1530,75 @@ body {
   padding-top: var(--mt-space-1);
 }
 
+.material-detail-surface {
+  display: grid;
+  align-content: start;
+  gap: var(--mt-space-4);
+  min-width: 0;
+  background: var(--mt-color-surface);
+}
+
+.material-detail-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mt-space-3);
+  align-items: start;
+  padding-bottom: var(--mt-space-3);
+  border-bottom: 1px solid var(--mt-color-border);
+}
+
+.material-detail-header h2,
+.material-detail-header h3,
+.material-detail-header h4,
+.material-detail-header p {
+  margin: 0;
+}
+
+.material-detail-section {
+  display: grid;
+  gap: var(--mt-space-3);
+  min-width: 0;
+  padding: var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: var(--mt-radius-md);
+  background: var(--mt-color-surface-muted);
+}
+
+.material-detail-list {
+  display: grid;
+  gap: var(--mt-space-3);
+  min-width: 0;
+  margin: 0;
+}
+
+.material-detail-row {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.material-detail-row dt {
+  color: var(--mt-color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.material-detail-row dd {
+  margin: var(--mt-space-1) 0 0;
+  color: var(--mt-color-text);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.material-drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mt-space-3);
+  align-items: center;
+  padding-top: var(--mt-space-3);
+  border-top: 1px solid var(--mt-color-border);
+}
+
 .project-card,
 .form-card,
 .data-card {

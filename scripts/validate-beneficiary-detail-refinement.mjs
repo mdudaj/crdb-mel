@@ -36,6 +36,11 @@ assertIncludes(viewSource, 'Dashboard drill-through filters:', 'No-data state mu
 assertIncludes(viewSource, 'Open all beneficiaries', 'No-data state must offer a non-misleading recovery action.');
 
 assertIncludes(viewSource, 'class="beneficiary-detail-tags"', 'Beneficiary detail header must show structured identity tags.');
+assertIncludes(viewSource, 'class="material-detail-surface beneficiary-detail-drawer"', 'Beneficiary detail drawer must use the shared Material detail surface abstraction.');
+assertIncludes(viewSource, 'class="material-detail-header beneficiary-detail-header beneficiary-detail-header--structured"', 'Beneficiary detail header must use the shared Material detail header abstraction.');
+assertIncludes(viewSource, 'class="material-detail-section beneficiary-detail-section"', 'Beneficiary detail sections must use the shared Material detail section abstraction.');
+assertIncludes(viewSource, 'class="material-detail-list beneficiary-detail-grid"', 'Beneficiary detail grids must use the shared Material detail list abstraction.');
+assertIncludes(viewSource, 'class="material-detail-row"', 'Beneficiary detail fields must use the shared Material detail row abstraction.');
 assertIncludes(viewSource, 'aria-label="Beneficiary identity summary"', 'Beneficiary detail identity tags must be labelled for assistive technology.');
 for (const heading of ['Profile', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Technical Dataverse mapping']) {
   assertPattern(viewSource, new RegExp(`<h3>${heading}</h3>`), `Beneficiary detail drawer must include the ${heading} section.`);

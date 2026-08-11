@@ -29,6 +29,12 @@ for (const sharedClass of [
   '.material-table tbody tr:hover',
   '.material-row:hover',
   '.material-card-footer',
+  '.material-detail-surface',
+  '.material-detail-header',
+  '.material-detail-section',
+  '.material-detail-list',
+  '.material-detail-row',
+  '.material-drawer-actions',
 ]) {
   assertIncludes(stylesSource, sharedClass, `Shared Material abstraction missing CSS rule: ${sharedClass}`);
 }
@@ -73,6 +79,20 @@ for (const tableFragment of [
 assertIncludes(viewSource, 'class="material-row system-activity-row system-activity-row--material"', 'System Activity rows must use the shared Material row abstraction.');
 assertIncludes(viewSource, 'class="material-card-footer project-card__footer"', 'Project cards must use the shared Material card footer abstraction.');
 
+for (const userDetailFragment of [
+  'class="material-detail-surface access-detail-drawer"',
+  'class="material-detail-header access-drawer-header"',
+  'class="material-detail-list access-detail-list"',
+  'class="material-detail-row"',
+  'class="material-detail-section access-assignment-list"',
+  'class="material-row access-assignment-row"',
+  'class="material-detail-section access-drawer-activity"',
+  'class="material-row access-activity-row access-activity-row--compact"',
+  'class="material-drawer-actions access-workflow-actions"',
+]) {
+  assertIncludes(viewSource, userDetailFragment, `Users detail drawer must use shared Material detail abstraction: ${userDetailFragment}`);
+}
+
 for (const beneficiaryFragment of [
   'class="material-list-surface beneficiary-list"',
   'class="material-surface-header beneficiary-list__header"',
@@ -81,6 +101,12 @@ for (const beneficiaryFragment of [
   'class="material-row" tabindex="0"',
   'class="material-row beneficiary-record-card"',
   'class="material-card-footer"',
+  'class="material-detail-surface beneficiary-detail-drawer"',
+  'class="material-detail-header beneficiary-detail-header beneficiary-detail-header--structured"',
+  'class="material-detail-section beneficiary-detail-section"',
+  'class="material-detail-list beneficiary-detail-grid"',
+  'class="material-detail-list beneficiary-detail-list',
+  'class="material-detail-row"',
 ]) {
   assertIncludes(beneficiariesSource, beneficiaryFragment, `Beneficiaries route must use shared Material abstraction: ${beneficiaryFragment}`);
 }

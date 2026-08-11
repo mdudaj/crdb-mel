@@ -410,12 +410,12 @@ onUnmounted(() => {
 
     <aside
       v-if="selectedBeneficiary"
-      class="beneficiary-detail-drawer"
+      class="material-detail-surface beneficiary-detail-drawer"
       role="dialog"
       aria-modal="true"
       aria-labelledby="beneficiary-detail-title"
     >
-      <header class="beneficiary-detail-header beneficiary-detail-header--structured">
+      <header class="material-detail-header beneficiary-detail-header beneficiary-detail-header--structured">
         <div class="beneficiary-detail-identity">
           <p class="beneficiaries-eyebrow">Beneficiary detail</p>
           <h2 id="beneficiary-detail-title">{{ selectedBeneficiary.name }}</h2>
@@ -443,18 +443,18 @@ onUnmounted(() => {
 
       <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
-      <section class="beneficiary-detail-section" aria-label="Profile">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Profile">
         <h3>Profile</h3>
-        <dl class="beneficiary-detail-grid">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
             <dt>Location</dt>
             <dd>{{ selectedBeneficiary.region }} · {{ selectedBeneficiary.district }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Borrower status</dt>
             <dd>{{ selectedBeneficiary.borrowerStatus }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Verification</dt>
             <dd>
               <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(selectedBeneficiary.verificationStatus)}`">
@@ -462,54 +462,54 @@ onUnmounted(() => {
               </span>
             </dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Last updated</dt>
             <dd>{{ selectedBeneficiary.lastUpdated }}</dd>
           </div>
         </dl>
-        <dl class="beneficiary-detail-list beneficiary-detail-list--nested">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-list beneficiary-detail-list--nested">
+          <div class="material-detail-row">
             <dt>Programme</dt>
             <dd>{{ selectedBeneficiary.projectParticipation.programme }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Project</dt>
             <dd>{{ selectedBeneficiary.projectParticipation.project }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Implementation partner</dt>
             <dd>{{ selectedBeneficiary.projectParticipation.implementationPartner }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Enrolment</dt>
             <dd>{{ selectedBeneficiary.projectParticipation.enrolmentDate }} · {{ selectedBeneficiary.projectParticipation.participationRole }}</dd>
           </div>
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Finance">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
         <h3>Finance</h3>
-        <dl class="beneficiary-detail-grid">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
             <dt>Loan reference</dt>
             <dd>{{ selectedBeneficiary.finance.loanAccountRef }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Disbursed</dt>
             <dd>{{ selectedBeneficiary.finance.disbursedAmount }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Outstanding</dt>
             <dd>{{ selectedBeneficiary.finance.outstandingBalance }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Repayment rate</dt>
             <dd>{{ selectedBeneficiary.finance.repaymentRate }}</dd>
           </div>
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Technology">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Technology">
         <h3>Technology</h3>
         <ul class="beneficiary-technology-list">
           <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
@@ -519,62 +519,62 @@ onUnmounted(() => {
         </ul>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Training">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Training">
         <h3>Training</h3>
-        <dl class="beneficiary-detail-grid">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
             <dt>Sessions attended</dt>
             <dd>{{ selectedBeneficiary.trainingSummary.sessionsAttended }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Completion</dt>
             <dd>{{ selectedBeneficiary.trainingSummary.completionRate }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Latest topic</dt>
             <dd>{{ selectedBeneficiary.trainingSummary.lastTopic }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Last training</dt>
             <dd>{{ selectedBeneficiary.trainingSummary.lastTrainingDate }}</dd>
           </div>
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Outcomes">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Outcomes">
         <h3>Outcomes</h3>
-        <dl class="beneficiary-detail-list">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-list">
+          <div class="material-detail-row">
             <dt>Area under improved practices</dt>
             <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Yield increase</dt>
             <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Climate estimate</dt>
             <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
           </div>
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Data lineage">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Data lineage">
         <h3>Data lineage</h3>
-        <dl class="beneficiary-detail-grid">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
             <dt>Latest submission</dt>
             <dd>{{ selectedBeneficiary.latestSubmission.form }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Reporting period</dt>
             <dd>{{ selectedBeneficiary.latestSubmission.reportingPeriod }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Completeness</dt>
             <dd>{{ selectedBeneficiary.latestSubmission.completeness }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Verification state</dt>
             <dd>{{ selectedBeneficiary.latestSubmission.status }}</dd>
           </div>
@@ -585,21 +585,21 @@ onUnmounted(() => {
         </p>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Technical Dataverse mapping">
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Technical Dataverse mapping">
         <h3>Technical Dataverse mapping</h3>
         <ul class="beneficiary-mapping-targets" aria-label="Mapped Dataverse tables">
           <li v-for="target in beneficiaryDataverseTargets" :key="target">{{ target }}</li>
         </ul>
-        <dl class="beneficiary-detail-list">
-          <div>
+        <dl class="material-detail-list beneficiary-detail-list">
+          <div class="material-detail-row">
             <dt>Primary target</dt>
             <dd>{{ selectedBeneficiary.futureDataverseMapping.table }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Record ID</dt>
             <dd>{{ selectedBeneficiary.futureDataverseMapping.recordId }}</dd>
           </div>
-          <div>
+          <div class="material-detail-row">
             <dt>Relationship notes</dt>
             <dd>{{ selectedBeneficiary.futureDataverseMapping.relationshipNotes }}</dd>
           </div>

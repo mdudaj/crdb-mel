@@ -3954,12 +3954,12 @@ onUnmounted(() => {
 
         <aside
           v-if="activeAccessSection === 'users' && selectedAccessUser"
-          class="access-detail-drawer"
+          class="material-detail-surface access-detail-drawer"
           role="dialog"
           aria-modal="true"
           aria-labelledby="access-detail-title"
         >
-          <header class="access-drawer-header">
+          <header class="material-detail-header access-drawer-header">
             <div>
               <p class="eyebrow">User detail</p>
               <h3 id="access-detail-title">{{ selectedAccessUser.name }}</h3>
@@ -3967,20 +3967,20 @@ onUnmounted(() => {
             </div>
             <button class="icon-action icon-action--secondary" type="button" @click="closeAccessUser">Close</button>
           </header>
-          <dl class="access-detail-list">
-            <div>
+          <dl class="material-detail-list access-detail-list">
+            <div class="material-detail-row">
               <dt>Contact state</dt>
               <dd>{{ formatContactState(selectedAccessUser.contactState) }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Role</dt>
               <dd>{{ selectedAccessUser.role }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Access status</dt>
               <dd>{{ selectedAccessUser.accessStatus }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Assigned forms</dt>
               <dd>{{ selectedAccessUser.formCount }}</dd>
             </div>
@@ -4111,7 +4111,7 @@ onUnmounted(() => {
               </details>
             </section>
 
-            <footer class="access-workflow-actions">
+            <footer class="material-drawer-actions access-workflow-actions">
               <button class="icon-action icon-action--secondary" type="button" @click="closeAccessChangeAction">
                 <ArrowLeft class="action-icon" aria-hidden="true" />
                 Cancel
@@ -4128,15 +4128,15 @@ onUnmounted(() => {
               </button>
             </footer>
           </section>
-          <section class="access-assignment-list" aria-label="Assigned forms">
-            <header class="access-assignment-header">
+          <section class="material-detail-section access-assignment-list" aria-label="Assigned forms">
+            <header class="material-detail-header access-assignment-header">
               <div>
                 <p class="eyebrow">Assignments</p>
                 <h4>Project and form access</h4>
               </div>
               <span class="state-chip state-chip--neutral">{{ selectedAccessUser.formCount }} forms</span>
             </header>
-            <article v-for="assignment in selectedAccessUser.assignments" :key="assignment.assignmentId" class="access-assignment-row">
+            <article v-for="assignment in selectedAccessUser.assignments" :key="assignment.assignmentId" class="material-row access-assignment-row" tabindex="0">
               <div>
                 <strong>{{ assignment.formName }}</strong>
                 <span>{{ selectedAccessProjectName }}</span>
@@ -4153,15 +4153,15 @@ onUnmounted(() => {
               </dl>
             </article>
           </section>
-          <section class="access-drawer-activity" aria-label="Selected user activity">
-            <header class="access-assignment-header">
+          <section class="material-detail-section access-drawer-activity" aria-label="Selected user activity">
+            <header class="material-detail-header access-assignment-header">
               <div>
                 <p class="eyebrow">Audit preview</p>
                 <h4>User activity</h4>
               </div>
               <span class="state-chip state-chip--neutral">{{ selectedAccessUserActivity.length }} events</span>
             </header>
-            <article v-for="event in selectedAccessUserActivity" :key="event.id" class="access-activity-row access-activity-row--compact">
+            <article v-for="event in selectedAccessUserActivity" :key="event.id" class="material-row access-activity-row access-activity-row--compact" tabindex="0">
               <span class="state-chip" :class="`state-chip--${event.status}`">{{ event.event }}</span>
               <p>{{ event.detail }}</p>
               <small>{{ event.source }}</small>
