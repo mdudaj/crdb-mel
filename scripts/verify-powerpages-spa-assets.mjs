@@ -156,7 +156,7 @@ function printTextSummary(result, failOnDuplicates) {
     console.error(`No matching binary for partial URLs:\n${result.mismatched.join('\n')}`);
   }
   if (result.duplicatePartialUrls.length) {
-    const lines = result.duplicatePartialUrls.map((entry) => `${entry.partialUrl}: ${entry.count}`);
+    const lines = result.duplicatePartialUrls.map((entry) => `${entry.partialUrl}: ${entry.count} [${entry.files.join(', ')}]`);
     const prefix = failOnDuplicates ? 'Duplicate partial URLs:' : 'Duplicate partial URLs observed:';
     console.error(`${prefix}\n${lines.join('\n')}`);
   }
