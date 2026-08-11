@@ -141,11 +141,11 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   },
   legend: {
     orient: 'vertical',
-    right: 0,
-    bottom: 0,
+    right: -2,
+    bottom: -2,
     itemWidth: 9,
     itemHeight: 9,
-    itemGap: 8,
+    itemGap: 10,
     textStyle: { color: '#64706A', fontSize: 11 },
     formatter: (name: string) => {
       const item = loanPortfolio.find((entry) => entry.name === name);
@@ -155,7 +155,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   series: [{
     type: 'pie',
     radius: ['42%', '66%'],
-    center: ['34%', '46%'],
+    center: ['30%', '44%'],
     avoidLabelOverlap: false,
     data: loanPortfolio.map((item) => ({ name: item.name, value: item.value, itemStyle: { color: item.color } })),
     label: { show: false, position: 'center' },
@@ -181,6 +181,15 @@ const disbursementTrendOption = computed<DashboardChartOption>(() => ({
 }));
 
 const loanPerformanceOption = computed<DashboardChartOption>(() => ({
+  title: {
+    text: '12,458',
+    subtext: 'Total Loans',
+    left: '34%',
+    top: '39%',
+    textAlign: 'center',
+    textStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
+    subtextStyle: { color: '#64706A', fontSize: 11 },
+  },
   tooltip: {
     trigger: 'item',
     formatter: (params: unknown) => {
@@ -189,13 +198,27 @@ const loanPerformanceOption = computed<DashboardChartOption>(() => ({
       return `${itemParams.name}<br>${itemParams.value.toLocaleString()} loans (${itemParams.percent}%)<br>${row?.amount ?? 'Prototype outstanding principal'}`;
     },
   },
-  legend: { orient: 'vertical', right: 0, top: 'middle', itemWidth: 9, itemHeight: 9 },
+  legend: {
+    orient: 'vertical',
+    right: 0,
+    top: 'middle',
+    itemWidth: 9,
+    itemHeight: 9,
+    itemGap: 10,
+    textStyle: { color: '#64706A', fontSize: 11 },
+    formatter: (name: string) => {
+      const item = loanPerformance.find((entry) => entry.name === name);
+      return item ? `${item.name}\n${item.value.toLocaleString()} (${item.percent}%)` : name;
+    },
+  },
   series: [{
     type: 'pie',
-    radius: ['48%', '72%'],
+    radius: ['42%', '66%'],
     center: ['34%', '50%'],
+    avoidLabelOverlap: false,
     data: loanPerformance.map((item) => ({ name: item.name, value: item.value, itemStyle: { color: item.color } })),
-    label: { show: false },
+    label: { show: false, position: 'center' },
+    labelLine: { show: false },
   }],
 }));
 
@@ -239,14 +262,23 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
     },
   },
   visualMap: {
+    type: 'piecewise',
     min: 0,
     max: 22,
-    right: 8,
-    top: 78,
-    text: ['>15B', '<1B'],
+    right: 0,
+    top: 64,
     itemWidth: 12,
-    itemHeight: 86,
+    itemHeight: 10,
+    itemGap: 6,
     calculable: false,
+    pieces: [
+      { min: 20, label: '> TZS 20B', color: '#064E3B' },
+      { min: 15, max: 20, label: 'TZS 15B–20B', color: '#15803D' },
+      { min: 10, max: 15, label: 'TZS 10B–15B', color: '#2F9E44' },
+      { min: 5, max: 10, label: 'TZS 5B–10B', color: '#74C69D' },
+      { min: 1, max: 5, label: 'TZS 1B–5B', color: '#B7E4C7' },
+      { min: 0, max: 1, label: '< TZS 1B', color: '#EAF7EE' },
+    ],
     inRange: { color: ['#EAF7EE', '#B7E4C7', '#74C69D', '#2F9E44', '#064E3B'] },
     textStyle: { color: '#64706A', fontSize: 11 },
   },
@@ -257,6 +289,8 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
     nameProperty: 'shapeName',
     selectedMode: 'single',
     data: regionData,
+    layoutCenter: ['42%', '52%'],
+    layoutSize: '86%',
     label: { show: true, color: '#214036', fontSize: 9 },
     emphasis: { label: { color: '#064E3B', fontWeight: 700 }, itemStyle: { areaColor: '#8FD19E' } },
     select: { itemStyle: { areaColor: '#15803D' }, label: { color: '#FFFFFF' } },
@@ -358,13 +392,7 @@ function iconFor(metric: KpiMetric) {
       </DashboardCard>
 
       <DashboardCard :span="4" title="Loan Performance">
-        <div class="chart-with-center">
-          <DashboardChart class="chart chart--donut" :option="loanPerformanceOption" autoresize />
-          <div class="donut-center">
-            <span>Total Loans</span>
-            <strong>12,458</strong>
-          </div>
-        </div>
+        <DashboardChart class="chart chart--donut" :option="loanPerformanceOption" autoresize />
         <template #footer>
           <a href="#reporting">View portfolio quality →</a>
         </template>
