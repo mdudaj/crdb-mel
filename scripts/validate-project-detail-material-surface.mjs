@@ -30,16 +30,16 @@ assertIncludes(viewSource, 'class="project-form-workspace"', 'Project detail rou
 assertIncludes(viewSource, 'class="project-command-card"', 'Project detail route must keep the selected project command card.');
 assertIncludes(viewSource, 'class="material-tabs"', 'Project detail route must keep Material-style section tabs.');
 
-assertIncludes(viewSource, 'class="project-detail-surface data-table-panel"', 'Project Data tab must use the shared project-detail surface.');
+assertIncludes(viewSource, 'class="material-surface project-detail-surface data-table-panel"', 'Project Data tab must use the shared Material surface and project-detail alias.');
 assertIncludes(viewSource, 'aria-labelledby="project-data-title"', 'Project Data surface must be labelled by its visible title.');
 assertIncludes(viewSource, 'id="project-data-title"', 'Project Data title must expose a stable heading id.');
-assertIncludes(viewSource, 'class="record-toolbar project-detail-surface__header"', 'Project Data toolbar must use the project-detail surface header anatomy.');
+assertIncludes(viewSource, 'class="record-toolbar material-surface-header project-detail-surface__header"', 'Project Data toolbar must use the shared Material surface header anatomy.');
 assertIncludes(viewSource, 'Submitted and projected records for the selected project form.', 'Project Data surface must explain its data scope.');
-assertIncludes(viewSource, 'class="project-detail-count"', 'Project Data surface must show a visible record count chip.');
+assertIncludes(viewSource, 'class="material-count-chip project-detail-count"', 'Project Data surface must show a visible record count chip.');
 assertIncludes(viewSource, '{{ reportTotal }} record{{ reportTotal === 1 ? \'\' : \'s\' }}', 'Project Data count chip must reflect the filtered reporting total.');
 assertIncludes(viewSource, 'aria-label="Search submitted data"', 'Project Data search must remain accessible.');
 
-assertIncludes(viewSource, 'class="responsive-table project-detail-table"', 'Project Data desktop view must remain a semantic table surface.');
+assertIncludes(viewSource, 'class="responsive-table material-table project-detail-table"', 'Project Data desktop view must remain a semantic table surface.');
 assertIncludes(viewSource, '<caption class="sr-only">Reporting records with record name, version, updated date, review state, projection status, and row actions.</caption>', 'Project Data table must include an accessible caption.');
 for (const column of ['Record', 'Version', 'Updated', 'Review', 'Projection', 'Actions']) {
   assertPattern(viewSource, new RegExp(`<th scope="col">${column}</th>`), `Project Data table must keep ${column} column header.`);
@@ -49,14 +49,14 @@ assertIncludes(viewSource, 'class="project-detail-table__number"', 'Project Data
 assertIncludes(viewSource, 'projectionStatusTone(reportRow.mp_projectionstatus)', 'Project Data projection state must use a text-labelled status-chip tone.');
 assertIncludes(viewSource, 'function projectionStatusTone(value?: number): string', 'Projection status tone mapping must exist in source.');
 
-assertIncludes(viewSource, 'class="project-detail-surface export-workspace"', 'Exports tab must use the project-detail surface.');
-assertIncludes(viewSource, 'class="project-detail-surface powerbi-workspace"', 'Power BI tab must use the project-detail surface.');
+assertIncludes(viewSource, 'class="material-surface project-detail-surface export-workspace"', 'Exports tab must use the shared Material surface.');
+assertIncludes(viewSource, 'class="material-surface project-detail-surface powerbi-workspace"', 'Power BI tab must use the shared Material surface.');
 
-assertIncludes(stylesSource, '.project-detail-surface', 'Project detail surface styles must exist.');
-assertIncludes(stylesSource, '.project-detail-surface__header', 'Project detail surface header styles must exist.');
-assertIncludes(stylesSource, '.project-detail-count', 'Project detail count chip styles must exist.');
+assertIncludes(stylesSource, '.material-surface', 'Shared Material surface styles must exist.');
+assertIncludes(stylesSource, '.material-surface-header', 'Shared Material surface header styles must exist.');
+assertIncludes(stylesSource, '.material-count-chip', 'Shared Material count chip styles must exist.');
 assertIncludes(stylesSource, '.data-table-panel .project-detail-surface__header', 'Project detail Data header must support title, count, and search layout.');
-assertIncludes(stylesSource, '.project-detail-table tbody tr:hover', 'Project detail table rows must have hover/focus feedback.');
+assertIncludes(stylesSource, '.material-table tbody tr:hover', 'Project detail table rows must use shared hover/focus feedback.');
 assertIncludes(stylesSource, '.project-detail-table__number', 'Project detail numeric alignment styles must exist.');
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-project-detail-material-surface.mjs')) {

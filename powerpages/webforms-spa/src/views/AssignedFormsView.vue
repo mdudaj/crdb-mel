@@ -2833,14 +2833,14 @@ onUnmounted(() => {
         {{ error }}
       </section>
 
-      <section class="project-list-surface" aria-labelledby="projects-list-title">
-        <header class="project-list-header">
+      <section class="material-list-surface project-list-surface" aria-labelledby="projects-list-title">
+        <header class="material-surface-header project-list-header">
           <div>
             <p class="eyebrow">Projects</p>
             <h2 id="projects-list-title">Assigned projects</h2>
             <p>Open a project workspace to collect data, review submitted records, export CSV files, or inspect reporting setup.</p>
           </div>
-          <span class="project-list-count">{{ projectWorkspaces.length }} assigned</span>
+          <span class="material-count-chip project-list-count">{{ projectWorkspaces.length }} assigned</span>
         </header>
 
         <section v-if="workspaceHydrating && assignments.length === 0" class="project-list" aria-live="polite" aria-label="Loading available projects">
@@ -2882,7 +2882,7 @@ onUnmounted(() => {
                 </div>
               </dl>
             </div>
-            <footer class="project-card__footer">
+            <footer class="material-card-footer project-card__footer">
               <button class="icon-action" type="button" :aria-label="`Open ${project.name}`" @click="openProject(project)">
                 <FolderOpen class="action-icon" aria-hidden="true" />
                 Open project
@@ -2922,16 +2922,16 @@ onUnmounted(() => {
         {{ reportError }}
       </section>
 
-      <section class="reporting-list-surface" aria-labelledby="reporting-projects-title">
-        <header class="reporting-list-header">
+      <section class="material-list-surface reporting-list-surface" aria-labelledby="reporting-projects-title">
+        <header class="material-surface-header reporting-list-header">
           <div>
             <p class="eyebrow">Project reporting</p>
             <h2 id="reporting-projects-title">Reporting workspaces</h2>
             <p>Open assigned project reporting areas for data review, governed CSV exports, and Power BI setup guidance.</p>
           </div>
-          <span class="reporting-list-count">{{ reportingProjectRows.length }} workspace{{ reportingProjectRows.length === 1 ? '' : 's' }}</span>
+          <span class="material-count-chip reporting-list-count">{{ reportingProjectRows.length }} workspace{{ reportingProjectRows.length === 1 ? '' : 's' }}</span>
         </header>
-        <div v-if="reportingProjectRows.length > 0" class="responsive-table reporting-table" role="region" aria-label="Reporting workspace table" tabindex="0">
+        <div v-if="reportingProjectRows.length > 0" class="responsive-table material-table reporting-table" role="region" aria-label="Reporting workspace table" tabindex="0">
           <table>
             <caption class="sr-only">Reporting workspaces with project name, form count, projected record count, last updated date, projection status, and actions.</caption>
             <thead>
@@ -3073,14 +3073,14 @@ onUnmounted(() => {
             </article>
           </section>
 
-          <section v-else-if="activeFormSection === 'data'" class="project-detail-surface data-table-panel" role="tabpanel" aria-labelledby="project-data-title">
-            <div class="record-toolbar project-detail-surface__header">
+          <section v-else-if="activeFormSection === 'data'" class="material-surface project-detail-surface data-table-panel" role="tabpanel" aria-labelledby="project-data-title">
+            <div class="record-toolbar material-surface-header project-detail-surface__header">
               <div>
                 <p class="eyebrow">Data</p>
                 <h3 id="project-data-title">Reporting records</h3>
                 <p>Submitted and projected records for the selected project form.</p>
               </div>
-              <span class="project-detail-count">{{ reportTotal }} record{{ reportTotal === 1 ? '' : 's' }}</span>
+              <span class="material-count-chip project-detail-count">{{ reportTotal }} record{{ reportTotal === 1 ? '' : 's' }}</span>
               <label class="record-search">
                 <Search class="record-search__icon" aria-hidden="true" />
                 <span class="sr-only">Search submitted data</span>
@@ -3171,7 +3171,7 @@ onUnmounted(() => {
               <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             </section>
 
-            <div v-else class="responsive-table project-detail-table" role="region" aria-label="Reporting data table" tabindex="0">
+            <div v-else class="responsive-table material-table project-detail-table" role="region" aria-label="Reporting data table" tabindex="0">
               <table>
                 <caption class="sr-only">Reporting records with record name, version, updated date, review state, projection status, and row actions.</caption>
                 <thead>
@@ -3296,7 +3296,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else-if="activeFormSection === 'exports'" class="project-detail-surface export-workspace" role="tabpanel" aria-label="Exports">
+          <section v-else-if="activeFormSection === 'exports'" class="material-surface project-detail-surface export-workspace" role="tabpanel" aria-label="Exports">
             <header class="section-heading">
               <div>
                 <p class="eyebrow">Exports</p>
@@ -3350,7 +3350,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else class="project-detail-surface powerbi-workspace" role="tabpanel" aria-label="Power BI">
+          <section v-else class="material-surface project-detail-surface powerbi-workspace" role="tabpanel" aria-label="Power BI">
             <header class="section-heading section-heading--with-icon">
               <BarChart3 class="guidance-icon" aria-hidden="true" />
               <div>
@@ -3463,7 +3463,7 @@ onUnmounted(() => {
           </button>
         </nav>
 
-        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel system-activity-surface" role="tabpanel" aria-label="System health">
+        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel material-surface system-activity-surface" role="tabpanel" aria-label="System health">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Health</p>
@@ -3483,7 +3483,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Recent system events">
+        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Recent system events">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Events</p>
@@ -3492,7 +3492,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Recent system activity list">
-            <article v-for="event in systemActivityEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
+            <article v-for="event in systemActivityEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3510,7 +3510,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Onboarding activity">
+        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Onboarding activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Onboarding</p>
@@ -3519,7 +3519,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Onboarding activity list">
-            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
+            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3584,7 +3584,7 @@ onUnmounted(() => {
             <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
           </section>
 
-          <div v-else class="responsive-table access-table activation-diagnostics-table system-activity-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
+          <div v-else class="responsive-table material-table access-table activation-diagnostics-table system-activity-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
             <table>
               <caption class="sr-only">Activation diagnostics with user identity, contact, email, invitation, redemption, external identity, web role, assignment, and next action.</caption>
               <thead>
@@ -3629,7 +3629,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Submission activity">
+        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Submission activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Submissions</p>
@@ -3638,7 +3638,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Submission activity list">
-            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
+            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3660,7 +3660,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Integration activity">
+        <section v-else class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Integration activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Integrations</p>
@@ -3676,7 +3676,7 @@ onUnmounted(() => {
             </div>
           </section>
           <section class="access-activity-list" aria-label="Integration activity list">
-            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
+            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3808,14 +3808,14 @@ onUnmounted(() => {
         </nav>
 
         <section v-if="activeAccessSection === 'users'" class="access-tab-panel" role="tabpanel" aria-label="Users">
-          <section class="access-list-surface" aria-labelledby="access-users-title">
-            <header class="access-list-header">
+          <section class="material-list-surface access-list-surface" aria-labelledby="access-users-title">
+            <header class="material-surface-header access-list-header">
               <div>
                 <p class="eyebrow">Users</p>
                 <h3 id="access-users-title">Portal users</h3>
                 <p>Review contacts, role scope, project assignments, form access, and activation state.</p>
               </div>
-              <span class="access-list-count">{{ filteredAccessUsers.length }} shown</span>
+              <span class="material-count-chip access-list-count">{{ filteredAccessUsers.length }} shown</span>
             </header>
 
             <section class="access-toolbar" aria-label="User access filters">
@@ -3839,7 +3839,7 @@ onUnmounted(() => {
               <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             </section>
 
-            <div v-else-if="filteredAccessUsers.length > 0" class="responsive-table access-table" role="region" aria-label="User access table" tabindex="0">
+            <div v-else-if="filteredAccessUsers.length > 0" class="responsive-table material-table access-table" role="region" aria-label="User access table" tabindex="0">
               <table>
                 <caption class="sr-only">Portal users with contact state, role, project count, form count, access state, and row actions.</caption>
                 <thead>

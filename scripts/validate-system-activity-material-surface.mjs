@@ -30,14 +30,14 @@ assertIncludes(viewSource, 'v-if="!canManageAccess"', 'System Activity route mus
 assertIncludes(viewSource, 'class="system-activity-workspace"', 'System Activity route must keep a bounded workspace container.');
 assertIncludes(viewSource, 'class="access-metric-strip"', 'System Activity route must keep metric summary cards.');
 assertIncludes(viewSource, 'aria-label="System Activity sections"', 'System Activity route must keep section tabs.');
-assertIncludes(viewSource, 'class="access-readiness-panel system-activity-surface"', 'System health panel must use the System Activity surface class.');
-assertIncludes(viewSource, 'class="access-activity-panel system-activity-surface"', 'Activity panels must use the System Activity surface class.');
-assertIncludes(viewSource, 'class="system-activity-row system-activity-row--material"', 'System Activity event rows must use the Material row class.');
-assertPattern(viewSource, /system-activity-row system-activity-row--material" tabindex="0"/, 'System Activity event rows must be keyboard reachable.');
+assertIncludes(viewSource, 'class="access-readiness-panel material-surface system-activity-surface"', 'System health panel must use the shared Material surface class.');
+assertIncludes(viewSource, 'class="access-activity-panel material-surface system-activity-surface"', 'Activity panels must use the shared Material surface class.');
+assertIncludes(viewSource, 'class="material-row system-activity-row system-activity-row--material"', 'System Activity event rows must use the shared Material row class.');
+assertPattern(viewSource, /material-row system-activity-row system-activity-row--material" tabindex="0"/, 'System Activity event rows must be keyboard reachable.');
 assertIncludes(viewSource, 'systemActivityTone(event.severity)', 'System Activity events must use text-labelled status chip tones.');
 assertIncludes(viewSource, '<strong>Next action</strong>', 'System Activity rows must keep explicit next-action content.');
 
-assertIncludes(viewSource, 'class="responsive-table access-table activation-diagnostics-table system-activity-table"', 'Activation diagnostics must use the System Activity table class.');
+assertIncludes(viewSource, 'class="responsive-table material-table access-table activation-diagnostics-table system-activity-table"', 'Activation diagnostics must use the shared Material table class.');
 assertIncludes(viewSource, '<caption class="sr-only">Activation diagnostics with user identity, contact, email, invitation, redemption, external identity, web role, assignment, and next action.</caption>', 'Activation diagnostics table must include an accessible caption.');
 for (const column of ['User', 'Contact', 'Email', 'Invitation', 'Redemption', 'Identity', 'Web role', 'Assignment', 'Next action']) {
   assertPattern(viewSource, new RegExp(`<th scope="col">${column}</th>`), `Activation diagnostics table must keep ${column} column header.`);
@@ -47,9 +47,9 @@ assertIncludes(viewSource, 'class="system-activity-table__number"', 'Activation 
 assertIncludes(viewSource, 'activationStateTone(row.externalIdentityStatus)', 'Activation diagnostics must keep external identity status tone.');
 assertIncludes(viewSource, 'nextActionTone(row.nextAction)', 'Activation diagnostics must keep next-action status tone.');
 
-assertIncludes(stylesSource, '.system-activity-surface', 'System Activity surface styles must exist.');
-assertIncludes(stylesSource, '.system-activity-row--material:hover', 'System Activity rows must have hover/focus feedback.');
-assertIncludes(stylesSource, '.system-activity-table tbody tr:hover', 'System Activity table rows must have hover/focus feedback.');
+assertIncludes(stylesSource, '.material-surface', 'Shared Material surface styles must exist.');
+assertIncludes(stylesSource, '.material-row:hover', 'System Activity rows must use shared hover/focus feedback.');
+assertIncludes(stylesSource, '.material-table tbody tr:hover', 'System Activity table rows must use shared hover/focus feedback.');
 assertIncludes(stylesSource, '.system-activity-table__number', 'System Activity numeric table alignment styles must exist.');
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-system-activity-material-surface.mjs')) {

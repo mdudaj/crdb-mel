@@ -25,16 +25,16 @@ function assertPattern(source, pattern, message) {
   }
 }
 
-assertIncludes(viewSource, 'class="access-list-surface"', 'Users route must group toolbar, table/cards, and empty/loading states inside one Material-style list surface.');
+assertIncludes(viewSource, 'class="material-list-surface access-list-surface"', 'Users route must group toolbar, table/cards, and empty/loading states inside one shared Material-style list surface.');
 assertIncludes(viewSource, 'aria-labelledby="access-users-title"', 'Users list surface must be labelled by its visible heading.');
 assertIncludes(viewSource, 'id="access-users-title"', 'Users list must expose a stable visible heading.');
-assertIncludes(viewSource, 'class="access-list-count"', 'Users list must show a visible filtered count chip.');
+assertIncludes(viewSource, 'class="material-count-chip access-list-count"', 'Users list must show a visible filtered count chip.');
 assertIncludes(viewSource, '{{ filteredAccessUsers.length }} shown', 'Users list count must reflect filtered rows, not only total users.');
 assertIncludes(viewSource, 'class="access-toolbar"', 'Users list must keep visible filter/search controls.');
 assertIncludes(viewSource, '<span>Role</span>', 'Users role filter must keep a visible label.');
 assertIncludes(viewSource, 'aria-label="Search users"', 'Users search field must remain accessible.');
 
-assertIncludes(viewSource, 'class="responsive-table access-table"', 'Users desktop view must remain a semantic table surface.');
+assertIncludes(viewSource, 'class="responsive-table material-table access-table"', 'Users desktop view must remain a semantic table surface.');
 assertIncludes(viewSource, '<caption class="sr-only">Portal users with contact state, role, project count, form count, access state, and row actions.</caption>', 'Users table must include an accessible caption.');
 for (const column of ['User', 'Contact', 'Role', 'Projects', 'Forms', 'Access', 'Actions']) {
   assertPattern(viewSource, new RegExp(`<th scope="col">${column}</th>`), `Users table must keep ${column} column header.`);
@@ -51,9 +51,9 @@ assertIncludes(viewSource, '<dt>Forms</dt>', 'Users mobile cards must include fo
 assertIncludes(viewSource, 'access-empty-state', 'Users list must keep a scoped no-results state.');
 assertIncludes(viewSource, 'class="loading-panel loading-panel--inline access-loading-state"', 'Users list must keep a scoped loading state.');
 
-assertIncludes(stylesSource, '.access-list-surface', 'Users list surface styles must exist.');
-assertIncludes(stylesSource, '.access-list-header', 'Users list header styles must exist.');
-assertIncludes(stylesSource, '.access-list-count', 'Users list count chip styles must exist.');
+assertIncludes(stylesSource, '.material-list-surface', 'Shared Material list surface styles must exist.');
+assertIncludes(stylesSource, '.material-surface-header', 'Shared Material list header styles must exist.');
+assertIncludes(stylesSource, '.material-count-chip', 'Shared Material count chip styles must exist.');
 assertIncludes(stylesSource, '.access-list-surface .access-toolbar', 'Users list toolbar must be styled as part of the list surface.');
 assertIncludes(stylesSource, '.access-table tbody tr:hover', 'Users table rows must have hover/focus feedback.');
 assertIncludes(stylesSource, '.access-table__number', 'Users numeric column alignment styles must exist.');
