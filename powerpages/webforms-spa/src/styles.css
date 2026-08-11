@@ -2343,6 +2343,17 @@ body {
   min-width: 1180px;
 }
 
+.system-activity-table tbody tr:hover,
+.system-activity-table tbody tr:focus-visible {
+  background: var(--mt-color-primary-soft);
+  outline: none;
+}
+
+.system-activity-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .activation-detail {
   display: block;
   max-width: 260px;
@@ -3266,6 +3277,10 @@ body {
   gap: var(--mt-space-4);
 }
 
+.system-activity-surface {
+  min-width: 0;
+}
+
 .system-health-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -3308,6 +3323,13 @@ body {
   border: 1px solid var(--mt-color-border);
   border-radius: var(--mt-radius-sm);
   background: var(--mt-color-surface-muted);
+}
+
+.system-activity-row--material:hover,
+.system-activity-row--material:focus-visible {
+  border-color: var(--mt-color-border-strong);
+  background: var(--mt-color-primary-soft);
+  outline: none;
 }
 
 .system-activity-row div {

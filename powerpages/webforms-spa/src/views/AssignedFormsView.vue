@@ -3463,7 +3463,7 @@ onUnmounted(() => {
           </button>
         </nav>
 
-        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel" role="tabpanel" aria-label="System health">
+        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel system-activity-surface" role="tabpanel" aria-label="System health">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Health</p>
@@ -3483,7 +3483,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel" role="tabpanel" aria-label="Recent system events">
+        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Recent system events">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Events</p>
@@ -3492,7 +3492,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Recent system activity list">
-            <article v-for="event in systemActivityEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3510,7 +3510,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel" role="tabpanel" aria-label="Onboarding activity">
+        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Onboarding activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Onboarding</p>
@@ -3519,7 +3519,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Onboarding activity list">
-            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3584,8 +3584,9 @@ onUnmounted(() => {
             <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
           </section>
 
-          <div v-else class="responsive-table access-table activation-diagnostics-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
+          <div v-else class="responsive-table access-table activation-diagnostics-table system-activity-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
             <table>
+              <caption class="sr-only">Activation diagnostics with user identity, contact, email, invitation, redemption, external identity, web role, assignment, and next action.</caption>
               <thead>
                 <tr>
                   <th scope="col">User</th>
@@ -3600,7 +3601,7 @@ onUnmounted(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in activationDiagnostics" :key="row.id">
+                <tr v-for="row in activationDiagnostics" :key="row.id" tabindex="0">
                   <td>
                     <strong>{{ row.name }}</strong>
                     <span>{{ row.email }}</span>
@@ -3611,7 +3612,7 @@ onUnmounted(() => {
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.redemptionStatus)}`">{{ formatActivationState(row.redemptionStatus) }}</span></td>
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.externalIdentityStatus)}`">{{ formatActivationState(row.externalIdentityStatus) }}</span></td>
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.webRoleStatus)}`">{{ formatActivationState(row.webRoleStatus) }}</span></td>
-                  <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.assignmentStatus)}`">{{ row.activeAssignmentCount }} active</span></td>
+                  <td class="system-activity-table__number"><span class="state-chip" :class="`state-chip--${activationStateTone(row.assignmentStatus)}`">{{ row.activeAssignmentCount }} active</span></td>
                   <td>
                     <span class="state-chip" :class="`state-chip--${nextActionTone(row.nextAction)}`">{{ row.nextAction }}</span>
                     <small class="activation-detail">{{ row.detail }}</small>
@@ -3628,7 +3629,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel" role="tabpanel" aria-label="Submission activity">
+        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Submission activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Submissions</p>
@@ -3637,7 +3638,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Submission activity list">
-            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3659,7 +3660,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else class="access-activity-panel" role="tabpanel" aria-label="Integration activity">
+        <section v-else class="access-activity-panel system-activity-surface" role="tabpanel" aria-label="Integration activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Integrations</p>
@@ -3675,7 +3676,7 @@ onUnmounted(() => {
             </div>
           </section>
           <section class="access-activity-list" aria-label="Integration activity list">
-            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
