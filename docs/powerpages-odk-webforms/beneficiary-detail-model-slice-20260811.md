@@ -26,7 +26,7 @@ Each beneficiary record now carries:
 - monitored outcome snapshot;
 - future Dataverse mapping notes.
 
-The future production direction is a central `mp_beneficiary`-style entity related to submissions, loans, trainings, financed technologies, and outcome/indicator records.
+The future production direction is a central `mp_TrackedEntity` beneficiary identity with additive beneficiary extension tables related to submissions, loans, trainings, financed technologies, and outcome/indicator records.
 
 ## User experience
 

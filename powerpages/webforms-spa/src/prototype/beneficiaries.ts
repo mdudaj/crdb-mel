@@ -99,7 +99,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Modelled tCO₂e avoided pending verification',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Future lookup from submissions, loans, trainings, and financed technologies.',
     },
@@ -152,7 +152,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Not yet modelled',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Group entity should link to member farmers and submission history.',
     },
@@ -205,7 +205,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Awaiting verification',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Organization entity should link to infrastructure asset records.',
     },
@@ -257,7 +257,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Not yet modelled',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Pending record should remain visible for data-quality follow-up.',
     },
@@ -310,7 +310,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Modelled estimate pending field verification',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Group entity should support crop-cycle and greenhouse-unit child records.',
     },
@@ -363,7 +363,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Awaiting submission correction',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Incomplete record should retain issue history and responsible organization.',
     },
@@ -416,7 +416,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Modelled water-efficiency benefit',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Technology detail should link to financed equipment and outcome estimates.',
     },
@@ -469,7 +469,7 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       climateEstimate: 'Not yet modelled',
     },
     futureDataverseMapping: {
-      table: 'mp_beneficiary',
+      table: 'mp_TrackedEntity + beneficiary extension tables',
       recordId: 'Not yet mapped',
       relationshipNotes: 'Record needs submission follow-up before indicator reporting.',
     },

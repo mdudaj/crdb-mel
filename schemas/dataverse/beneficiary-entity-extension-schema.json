@@ -1,0 +1,657 @@
+{
+  "schema_name": "beneficiary_entity_extension",
+  "generated_for_review_only": true,
+  "generated_on": "2026-08-11",
+  "environment_write": false,
+  "publisher_prefix_placeholder": "mp",
+  "source_documents": [
+    "docs/app-vision.md",
+    "docs/multi-project-monitoring/data-model.md",
+    "docs/multi-project-monitoring/research.md",
+    "docs/powerpages-odk-webforms/beneficiary-detail-model-slice-20260811.md",
+    "powerpages/webforms-spa/src/prototype/beneficiaries.ts",
+    "schemas/dataverse/platform-tables.json",
+    "schemas/dataverse/platform-columns.csv",
+    "schemas/dataverse/tacatdp-field-definitions.csv",
+    "schemas/dataverse/tacatdp-vocabulary-terms.csv"
+  ],
+  "purpose": "Add review-only beneficiary-specific tables around the existing mp_TrackedEntity runtime identity so TACATDP beneficiaries can be modeled without creating a TACATDP-only mp_beneficiary silo.",
+  "design_decisions": [
+    "Use mp_TrackedEntity as the central beneficiary identity with EntityType=beneficiary/farmer/farmer_group/amcos/saccos as controlled choices.",
+    "Keep submitted XForm payloads and submission versions as source of truth; beneficiary extension tables are current-state and analytics surfaces.",
+    "Keep finance, technology, training, and outcome facts as separate child tables so repeated and longitudinal records do not overwrite each other.",
+    "Use VocabularyTerm lookups for governed options such as technology, training topic, beneficiary category, verification status, adoption stage, and measurement method where practical.",
+    "Use Submission and Encounter lookups to preserve lineage from a beneficiary summary fact back to a collected monitoring event."
+  ],
+  "tables": [
+    {
+      "name": "mp_BeneficiaryProfile",
+      "display_name": "Beneficiary Profile",
+      "primary_name_column": "mp_name",
+      "ownership": "UserOrTeam",
+      "purpose": "Current profile extension for a beneficiary tracked entity.",
+      "columns": [
+        {
+          "name": "mp_name",
+          "type": "Text",
+          "required": true,
+          "notes": "Display name snapshot for list/detail UX."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Central longitudinal beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary; TACATDP is one project configuration."
+        },
+        {
+          "name": "mp_beneficiarycategory",
+          "type": "Choice",
+          "required": true,
+          "notes": "Individual farmer, farmer group, AMCOS, SACCOS, cooperative, institution, or other governed category."
+        },
+        {
+          "name": "mp_region",
+          "type": "Text",
+          "required": false,
+          "notes": "Region label snapshot for delegated UI filters; future geography reference can replace this."
+        },
+        {
+          "name": "mp_district",
+          "type": "Text",
+          "required": false,
+          "notes": "District label snapshot for delegated UI filters."
+        },
+        {
+          "name": "mp_verificationstatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Verified, under review, incomplete, returned, or inactive."
+        },
+        {
+          "name": "mp_datasource",
+          "type": "Text",
+          "required": false,
+          "notes": "Source system/form that last updated the profile."
+        },
+        {
+          "name": "mp_lastupdatedat",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Latest profile refresh timestamp."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryProgrammeParticipation",
+      "display_name": "Beneficiary Programme Participation",
+      "primary_name_column": "mp_participationkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Links a beneficiary to a project, implementation partner, role, and enrolment period.",
+      "columns": [
+        {
+          "name": "mp_participationkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as projectCode:trackedEntityKey:role:startDate."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Programme/project boundary."
+        },
+        {
+          "name": "mp_implementationpartner",
+          "type": "Text",
+          "required": false,
+          "notes": "Partner or responsible organization snapshot until an organization table is approved."
+        },
+        {
+          "name": "mp_participationrole",
+          "type": "Choice",
+          "required": true,
+          "notes": "Borrower, trainee, implementation partner, group member, or monitoring subject."
+        },
+        {
+          "name": "mp_enrolmentdate",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Date first enrolled or registered."
+        },
+        {
+          "name": "mp_status",
+          "type": "Choice",
+          "required": true,
+          "notes": "Active, pending verification, completed, inactive."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryFinanceLink",
+      "display_name": "Beneficiary Finance Link",
+      "primary_name_column": "mp_financekey",
+      "ownership": "UserOrTeam",
+      "purpose": "Finance/loan snapshot linked to a beneficiary without replacing CRDB core banking records.",
+      "columns": [
+        {
+          "name": "mp_financekey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable project-scoped finance link key."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_loanaccountref",
+          "type": "Text",
+          "required": false,
+          "notes": "Masked or prototype loan reference; do not store sensitive core banking identifiers without approval."
+        },
+        {
+          "name": "mp_loantype",
+          "type": "Choice",
+          "required": false,
+          "notes": "Short-term, medium-term, long-term, not financed, or other governed type."
+        },
+        {
+          "name": "mp_disbursedamount",
+          "type": "Currency",
+          "required": false,
+          "notes": "Amount disbursed for reporting period or current facility."
+        },
+        {
+          "name": "mp_outstandingbalance",
+          "type": "Currency",
+          "required": false,
+          "notes": "Outstanding balance snapshot."
+        },
+        {
+          "name": "mp_repaymentrate",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Repayment rate percentage as numeric value."
+        },
+        {
+          "name": "mp_reportingperiod",
+          "type": "Text",
+          "required": false,
+          "notes": "Reporting period label such as 2025-05."
+        },
+        {
+          "name": "mp_verificationstatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Submitted, under review, verified, returned, or unavailable."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryTechnologyAdoption",
+      "display_name": "Beneficiary Technology Adoption",
+      "primary_name_column": "mp_adoptionkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Technology financed or adopted by a beneficiary.",
+      "columns": [
+        {
+          "name": "mp_adoptionkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as trackedEntityKey:technologyCode:period."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_technologyterm",
+          "type": "Lookup:mp_VocabularyTerm",
+          "required": false,
+          "notes": "Governed technology term from TACATDP technology vocabulary when available."
+        },
+        {
+          "name": "mp_technologynamelabel",
+          "type": "Text",
+          "required": true,
+          "notes": "Technology label snapshot for reporting stability."
+        },
+        {
+          "name": "mp_adoptionstage",
+          "type": "Choice",
+          "required": true,
+          "notes": "Planned, financed, installed, in use, scaling, discontinued."
+        },
+        {
+          "name": "mp_financed",
+          "type": "Boolean",
+          "required": false,
+          "notes": "Whether adoption is financed by the programme."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Submission that most recently reported this technology fact."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryTrainingParticipation",
+      "display_name": "Beneficiary Training Participation",
+      "primary_name_column": "mp_trainingkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Training and capacity-building participation summary for a beneficiary.",
+      "columns": [
+        {
+          "name": "mp_trainingkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as trackedEntityKey:topicCode:period."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_trainingtopicterm",
+          "type": "Lookup:mp_VocabularyTerm",
+          "required": false,
+          "notes": "Governed training topic where available."
+        },
+        {
+          "name": "mp_topiclabel",
+          "type": "Text",
+          "required": false,
+          "notes": "Training topic label snapshot."
+        },
+        {
+          "name": "mp_sessionsattended",
+          "type": "WholeNumber",
+          "required": false,
+          "notes": "Number of sessions attended in the reporting period or cumulative view."
+        },
+        {
+          "name": "mp_completionrate",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Completion percentage as numeric value."
+        },
+        {
+          "name": "mp_lasttrainingdate",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Most recent training date."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Submission that most recently reported the training fact."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryOutcomeSnapshot",
+      "display_name": "Beneficiary Outcome Snapshot",
+      "primary_name_column": "mp_outcomekey",
+      "ownership": "UserOrTeam",
+      "purpose": "Measured, estimated, or modelled beneficiary-level outcome fact.",
+      "columns": [
+        {
+          "name": "mp_outcomekey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as trackedEntityKey:indicatorCode:period."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Source submission when the outcome is derived from field data."
+        },
+        {
+          "name": "mp_encounter",
+          "type": "Lookup:mp_Encounter",
+          "required": false,
+          "notes": "Monitoring event or follow-up visit linked to this fact."
+        },
+        {
+          "name": "mp_indicatorcode",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable indicator/outcome code."
+        },
+        {
+          "name": "mp_value",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Numeric value where applicable."
+        },
+        {
+          "name": "mp_valuesnapshot",
+          "type": "Text",
+          "required": false,
+          "notes": "Textual value when numeric normalization is not yet available."
+        },
+        {
+          "name": "mp_unit",
+          "type": "Text",
+          "required": false,
+          "notes": "Unit such as ha, percent, reports, tCO2e."
+        },
+        {
+          "name": "mp_measurementmethod",
+          "type": "Choice",
+          "required": true,
+          "notes": "Measured, estimated, modelled, or awaiting verification."
+        },
+        {
+          "name": "mp_reportingperiod",
+          "type": "Text",
+          "required": true,
+          "notes": "Reporting period key such as 2025-05."
+        },
+        {
+          "name": "mp_verificationstatus",
+          "type": "Choice",
+          "required": true,
+          "notes": "Submitted, under review, verified, returned, or unavailable."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiarySubmissionLink",
+      "display_name": "Beneficiary Submission Link",
+      "primary_name_column": "mp_linkkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Many-to-many-style lineage between beneficiaries and submissions.",
+      "columns": [
+        {
+          "name": "mp_linkkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as trackedEntityKey:submissionKey:relationshipType."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": true,
+          "notes": "Submission that references or updates the beneficiary."
+        },
+        {
+          "name": "mp_relationshiptype",
+          "type": "Choice",
+          "required": true,
+          "notes": "Subject, group member, training participant, finance recipient, or reported organization."
+        },
+        {
+          "name": "mp_completeness",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Completeness percentage for this beneficiary-related submission."
+        },
+        {
+          "name": "mp_reviewstatus",
+          "type": "Choice",
+          "required": false,
+          "notes": "Submitted, under review, approved, returned, incomplete, overdue."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryProfile",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "One current profile per beneficiary entity."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryProfile",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryProgrammeParticipation",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary participates in a project or programme role."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryProgrammeParticipation",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryFinanceLink",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary finance relationship."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryFinanceLink",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryTechnologyAdoption",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary technology relationship."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryTechnologyAdoption",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_VocabularyTerm",
+      "referencing_table": "mp_BeneficiaryTechnologyAdoption",
+      "lookup_column": "mp_technologyterm",
+      "required": false,
+      "notes": "Governed technology term."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryTechnologyAdoption",
+      "lookup_column": "mp_submission",
+      "required": false,
+      "notes": "Source submission lineage."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryTrainingParticipation",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary training relationship."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryTrainingParticipation",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_VocabularyTerm",
+      "referencing_table": "mp_BeneficiaryTrainingParticipation",
+      "lookup_column": "mp_trainingtopicterm",
+      "required": false,
+      "notes": "Governed training topic."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryTrainingParticipation",
+      "lookup_column": "mp_submission",
+      "required": false,
+      "notes": "Source submission lineage."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryOutcomeSnapshot",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary outcome relationship."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryOutcomeSnapshot",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryOutcomeSnapshot",
+      "lookup_column": "mp_submission",
+      "required": false,
+      "notes": "Source submission lineage."
+    },
+    {
+      "referenced_table": "mp_Encounter",
+      "referencing_table": "mp_BeneficiaryOutcomeSnapshot",
+      "lookup_column": "mp_encounter",
+      "required": false,
+      "notes": "Monitoring event lineage."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiarySubmissionLink",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary submission lineage."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiarySubmissionLink",
+      "lookup_column": "mp_submission",
+      "required": true,
+      "notes": "Submission lineage."
+    }
+  ],
+  "alternate_keys": [
+    {
+      "table": "mp_BeneficiaryProfile",
+      "name": "AK_BeneficiaryProfile_TrackedEntity",
+      "columns": [
+        "mp_trackedentity"
+      ],
+      "notes": "One current profile extension per tracked entity."
+    },
+    {
+      "table": "mp_BeneficiaryProgrammeParticipation",
+      "name": "AK_BeneficiaryParticipation_Key",
+      "columns": [
+        "mp_participationkey"
+      ],
+      "notes": "Idempotent import/update key."
+    },
+    {
+      "table": "mp_BeneficiaryFinanceLink",
+      "name": "AK_BeneficiaryFinance_Key",
+      "columns": [
+        "mp_financekey"
+      ],
+      "notes": "Idempotent finance snapshot key."
+    },
+    {
+      "table": "mp_BeneficiaryTechnologyAdoption",
+      "name": "AK_BeneficiaryTechnology_Key",
+      "columns": [
+        "mp_adoptionkey"
+      ],
+      "notes": "Idempotent technology adoption key."
+    },
+    {
+      "table": "mp_BeneficiaryTrainingParticipation",
+      "name": "AK_BeneficiaryTraining_Key",
+      "columns": [
+        "mp_trainingkey"
+      ],
+      "notes": "Idempotent training summary key."
+    },
+    {
+      "table": "mp_BeneficiaryOutcomeSnapshot",
+      "name": "AK_BeneficiaryOutcome_Key",
+      "columns": [
+        "mp_outcomekey"
+      ],
+      "notes": "Idempotent outcome snapshot key."
+    },
+    {
+      "table": "mp_BeneficiarySubmissionLink",
+      "name": "AK_BeneficiarySubmissionLink_Key",
+      "columns": [
+        "mp_linkkey"
+      ],
+      "notes": "Idempotent submission lineage key."
+    }
+  ]
+}
