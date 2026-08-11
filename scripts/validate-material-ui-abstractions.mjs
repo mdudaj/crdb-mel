@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
 const viewPath = resolve(repoRoot, 'powerpages/webforms-spa/src/views/AssignedFormsView.vue');
+const beneficiariesPath = resolve(repoRoot, 'powerpages/webforms-spa/src/views/BeneficiariesView.vue');
 const stylesPath = resolve(repoRoot, 'powerpages/webforms-spa/src/styles.css');
 const packagePath = resolve(repoRoot, 'powerpages/webforms-spa/package.json');
 
 const viewSource = readFileSync(viewPath, 'utf8');
+const beneficiariesSource = readFileSync(beneficiariesPath, 'utf8');
 const stylesSource = readFileSync(stylesPath, 'utf8');
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
 
@@ -70,6 +72,18 @@ for (const tableFragment of [
 
 assertIncludes(viewSource, 'class="material-row system-activity-row system-activity-row--material"', 'System Activity rows must use the shared Material row abstraction.');
 assertIncludes(viewSource, 'class="material-card-footer project-card__footer"', 'Project cards must use the shared Material card footer abstraction.');
+
+for (const beneficiaryFragment of [
+  'class="material-list-surface beneficiary-list"',
+  'class="material-surface-header beneficiary-list__header"',
+  'class="material-count-chip beneficiary-list__count"',
+  'class="beneficiary-table-wrap material-table"',
+  'class="material-row" tabindex="0"',
+  'class="material-row beneficiary-record-card"',
+  'class="material-card-footer"',
+]) {
+  assertIncludes(beneficiariesSource, beneficiaryFragment, `Beneficiaries route must use shared Material abstraction: ${beneficiaryFragment}`);
+}
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-material-ui-abstractions.mjs')) {
   throw new Error('test:material must run the shared Material UI abstraction validator.');

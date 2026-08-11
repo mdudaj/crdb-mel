@@ -234,13 +234,13 @@ onUnmounted(() => {
       </SurfaceCard>
     </section>
 
-    <SurfaceCard as="section" class="beneficiary-list" aria-labelledby="beneficiary-list-title">
-      <header class="beneficiary-list__header">
+    <SurfaceCard as="section" class="material-list-surface beneficiary-list" aria-labelledby="beneficiary-list-title">
+      <header class="material-surface-header beneficiary-list__header">
         <div>
           <h2 id="beneficiary-list-title">Beneficiary records</h2>
           <p>Prototype data only. These figures are not official CRDB Bank or Green Climate Fund statistics.</p>
         </div>
-        <span class="beneficiary-list__count">{{ filteredBeneficiaries.length }} shown</span>
+        <span class="material-count-chip beneficiary-list__count">{{ filteredBeneficiaries.length }} shown</span>
       </header>
 
       <section v-if="hasDashboardContext" class="beneficiary-drillthrough-context" aria-label="Dashboard drill-through context">
@@ -320,7 +320,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="beneficiary-table-wrap">
+      <div v-else class="beneficiary-table-wrap material-table">
         <table class="beneficiary-table" aria-label="Beneficiary records">
           <thead>
             <tr>
@@ -336,7 +336,7 @@ onUnmounted(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="record in filteredBeneficiaries" :key="record.id" tabindex="0" @dblclick="openBeneficiary(record)">
+            <tr v-for="record in filteredBeneficiaries" :key="record.id" class="material-row" tabindex="0" @dblclick="openBeneficiary(record)">
               <td>
                 <strong>{{ record.name }}</strong>
                 <span>{{ record.id }} · {{ record.category }}</span>
@@ -367,7 +367,7 @@ onUnmounted(() => {
       </div>
 
       <div class="beneficiary-card-list" aria-label="Beneficiary records mobile list">
-        <article v-for="record in filteredBeneficiaries" :key="`card:${record.id}`" class="beneficiary-record-card">
+        <article v-for="record in filteredBeneficiaries" :key="`card:${record.id}`" class="material-row beneficiary-record-card" tabindex="0">
           <div>
             <strong>{{ record.name }}</strong>
             <span>{{ record.id }} · {{ record.category }}</span>
@@ -386,7 +386,7 @@ onUnmounted(() => {
               <dd>{{ record.technology }}</dd>
             </div>
           </dl>
-          <footer>
+          <footer class="material-card-footer">
             <span>{{ record.trained ? 'Trained' : 'Not yet trained' }}</span>
             <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(record.verificationStatus)}`">
               {{ record.verificationStatus }}
@@ -726,6 +726,11 @@ onUnmounted(() => {
   align-items: start;
 }
 
+.material-surface-header h2,
+.material-surface-header p {
+  margin: 0;
+}
+
 .beneficiary-list__count {
   flex: 0 0 auto;
   padding: 6px 12px;
@@ -899,6 +904,14 @@ onUnmounted(() => {
 .beneficiary-table tbody tr:hover,
 .beneficiary-table tbody tr:focus-visible {
   background: #F4FAF6;
+}
+
+.material-table tbody tr:hover,
+.material-table tbody tr:focus-visible,
+.material-row:hover,
+.material-row:focus-visible {
+  outline: 3px solid rgba(21, 128, 61, 0.16);
+  outline-offset: -3px;
 }
 
 .beneficiary-table td strong,
@@ -1297,7 +1310,8 @@ onUnmounted(() => {
     margin: 0;
   }
 
-  .beneficiary-record-card footer {
+  .beneficiary-record-card footer,
+  .material-card-footer {
     display: flex;
     justify-content: space-between;
     gap: 12px;
