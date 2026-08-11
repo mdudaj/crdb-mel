@@ -446,215 +446,223 @@ onUnmounted(() => {
 
       <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Profile">
-        <h3>Profile</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Location</dt>
-            <dd>{{ selectedBeneficiary.region }} · {{ selectedBeneficiary.district }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Borrower status</dt>
-            <dd>{{ selectedBeneficiary.borrowerStatus }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Verification</dt>
-            <dd>
-              <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(selectedBeneficiary.verificationStatus)}`">
-                {{ selectedBeneficiary.verificationStatus }}
-              </span>
-            </dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Last updated</dt>
-            <dd>{{ selectedBeneficiary.lastUpdated }}</dd>
-          </div>
-        </dl>
-        <dl class="material-detail-list beneficiary-detail-list beneficiary-detail-list--nested">
-          <div class="material-detail-row">
-            <dt>Programme</dt>
-            <dd>{{ selectedBeneficiary.projectParticipation.programme }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Project</dt>
-            <dd>{{ selectedBeneficiary.projectParticipation.project }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Implementation partner</dt>
-            <dd>{{ selectedBeneficiary.projectParticipation.implementationPartner }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Enrolment</dt>
-            <dd>{{ selectedBeneficiary.projectParticipation.enrolmentDate }} · {{ selectedBeneficiary.projectParticipation.participationRole }}</dd>
-          </div>
-        </dl>
+      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Profile and participation">
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Profile">
+          <h3>Profile</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Location</dt>
+              <dd>{{ selectedBeneficiary.region }} · {{ selectedBeneficiary.district }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Borrower status</dt>
+              <dd>{{ selectedBeneficiary.borrowerStatus }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Verification</dt>
+              <dd>
+                <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(selectedBeneficiary.verificationStatus)}`">
+                  {{ selectedBeneficiary.verificationStatus }}
+                </span>
+              </dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Last updated</dt>
+              <dd>{{ selectedBeneficiary.lastUpdated }}</dd>
+            </div>
+          </dl>
+          <dl class="material-detail-list beneficiary-detail-list beneficiary-detail-list--nested">
+            <div class="material-detail-row">
+              <dt>Programme</dt>
+              <dd>{{ selectedBeneficiary.projectParticipation.programme }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Project</dt>
+              <dd>{{ selectedBeneficiary.projectParticipation.project }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Implementation partner</dt>
+              <dd>{{ selectedBeneficiary.projectParticipation.implementationPartner }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Enrolment</dt>
+              <dd>{{ selectedBeneficiary.projectParticipation.enrolmentDate }} · {{ selectedBeneficiary.projectParticipation.participationRole }}</dd>
+            </div>
+          </dl>
+        </section>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Record matching">
-        <h3>Record matching</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Match state</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.matchState ?? 'Not yet reviewed' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Match signals</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.matchSignals ?? 'Awaiting identity review' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Reviewer decision</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.reviewerDecision ?? 'No reviewer decision recorded' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Model target</dt>
-            <dd>mp_BeneficiaryIdentityMatch</dd>
-          </div>
-        </dl>
+      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Beneficiary model">
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Record matching">
+          <h3>Record matching</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Match state</dt>
+              <dd>{{ selectedBeneficiary.identityGovernance?.matchState ?? 'Not yet reviewed' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Match signals</dt>
+              <dd>{{ selectedBeneficiary.identityGovernance?.matchSignals ?? 'Awaiting identity review' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Reviewer decision</dt>
+              <dd>{{ selectedBeneficiary.identityGovernance?.reviewerDecision ?? 'No reviewer decision recorded' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Model target</dt>
+              <dd>mp_BeneficiaryIdentityMatch</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Group/member links">
+          <h3>Group/member links</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Membership type</dt>
+              <dd>{{ selectedBeneficiary.groupMembership?.membershipType ?? 'Not yet modelled' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Members linked</dt>
+              <dd>{{ selectedBeneficiary.groupMembership?.membersLinked ?? 'No member linkage in prototype data' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Status</dt>
+              <dd>{{ selectedBeneficiary.groupMembership?.membershipStatus ?? 'Not modelled' }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Model target</dt>
+              <dd>mp_BeneficiaryGroupMembership</dd>
+            </div>
+          </dl>
+        </section>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Group/member links">
-        <h3>Group/member links</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Membership type</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membershipType ?? 'Not yet modelled' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Members linked</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membersLinked ?? 'No member linkage in prototype data' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Status</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membershipStatus ?? 'Not modelled' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Model target</dt>
-            <dd>mp_BeneficiaryGroupMembership</dd>
-          </div>
-        </dl>
+      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Programme delivery">
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
+          <h3>Finance</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Loan reference</dt>
+              <dd>{{ selectedBeneficiary.finance.loanAccountRef }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Disbursed</dt>
+              <dd>{{ selectedBeneficiary.finance.disbursedAmount }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Outstanding</dt>
+              <dd>{{ selectedBeneficiary.finance.outstandingBalance }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Repayment rate</dt>
+              <dd>{{ selectedBeneficiary.finance.repaymentRate }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Technology">
+          <h3>Technology</h3>
+          <ul class="beneficiary-technology-list">
+            <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
+              <strong>{{ technology.name }}</strong>
+              <span>{{ technology.category }} · {{ technology.adoptionStage }}</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Training">
+          <h3>Training</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Sessions attended</dt>
+              <dd>{{ selectedBeneficiary.trainingSummary.sessionsAttended }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Completion</dt>
+              <dd>{{ selectedBeneficiary.trainingSummary.completionRate }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Latest topic</dt>
+              <dd>{{ selectedBeneficiary.trainingSummary.lastTopic }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Last training</dt>
+              <dd>{{ selectedBeneficiary.trainingSummary.lastTrainingDate }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Outcomes">
+          <h3>Outcomes</h3>
+          <dl class="material-detail-list beneficiary-detail-list">
+            <div class="material-detail-row">
+              <dt>Area under improved practices</dt>
+              <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Yield increase</dt>
+              <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Climate estimate</dt>
+              <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
+            </div>
+          </dl>
+        </section>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Finance">
-        <h3>Finance</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Loan reference</dt>
-            <dd>{{ selectedBeneficiary.finance.loanAccountRef }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Disbursed</dt>
-            <dd>{{ selectedBeneficiary.finance.disbursedAmount }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Outstanding</dt>
-            <dd>{{ selectedBeneficiary.finance.outstandingBalance }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Repayment rate</dt>
-            <dd>{{ selectedBeneficiary.finance.repaymentRate }}</dd>
-          </div>
-        </dl>
-      </section>
+      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Evidence and location">
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Data lineage">
+          <h3>Data lineage</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Latest submission</dt>
+              <dd>{{ selectedBeneficiary.latestSubmission.form }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Reporting period</dt>
+              <dd>{{ selectedBeneficiary.latestSubmission.reportingPeriod }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Completeness</dt>
+              <dd>{{ selectedBeneficiary.latestSubmission.completeness }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Verification state</dt>
+              <dd>{{ selectedBeneficiary.latestSubmission.status }}</dd>
+            </div>
+          </dl>
+          <p class="beneficiary-detail-secondary">
+            Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links through
+            mp_BeneficiarySubmissionLink to the source mp_Submission record.
+          </p>
+        </section>
 
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Technology">
-        <h3>Technology</h3>
-        <ul class="beneficiary-technology-list">
-          <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
-            <strong>{{ technology.name }}</strong>
-            <span>{{ technology.category }} · {{ technology.adoptionStage }}</span>
-          </li>
-        </ul>
-      </section>
-
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Training">
-        <h3>Training</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Sessions attended</dt>
-            <dd>{{ selectedBeneficiary.trainingSummary.sessionsAttended }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Completion</dt>
-            <dd>{{ selectedBeneficiary.trainingSummary.completionRate }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Latest topic</dt>
-            <dd>{{ selectedBeneficiary.trainingSummary.lastTopic }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Last training</dt>
-            <dd>{{ selectedBeneficiary.trainingSummary.lastTrainingDate }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Outcomes">
-        <h3>Outcomes</h3>
-        <dl class="material-detail-list beneficiary-detail-list">
-          <div class="material-detail-row">
-            <dt>Area under improved practices</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Yield increase</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Climate estimate</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Data lineage">
-        <h3>Data lineage</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Latest submission</dt>
-            <dd>{{ selectedBeneficiary.latestSubmission.form }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Reporting period</dt>
-            <dd>{{ selectedBeneficiary.latestSubmission.reportingPeriod }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Completeness</dt>
-            <dd>{{ selectedBeneficiary.latestSubmission.completeness }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Verification state</dt>
-            <dd>{{ selectedBeneficiary.latestSubmission.status }}</dd>
-          </div>
-        </dl>
-        <p class="beneficiary-detail-secondary">
-          Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links through
-          mp_BeneficiarySubmissionLink to the source mp_Submission record.
-        </p>
-      </section>
-
-      <section class="material-detail-section beneficiary-detail-section beneficiary-detail-section--accented" aria-label="Location history">
-        <h3>Location history</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Current location</dt>
-            <dd>{{ selectedBeneficiary.locationHistory?.currentLocation ?? `${selectedBeneficiary.region} · ${selectedBeneficiary.district}` }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Source</dt>
-            <dd>{{ selectedBeneficiary.locationHistory?.source ?? selectedBeneficiary.latestSubmission.dataSource }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Effective from</dt>
-            <dd>{{ selectedBeneficiary.locationHistory?.effectiveFrom ?? selectedBeneficiary.projectParticipation.enrolmentDate }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>History state</dt>
-            <dd>{{ selectedBeneficiary.locationHistory?.historyState ?? 'Current profile location' }}</dd>
-          </div>
-        </dl>
-        <p class="beneficiary-detail-secondary">
-          Production location changes are stored in mp_BeneficiaryLocationHistory so dashboard filters can use the current location without losing historical evidence.
-        </p>
+        <section class="material-detail-section beneficiary-detail-section" aria-label="Location history">
+          <h3>Location history</h3>
+          <dl class="material-detail-list beneficiary-detail-grid">
+            <div class="material-detail-row">
+              <dt>Current location</dt>
+              <dd>{{ selectedBeneficiary.locationHistory?.currentLocation ?? `${selectedBeneficiary.region} · ${selectedBeneficiary.district}` }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Source</dt>
+              <dd>{{ selectedBeneficiary.locationHistory?.source ?? selectedBeneficiary.latestSubmission.dataSource }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>Effective from</dt>
+              <dd>{{ selectedBeneficiary.locationHistory?.effectiveFrom ?? selectedBeneficiary.projectParticipation.enrolmentDate }}</dd>
+            </div>
+            <div class="material-detail-row">
+              <dt>History state</dt>
+              <dd>{{ selectedBeneficiary.locationHistory?.historyState ?? 'Current profile location' }}</dd>
+            </div>
+          </dl>
+          <p class="beneficiary-detail-secondary">
+            Production location changes are stored in mp_BeneficiaryLocationHistory so dashboard filters can use the current location without losing historical evidence.
+          </p>
+        </section>
       </section>
 
       <details class="material-detail-section beneficiary-detail-section beneficiary-detail-section--technical" aria-label="Technical mapping">
@@ -1197,27 +1205,33 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.beneficiary-detail-section {
+.beneficiary-detail-segment {
   position: relative;
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
   overflow: hidden;
   border: 1px solid var(--m3-outline);
-  border-radius: 16px;
-  background: var(--m3-surface-container);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--m3-surface-container) 68%, #FFFFFF);
 }
 
-.beneficiary-detail-section--accented {
-  padding-left: 18px;
-}
-
-.beneficiary-detail-section--accented::before {
+.beneficiary-detail-segment--accented::before {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
   background: linear-gradient(180deg, #34A853, var(--m3-primary));
   content: "";
+}
+
+.beneficiary-detail-section {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--m3-outline) 78%, #FFFFFF);
+  border-radius: 16px;
+  background: var(--m3-surface-container);
 }
 
 .beneficiary-detail-section h3 {

@@ -39,16 +39,23 @@ assertIncludes(viewSource, 'class="beneficiary-detail-tags"', 'Beneficiary detai
 assertIncludes(viewSource, 'class="material-detail-surface beneficiary-detail-drawer"', 'Beneficiary detail drawer must use the shared Material detail surface abstraction.');
 assertIncludes(viewSource, 'class="material-detail-header beneficiary-detail-header beneficiary-detail-header--structured"', 'Beneficiary detail header must use the shared Material detail header abstraction.');
 assertIncludes(viewSource, 'class="material-detail-section beneficiary-detail-section"', 'Beneficiary detail sections must use the shared Material detail section abstraction.');
+assertIncludes(viewSource, 'class="beneficiary-detail-segment beneficiary-detail-segment--accented"', 'Beneficiary detail drawer must group related cards into accented segment surfaces.');
 assertIncludes(viewSource, 'class="material-detail-list beneficiary-detail-grid"', 'Beneficiary detail grids must use the shared Material detail list abstraction.');
 assertIncludes(viewSource, 'class="material-detail-row"', 'Beneficiary detail fields must use the shared Material detail row abstraction.');
 assertIncludes(viewSource, 'aria-label="Beneficiary identity summary"', 'Beneficiary detail identity tags must be labelled for assistive technology.');
+for (const segment of ['Profile and participation', 'Beneficiary model', 'Programme delivery', 'Evidence and location']) {
+  assertIncludes(viewSource, `aria-label="${segment}"`, `Beneficiary detail drawer must group detail cards under the ${segment} segment.`);
+}
 for (const heading of ['Profile', 'Record matching', 'Group/member links', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Location history']) {
   assertPattern(viewSource, new RegExp(`<h3>${heading}</h3>`), `Beneficiary detail drawer must include the ${heading} section.`);
 }
 
 assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical mapping must be hidden behind a compact disclosure summary.');
 assertIncludes(viewSource, 'beneficiary-detail-section--technical[open] summary::after', 'Technical mapping disclosure must expose open/closed state text.');
-assertIncludes(viewSource, 'beneficiary-detail-section--accented::before', 'Beneficiary drawer section cards must have a scoped left accent rail.');
+assertIncludes(viewSource, 'beneficiary-detail-segment--accented::before', 'Beneficiary drawer segment surfaces must have a scoped left accent rail.');
+if (viewSource.includes('beneficiary-detail-section--accented')) {
+  throw new Error('Beneficiary detail accent rails must be applied to grouped segments, not individual section cards.');
+}
 if (viewSource.includes('<h3>Technical Dataverse mapping</h3>')) {
   throw new Error('Technical Dataverse mapping must not remain as an always-visible drawer section heading.');
 }
