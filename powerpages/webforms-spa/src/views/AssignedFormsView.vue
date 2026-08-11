@@ -33,6 +33,7 @@ import { computed, defineAsyncComponent, defineComponent, h, nextTick, onMounted
 import TacatdpDashboardPage from '../components/dashboard/TacatdpDashboardPage.vue';
 import { draftStore, type LocalDraft } from '../offline/drafts';
 import { PowerPagesApiClient } from '../powerpages-api/client';
+import BeneficiariesView from './BeneficiariesView.vue';
 import type {
   AssignFormAccessResult,
   AccessUserSummary,
@@ -52,11 +53,11 @@ import type {
 } from '../powerpages-api/types';
 import { measureAsync } from '../performance';
 
-type AppView = 'dashboard' | 'workspace' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
+type AppView = 'dashboard' | 'workspace' | 'projects' | 'beneficiaries' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
 type FormSection = 'summary' | 'data' | 'exports' | 'powerbi';
 type AccessSection = 'users' | 'add' | 'roles' | 'activity' | 'configuration';
 type AccessChangeAction = 'email' | 'role' | 'suspend' | 'reactivate';
-type RouteIntent = 'dashboard' | 'projects' | 'reporting' | 'access' | 'system-activity';
+type RouteIntent = 'dashboard' | 'projects' | 'beneficiaries' | 'reporting' | 'access' | 'system-activity';
 type SystemActivitySection = 'health' | 'events' | 'onboarding' | 'submissions' | 'integrations';
 
 interface AccessActivityEvent {
@@ -640,6 +641,7 @@ const selectedProject = computed(() => projectWorkspaces.value.find((project) =>
 const shellPageTitle = computed(() => {
   if (activeView.value === 'dashboard') return 'Dashboard';
   if (activeView.value === 'workspace') return 'Workspace';
+  if (activeView.value === 'beneficiaries') return 'Beneficiaries';
   if (activeView.value === 'access') return 'User & Access';
   if (activeView.value === 'system-activity') return 'System Activity';
   if (activeView.value === 'reporting') return 'Reporting';
@@ -650,7 +652,7 @@ const shellPageTitle = computed(() => {
 });
 const shellPageEyebrow = computed(() => {
   if (activeView.value === 'access' || activeView.value === 'system-activity') return 'Administration';
-  if (activeView.value === 'reporting' || activeView.value === 'roadmap') return 'MEL platform';
+  if (activeView.value === 'reporting' || activeView.value === 'roadmap' || activeView.value === 'beneficiaries') return 'MEL platform';
   if (activeView.value === 'records') return 'Project';
   if (activeView.value === 'runner') return runnerTitle.value;
   if (activeView.value === 'workspace') return 'Field operations';
@@ -1144,6 +1146,14 @@ function backToProjects() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function openBeneficiaries() {
+  postSubmitMessage.value = '';
+  accessRouteDenied.value = false;
+  activeView.value = 'beneficiaries';
+  mobileNavOpen.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 async function openReporting() {
   activeView.value = 'reporting';
   mobileNavOpen.value = false;
@@ -1202,6 +1212,9 @@ function routeIntentFromHash(): RouteIntent | null {
   if (route === 'system-activity' || route === 'activity') {
     return 'system-activity';
   }
+  if (route === 'beneficiaries') {
+    return 'beneficiaries';
+  }
   if (route === 'dashboard' || route === 'projects' || route === 'reporting' || route === 'access') {
     return route;
   }
@@ -1223,6 +1236,10 @@ async function applyRouteIntent(intent: RouteIntent | null) {
   }
   if (intent === 'projects') {
     backToProjects();
+    return;
+  }
+  if (intent === 'beneficiaries') {
+    openBeneficiaries();
     return;
   }
   if (intent === 'dashboard') {
@@ -2377,7 +2394,13 @@ onUnmounted(() => {
             <span>Projects / Loans</span>
             <span class="action-tooltip" role="tooltip">Projects / Loans</span>
           </button>
-          <button class="managed-nav-item" type="button" aria-label="Beneficiaries" @click="openRoadmapModule('Beneficiaries')">
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'beneficiaries' }"
+            type="button"
+            aria-label="Beneficiaries"
+            @click="openBeneficiaries"
+          >
             <Users class="managed-nav-item__icon" aria-hidden="true" />
             <span>Beneficiaries</span>
             <span class="action-tooltip" role="tooltip">Beneficiaries</span>
@@ -2533,6 +2556,10 @@ onUnmounted(() => {
         <div class="managed-workspace-body">
     <template v-if="activeView === 'dashboard'">
       <TacatdpDashboardPage />
+    </template>
+
+    <template v-else-if="activeView === 'beneficiaries'">
+      <BeneficiariesView />
     </template>
 
     <template v-else-if="activeView === 'workspace'">
