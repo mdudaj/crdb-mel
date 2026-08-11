@@ -9,6 +9,7 @@
     "build:mshirika-access": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true VITE_TACATDP_ODK_RUNTIME_ENABLED=false vite build",
     "build:mshirika-runtime": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true vite build",
     "preview": "vite preview",
+    "test:visual": "node ../../scripts/validate-dashboard-visual-spacing.mjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

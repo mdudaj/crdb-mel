@@ -13,11 +13,9 @@ import {
   Users,
 } from '@lucide/vue';
 import { computed, defineAsyncComponent, type Component } from 'vue';
-import type { ComposeOption } from 'echarts/core';
-import type { BarSeriesOption, LineSeriesOption, MapSeriesOption, PieSeriesOption } from 'echarts/charts';
-import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import programImpactFarmer from '../../assets/dashboard/program-impact-farmer.png';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
+import { buildDisbursementTrendOption, type DashboardChartOption } from './chartOptions';
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
 import KpiCard from './KpiCard.vue';
@@ -32,18 +30,6 @@ import {
   technologyFinancing,
   type KpiMetric,
 } from '../../prototype/tacatdpDashboardData';
-
-type DashboardChartOption = ComposeOption<
-  | BarSeriesOption
-  | LineSeriesOption
-  | MapSeriesOption
-  | PieSeriesOption
-  | GridComponentOption
-  | LegendComponentOption
-  | TitleComponentOption
-  | TooltipComponentOption
-  | VisualMapComponentOption
->;
 
 type TanzaniaAdm1Feature = {
   properties?: {
@@ -165,22 +151,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   }],
 }));
 
-const disbursementTrendOption = computed<DashboardChartOption>(() => ({
-  tooltip: { trigger: 'axis', valueFormatter: (value) => `TZS ${value}B` },
-  grid: { left: 56, right: 18, top: 20, bottom: 28 },
-  xAxis: { type: 'category', data: disbursementTrend.map((point) => point.month), boundaryGap: false },
-  yAxis: { type: 'value', axisLabel: { formatter: '{value}B' }, splitLine: { lineStyle: { color: '#E3E8E5' } } },
-  series: [{
-    type: 'line',
-    smooth: true,
-    symbolSize: 8,
-    data: disbursementTrend.map((point) => point.value),
-    label: { show: true, formatter: ({ dataIndex }) => disbursementTrend[dataIndex].label, color: '#064E3B' },
-    lineStyle: { color: '#15803D', width: 3 },
-    itemStyle: { color: '#15803D' },
-    areaStyle: { color: 'rgba(21, 128, 61, 0.14)' },
-  }],
-}));
+const disbursementTrendOption = computed<DashboardChartOption>(() => buildDisbursementTrendOption(disbursementTrend));
 
 const loanPerformanceOption = computed<DashboardChartOption>(() => ({
   title: {
