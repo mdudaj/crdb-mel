@@ -94,7 +94,6 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
     <SurfaceCard as="section" class="beneficiary-list" aria-labelledby="beneficiary-list-title">
       <header class="beneficiary-list__header">
         <div>
-          <p class="beneficiaries-eyebrow">Material list surface</p>
           <h2 id="beneficiary-list-title">Beneficiary records</h2>
           <p>Prototype data only. These figures are not official CRDB Bank or Green Climate Fund statistics.</p>
         </div>
