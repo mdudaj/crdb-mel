@@ -26,7 +26,7 @@ PARENT_PAGE_ID = "60efc37d-aded-4014-912d-8a1cdefa876d"
 PUBLISHING_STATE_ID = "357decb2-7d20-468f-9898-1da7459f66b9"
 WEBFILE_NAMESPACE = uuid.UUID("b3107b66-8078-4bfe-bd96-e84ad7e46111")
 ANNOTATION_NAMESPACE = uuid.UUID("d2e9a15c-80fb-4828-b8b7-4e8646df75a8")
-BUILD_MARKER = "tacatdp-dashboard-20260811-014"
+BUILD_MARKER = "tacatdp-dashboard-20260811-015"
 
 
 def fail(message: str) -> None:
