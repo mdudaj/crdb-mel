@@ -37,7 +37,7 @@ export function buildDisbursementTrendOption(disbursementTrend: TrendPoint[]): D
     xAxis: {
       type: 'category',
       data: disbursementTrend.map((point) => point.month),
-      boundaryGap: false,
+      boundaryGap: true,
     },
     yAxis: {
       type: 'value',

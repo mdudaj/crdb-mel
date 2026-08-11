@@ -34,6 +34,7 @@ if (pointLabelDistance < 12) {
 }
 
 assertIncludes('containLabel: true', 'Disbursement Trend grid must keep containLabel enabled so axis labels are reserved inside layout.');
+assertIncludes('boundaryGap: true', 'Disbursement Trend x-axis must keep boundaryGap enabled so the first point label does not sit on the y-axis gutter.');
 assertIncludes("name: 'TZS, billions'", 'Disbursement Trend must show the unit once as the y-axis name.');
 assertIncludes("formatter: '{value}'", 'Disbursement Trend y-axis tick labels must remain plain numbers; do not repeat the unit on every tick.');
 assertIncludes('margin: 12', 'Disbursement Trend y-axis labels must keep a margin from the plotting area.');
