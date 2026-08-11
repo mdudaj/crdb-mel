@@ -179,6 +179,47 @@ The downloaded `index-_YAHDKxX.mjs` bundle passed `node --check`.
 
 Deployment note: with PAC 2.9.3, the successful upload used a clean fresh Enhanced-model package. The overlay replaced the fresh package's existing Home copy files in place and copied only the required Home-referenced web files. Do not copy the repository `web-pages/home` folder wholesale into a fresh package, because the fresh download may use `content-pages/Home.en-US...` while the repository mirror uses `content-pages/en-US/...`; mixing both creates duplicate or primary-key-missing webpage records.
 
+## Mshirika dashboard legend layout preview
+
+On 2026-08-11, the dashboard legend layout refinement was deployed to Mshirika for visual preview.
+
+Revision scope:
+
+- moved the Loan Portfolio by Type doughnut further left and reduced its radius to create more space between the doughnut and legend;
+- pushed the Loan Portfolio legend further right/down;
+- aligned Loan Performance centre text and doughnut centre through native ECharts title and series geometry;
+- shifted the regional map geometry left to preserve a more readable right-side disbursed legend lane.
+
+Target:
+
+- Environment: `PowerPagesDeveloper-070926-125720`
+- Environment URL: `https://orga3cf4b37.crm4.dynamics.com/`
+- Website: `TACATDP Monitoring Tool`
+- Website ID: `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`
+- PAC user: `john.mduda@mshirikacorp.onmicrosoft.com`
+- Source branch/commit: `prototype-next-delivery` / `576805f`
+
+Build and package marker:
+
+```text
+tacatdp-dashboard-20260811-005
+```
+
+Result:
+
+```text
+Power Pages website upload succeeded in 222.79 secs.
+```
+
+Post-upload verification downloaded the site again and confirmed the deployed Home fragments reference:
+
+```text
+/assets/index-BslHF5sX.mjs?v=tacatdp-dashboard-20260811-005
+/assets/index-Ch-JYMmt.css?v=tacatdp-dashboard-20260811-005
+```
+
+The downloaded `index-BslHF5sX.mjs` bundle passed `node --check`.
+
 ## CRDB dashboard chart spacing revision
 
 On 2026-08-11, the dashboard chart spacing revision was deployed directly to CRDB after device-code PAC authentication with the delegated Denis Muroba profile.
