@@ -16,6 +16,7 @@ import { computed, defineAsyncComponent, type Component } from 'vue';
 import type { ComposeOption } from 'echarts/core';
 import type { BarSeriesOption, LineSeriesOption, MapSeriesOption, PieSeriesOption } from 'echarts/charts';
 import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
+import programImpactFarmer from '../../assets/dashboard/program-impact-farmer.png';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
@@ -43,6 +44,10 @@ type DashboardChartOption = ComposeOption<
   | TooltipComponentOption
   | VisualMapComponentOption
 >;
+
+const programImpactFarmerStyle = {
+  backgroundImage: `url(${programImpactFarmer})`,
+};
 
 type TanzaniaAdm1Feature = {
   properties?: {
@@ -478,46 +483,7 @@ function iconFor(metric: KpiMetric) {
 
       <DashboardCard :span="6" variant="goal" title="Program Impact Goal">
         <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
-        <svg class="goal-illustration" viewBox="0 0 420 168" preserveAspectRatio="none" aria-hidden="true">
-          <path class="goal-sky-hill goal-sky-hill--back" d="M0 72c46-28 86-30 130-2 37 24 72 24 111 0 45-28 89-28 137 1 17 10 31 18 42 21v76H0Z" />
-          <path class="goal-sky-hill goal-sky-hill--mid" d="M0 96c54-34 104-36 153-2 39 27 77 27 121-1 43-28 88-26 146 8v67H0Z" />
-          <path class="goal-sky-hill goal-sky-hill--front" d="M0 124c45-20 91-21 139-2 48 20 96 20 146 0 47-19 87-18 135 5v41H0Z" />
-          <g class="goal-field-rows">
-            <path d="M0 146c74-13 146-13 216 0 70 13 138 13 204 0" />
-            <path d="M0 158c80-12 152-12 219 0 67 12 134 12 201 0" />
-          </g>
-          <g class="goal-plants">
-            <path d="M16 168v-30m0 14c-9-7-13-15-12-25 10 2 16 9 18 20m-6 5c9-7 15-15 17-25 7 8 6 17-3 27" />
-            <path d="M54 168v-34m0 15c-10-8-15-17-14-28 12 3 19 11 21 22m-7 7c10-8 17-18 20-29 8 9 6 20-5 31" />
-            <path d="M96 168v-31m0 14c-8-7-13-15-12-25 10 2 16 9 18 20m-6 5c9-7 15-15 17-25 7 8 6 17-3 27" />
-            <path d="M139 168v-38m0 17c-12-9-18-20-17-33 14 4 22 13 24 27m-7 6c11-9 19-20 22-33 9 10 7 23-6 36" />
-            <path d="M181 168v-32m0 15c-10-7-15-16-14-27 12 3 18 11 20 22m-6 5c9-7 16-16 19-27 7 9 5 19-5 29" />
-            <path d="M226 168v-35m0 16c-10-8-16-18-15-30 13 3 20 12 22 24m-7 6c11-8 18-18 21-30 8 10 6 21-6 32" />
-            <path d="M379 168v-34m0 15c-10-8-15-17-14-28 12 3 19 11 21 22m-7 7c10-8 17-18 20-29 8 9 6 20-5 31" />
-          </g>
-          <g class="goal-person goal-person--woman">
-            <path class="goal-person__hat" d="M236 60c9-11 28-11 39 0l16 4c-22 8-48 8-70 0Z" />
-            <circle cx="256" cy="72" r="8" />
-            <path class="goal-person__body" d="M245 82c15-5 29 2 38 18l-13 29h-39Z" />
-            <path class="goal-person__arm" d="M247 94c-13 11-23 20-33 29" />
-            <path class="goal-person__arm" d="M276 98c11 8 20 17 28 27" />
-            <path class="goal-person__leg" d="M244 127l-15 35" />
-            <path class="goal-person__leg" d="M269 128l10 34" />
-            <path class="goal-tool" d="M210 106l78 47" />
-            <path class="goal-tool" d="M201 101l17 10" />
-          </g>
-          <g class="goal-person goal-person--man">
-            <path class="goal-person__hat" d="M316 52c10-12 29-12 42 0l18 4c-26 8-54 8-78 0Z" />
-            <circle cx="337" cy="65" r="8" />
-            <path class="goal-person__body" d="M326 76c16-4 30 2 40 17l-11 27c-14-11-27-16-42-13Z" />
-            <path class="goal-person__arm" d="M321 91c-14 9-25 19-37 33" />
-            <path class="goal-person__arm" d="M357 93c13 9 22 20 30 33" />
-            <path class="goal-person__leg" d="M327 116l-18 46" />
-            <path class="goal-person__leg" d="M354 118l13 44" />
-            <path class="goal-tool" d="M287 84l93 78" />
-            <path class="goal-tool" d="M278 78l17 14" />
-          </g>
-        </svg>
+        <div class="goal-illustration" :style="programImpactFarmerStyle" aria-hidden="true"></div>
       </DashboardCard>
     </section>
   </DashboardPage>
@@ -788,6 +754,11 @@ a,
   background: #F8FBF9;
 }
 
+.training-grid div:last-child {
+  justify-items: end;
+  text-align: right;
+}
+
 .training-value-with-icon {
   display: inline-flex !important;
   align-items: center;
@@ -844,65 +815,9 @@ a,
   height: 154px;
   margin: -12px -16px -16px;
   align-self: end;
-}
-
-.goal-sky-hill--back { fill: #D8F0DD; }
-.goal-sky-hill--mid { fill: #BFE5C8; }
-.goal-sky-hill--front { fill: #9ED4AE; }
-
-.goal-field-rows path {
-  fill: none;
-  stroke: rgba(31, 122, 49, 0.22);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3;
-}
-
-.goal-plants path {
-  fill: none;
-  stroke: #1F7A31;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.2;
-}
-
-.goal-plants path:nth-child(even) {
-  stroke: #43A047;
-}
-
-.goal-person {
-  fill: #0F5C36;
-}
-
-.goal-person--woman {
-  fill: #146C43;
-}
-
-.goal-person__hat {
-  fill: #1F7A31;
-}
-
-.goal-person__body {
-  fill: currentColor;
-}
-
-.goal-person__arm,
-.goal-person__leg,
-.goal-tool {
-  fill: none;
-  stroke: #064E3B;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 4;
-}
-
-.goal-person--woman .goal-person__arm,
-.goal-person--woman .goal-person__leg {
-  stroke: #146C43;
-}
-
-.goal-tool {
-  stroke-width: 3.4;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: 136% auto;
 }
 
 @media (max-width: 1280px) {

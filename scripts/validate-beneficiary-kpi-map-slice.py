@@ -79,7 +79,7 @@ def validate_dashboard_component() -> None:
         "Recent Data Submissions",
         "Program Impact Goal",
         "Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.",
-        "goal-person",
+        "program-impact-farmer.png",
         "Prototype dashboard using demonstration data",
         "May 1 – May 31, 2025",
     ):
