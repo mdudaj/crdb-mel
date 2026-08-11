@@ -2922,15 +2922,18 @@ onUnmounted(() => {
         {{ reportError }}
       </section>
 
-      <section class="workspace-panel" aria-labelledby="reporting-projects-title">
-        <header class="section-heading">
+      <section class="reporting-list-surface" aria-labelledby="reporting-projects-title">
+        <header class="reporting-list-header">
           <div>
             <p class="eyebrow">Project reporting</p>
             <h2 id="reporting-projects-title">Reporting workspaces</h2>
+            <p>Open assigned project reporting areas for data review, governed CSV exports, and Power BI setup guidance.</p>
           </div>
+          <span class="reporting-list-count">{{ reportingProjectRows.length }} workspace{{ reportingProjectRows.length === 1 ? '' : 's' }}</span>
         </header>
-        <div v-if="reportingProjectRows.length > 0" class="responsive-table" role="region" aria-label="Reporting workspace table" tabindex="0">
+        <div v-if="reportingProjectRows.length > 0" class="responsive-table reporting-table" role="region" aria-label="Reporting workspace table" tabindex="0">
           <table>
+            <caption class="sr-only">Reporting workspaces with project name, form count, projected record count, last updated date, projection status, and actions.</caption>
             <thead>
               <tr>
                 <th scope="col">Project</th>
@@ -2942,13 +2945,13 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in reportingProjectRows" :key="`reporting:${row.project.id}`">
+              <tr v-for="row in reportingProjectRows" :key="`reporting:${row.project.id}`" tabindex="0">
                 <td>
                   <strong>{{ row.project.name }}</strong>
                   <span>{{ row.project.description }}</span>
                 </td>
-                <td>{{ row.forms }}</td>
-                <td>{{ row.records }}</td>
+                <td class="reporting-table__number">{{ row.forms }}</td>
+                <td class="reporting-table__number">{{ row.records }}</td>
                 <td>{{ formatDate(row.lastUpdated) }}</td>
                 <td><span class="state-chip" :class="reportError ? 'state-chip--warning' : 'state-chip--success'">{{ row.projectionStatus }}</span></td>
                 <td>
@@ -2971,7 +2974,7 @@ onUnmounted(() => {
             </tbody>
           </table>
         </div>
-        <section v-else class="empty-state empty-state--inline" aria-label="No reporting workspaces">
+        <section v-else class="empty-state empty-state--inline reporting-empty-state" aria-label="No reporting workspaces">
           <h2>No reporting workspaces</h2>
           <p>Project reporting will appear after assignments are available.</p>
         </section>

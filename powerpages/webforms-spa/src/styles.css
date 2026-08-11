@@ -1576,6 +1576,67 @@ body {
   box-shadow: none;
 }
 
+.reporting-list-surface {
+  display: grid;
+  gap: var(--mt-space-4);
+  min-width: 0;
+  padding: var(--mt-space-4);
+  border: 1px solid var(--mt-color-border);
+  border-radius: var(--mt-radius-md);
+  background: var(--mt-color-surface);
+  box-shadow: var(--mt-shadow-soft);
+}
+
+.reporting-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mt-space-4);
+  align-items: flex-start;
+}
+
+.reporting-list-header h2,
+.reporting-list-header p {
+  margin: 0;
+}
+
+.reporting-list-header p:not(.eyebrow) {
+  max-width: 760px;
+  margin-top: var(--mt-space-1);
+  color: var(--mt-color-text-muted);
+  line-height: 1.5;
+}
+
+.reporting-list-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: 999px;
+  background: var(--mt-color-surface-muted);
+  color: var(--mt-color-primary-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.reporting-table tbody tr:hover,
+.reporting-table tbody tr:focus-visible {
+  background: var(--mt-color-primary-soft);
+  outline: none;
+}
+
+.reporting-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reporting-empty-state {
+  margin: 0;
+  box-shadow: none;
+}
+
 .compact-facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4329,6 +4390,7 @@ body {
   .project-command-card,
   .project-list-header,
   .project-card__header,
+  .reporting-list-header,
   .data-card,
   .route-header,
   .route-status-strip,
