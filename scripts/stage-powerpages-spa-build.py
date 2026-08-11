@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 import uuid
 from pathlib import Path
 
@@ -27,6 +28,7 @@ PUBLISHING_STATE_ID = "357decb2-7d20-468f-9898-1da7459f66b9"
 WEBFILE_NAMESPACE = uuid.UUID("b3107b66-8078-4bfe-bd96-e84ad7e46111")
 ANNOTATION_NAMESPACE = uuid.UUID("d2e9a15c-80fb-4828-b8b7-4e8646df75a8")
 BUILD_MARKER = "beneficiary-schema-align-20260811-021"
+PACKAGE_HYGIENE_VALIDATOR = ROOT / "scripts/validate-powerpages-package-hygiene.py"
 
 
 def fail(message: str) -> None:
@@ -134,10 +136,19 @@ def refresh_upload_mirror() -> None:
             upload_metadata.write_text(metadata_for(asset.name))
 
 
+def repair_and_validate_upload_package() -> None:
+    subprocess.run(
+        ["python3", str(PACKAGE_HYGIENE_VALIDATOR), "--repair-manifest"],
+        cwd=ROOT,
+        check=True,
+    )
+
+
 def main() -> None:
     stage_assets()
     update_home_fragments()
     refresh_upload_mirror()
+    repair_and_validate_upload_package()
     print(f"Power Pages SPA build staged with marker {BUILD_MARKER}.")
 
 

@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test:visual": "node ../../scripts/validate-dashboard-visual-spacing.mjs",
     "test:material": "node ../../scripts/validate-dashboard-visual-spacing.mjs && node ../../scripts/validate-beneficiaries-material-list.mjs && node ../../scripts/validate-material-ui-abstractions.mjs && node ../../scripts/validate-users-material-list.mjs && node ../../scripts/validate-users-detail-material-surface.mjs && node ../../scripts/validate-projects-material-list.mjs && node ../../scripts/validate-project-detail-material-surface.mjs && node ../../scripts/validate-secondary-material-surfaces.mjs && node ../../scripts/validate-reporting-material-list.mjs && node ../../scripts/validate-system-activity-material-surface.mjs && node ../../scripts/validate-route-card-accent-scope.mjs && node ../../scripts/validate-dashboard-beneficiary-drillthrough.mjs && node ../../scripts/validate-beneficiary-detail-refinement.mjs",
-    "test:powerpages-assets": "node ../../scripts/verify-powerpages-spa-assets.mjs",
+    "test:powerpages-assets": "node ../../scripts/verify-powerpages-spa-assets.mjs && python3 ../../scripts/validate-powerpages-package-hygiene.py",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
