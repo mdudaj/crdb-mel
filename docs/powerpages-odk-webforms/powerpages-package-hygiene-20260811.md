@@ -41,6 +41,8 @@ It checks:
 
 - deleted-present `adx_webfile` conflicts between `.portalconfig/manifest.yml`
   and `web-files/*.webfile.yml`;
+- empty manifest sections that PAC 2.9.3 can read as a null collection;
+- target environment manifest presence when `--environment-url` is supplied;
 - Home page `/assets/...` references have matching web-file binaries;
 - Home page `/assets/...` references have matching `.webfile.yml` metadata;
 - Home page asset metadata exposes the expected `adx_partialurl`.
@@ -71,7 +73,16 @@ Expected:
 
 - SPA dist assets match the upload package web files.
 - No deleted-present `adx_webfile` conflicts remain.
+- No empty manifest sections remain.
 - Home page JS and CSS references resolve to package files.
+
+Before deploying to a specific environment, validate that the upload package was
+downloaded from that target environment:
+
+```bash
+python3 scripts/validate-powerpages-package-hygiene.py \
+  --environment-url https://orga3cf4b37.crm4.dynamics.com/
+```
 
 Duplicate partial URL warnings for historical localized/date-picker chunks remain
 non-blocking unless a future upload failure proves they affect PAC or runtime

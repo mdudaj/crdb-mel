@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from urllib.parse import urlparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -55,6 +56,14 @@ class WebFileRecord:
             for key in ("adx_name", "adx_partialurl", "filename")
             if (value := self.values.get(key, "")).strip()
         } | {self.binary_path.name.lower()}
+
+
+@dataclass(frozen=True)
+class ManifestSection:
+    entity: str
+    start_line: int
+    end_line: int
+    has_records: bool
 
 
 def fail(message: str) -> None:
@@ -133,6 +142,44 @@ def parse_manifest(path: Path) -> list[ManifestRecord]:
     return records
 
 
+def parse_manifest_sections(path: Path) -> list[ManifestSection]:
+    if not path.exists():
+        fail(f"manifest not found: {path}")
+
+    lines = path.read_text(encoding="utf-8-sig").splitlines(keepends=True)
+    sections: list[ManifestSection] = []
+    current: dict[str, object] | None = None
+
+    def finish(end_line: int) -> None:
+        nonlocal current
+        if current is None:
+            return
+        sections.append(
+            ManifestSection(
+                entity=str(current["entity"]),
+                start_line=int(current["start_line"]),
+                end_line=end_line,
+                has_records=bool(current["has_records"]),
+            )
+        )
+        current = None
+
+    for index, line in enumerate(lines):
+        if line and not line.startswith((" ", "-")) and line.rstrip().endswith(":"):
+            finish(index)
+            current = {
+                "entity": line.strip()[:-1],
+                "start_line": index,
+                "has_records": False,
+            }
+            continue
+        if current is not None and line.startswith("- "):
+            current["has_records"] = True
+
+    finish(len(lines))
+    return sections
+
+
 def read_webfile_records(web_files: Path) -> list[WebFileRecord]:
     if not web_files.exists():
         fail(f"web-files directory not found: {web_files}")
@@ -149,6 +196,38 @@ def read_webfile_records(web_files: Path) -> list[WebFileRecord]:
             )
         )
     return records
+
+
+def find_empty_manifest_section_issues(package: Path) -> list[str]:
+    manifest = package / ".portalconfig/manifest.yml"
+    return [
+        f"Manifest section {section.entity}: has no records; PAC 2.9.3 can crash on null collection"
+        for section in parse_manifest_sections(manifest)
+        if not section.has_records
+    ]
+
+
+def environment_manifest_name(environment_url_or_host: str) -> str:
+    parsed = urlparse(environment_url_or_host)
+    host = parsed.netloc or parsed.path
+    host = host.strip().strip("/")
+    if not host:
+        fail("--environment-url requires a URL or host")
+    return f"{host}-manifest.yml"
+
+
+def find_environment_manifest_issues(package: Path, environment_url_or_host: str | None) -> list[str]:
+    if not environment_url_or_host:
+        return []
+
+    portal_config = package / ".portalconfig"
+    expected = environment_manifest_name(environment_url_or_host)
+    existing = sorted(path.name for path in portal_config.glob("*-manifest.yml"))
+    if expected not in existing:
+        return [
+            f"Missing target environment manifest {expected}; found {', '.join(existing) or 'none'}"
+        ]
+    return []
 
 
 def find_deleted_present_conflicts(package: Path) -> list[str]:
@@ -224,6 +303,10 @@ def repair_deleted_present_manifest_records(package: Path) -> list[str]:
         for conflict in find_deleted_present_conflicts(package)
     }
     if not conflicting_names:
+        manifest.write_text(
+            remove_empty_manifest_sections("".join(lines)),
+            encoding="utf-8",
+        )
         return []
 
     remove_ranges = [
@@ -240,8 +323,40 @@ def repair_deleted_present_manifest_records(package: Path) -> list[str]:
             keep[index] = False
         removed.append(display_name)
 
-    manifest.write_text("".join(line for index, line in enumerate(lines) if keep[index]), encoding="utf-8")
+    repaired = "".join(line for index, line in enumerate(lines) if keep[index])
+    manifest.write_text(remove_empty_manifest_sections(repaired), encoding="utf-8")
     return removed
+
+
+def remove_empty_manifest_sections(text: str) -> str:
+    lines = text.splitlines(keepends=True)
+    sections: list[tuple[int, int, bool]] = []
+    current: dict[str, object] | None = None
+
+    def finish(end_line: int) -> None:
+        nonlocal current
+        if current is None:
+            return
+        sections.append((int(current["start_line"]), end_line, bool(current["has_records"])))
+        current = None
+
+    for index, line in enumerate(lines):
+        if line and not line.startswith((" ", "-")) and line.rstrip().endswith(":"):
+            finish(index)
+            current = {"start_line": index, "has_records": False}
+            continue
+        if current is not None and line.startswith("- "):
+            current["has_records"] = True
+
+    finish(len(lines))
+    keep = [True] * len(lines)
+    for start, end, has_records in sections:
+        if has_records:
+            continue
+        for index in range(start, end):
+            keep[index] = False
+
+    return "".join(line for index, line in enumerate(lines) if keep[index])
 
 
 def main() -> None:
@@ -257,6 +372,10 @@ def main() -> None:
         action="store_true",
         help="Remove conflicting adx_webfile deleted entries from manifest.yml.",
     )
+    parser.add_argument(
+        "--environment-url",
+        help="Target Dataverse environment URL or host; validates matching .portalconfig/<host>-manifest.yml.",
+    )
     args = parser.parse_args()
     package = args.package.resolve()
     if not package.exists():
@@ -270,10 +389,16 @@ def main() -> None:
                 print(f"- {name}")
 
     conflicts = find_deleted_present_conflicts(package)
+    section_issues = find_empty_manifest_section_issues(package)
+    environment_issues = find_environment_manifest_issues(package, args.environment_url)
     asset_issues = find_home_asset_reference_issues(package)
-    if conflicts or asset_issues:
+    if conflicts or section_issues or environment_issues or asset_issues:
         for conflict in conflicts:
             print(f"Deleted-present conflict: {conflict}")
+        for issue in section_issues:
+            print(f"Manifest structure issue: {issue}")
+        for issue in environment_issues:
+            print(f"Environment manifest issue: {issue}")
         for issue in asset_issues:
             print(f"Asset reference issue: {issue}")
         fail("Power Pages package hygiene validation failed")

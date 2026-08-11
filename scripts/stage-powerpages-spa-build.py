@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import os
 import shutil
 import subprocess
 import uuid
@@ -137,11 +138,10 @@ def refresh_upload_mirror() -> None:
 
 
 def repair_and_validate_upload_package() -> None:
-    subprocess.run(
-        ["python3", str(PACKAGE_HYGIENE_VALIDATOR), "--repair-manifest"],
-        cwd=ROOT,
-        check=True,
-    )
+    command = ["python3", str(PACKAGE_HYGIENE_VALIDATOR), "--repair-manifest"]
+    if environment_url := os.environ.get("POWER_PLATFORM_ENVIRONMENT_URL"):
+        command.extend(["--environment-url", environment_url])
+    subprocess.run(command, cwd=ROOT, check=True)
 
 
 def main() -> None:
