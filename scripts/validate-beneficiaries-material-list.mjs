@@ -42,6 +42,14 @@ assertIncludes(viewSource, '<table class="beneficiary-table" aria-label="Benefic
 assertIncludes(viewSource, '<thead>', 'Beneficiary table must include a table header.');
 assertIncludes(viewSource, '<tbody>', 'Beneficiary table must include a table body.');
 assertPattern(viewSource, /<th scope="col">Beneficiary<\/th>[\s\S]*<th scope="col">Location<\/th>[\s\S]*<th scope="col">Borrower status<\/th>/, 'Beneficiary table must use scoped column headers for scanability.');
+assertIncludes(viewSource, '<th scope="col">Actions</th>', 'Beneficiary table must expose a clear details action column.');
+assertIncludes(viewSource, 'View details', 'Beneficiary records must provide a details action.');
+assertIncludes(viewSource, 'beneficiary-detail-drawer', 'Beneficiary details must open in a dedicated drawer.');
+assertIncludes(viewSource, 'role="dialog"', 'Beneficiary details drawer must use dialog semantics.');
+assertIncludes(viewSource, 'aria-modal="true"', 'Beneficiary details drawer must be marked modal for assistive technology.');
+assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must label values as demonstration data.');
+assertIncludes(viewSource, 'Future Dataverse mapping', 'Beneficiary detail drawer must document the future Dataverse entity mapping.');
+assertIncludes(viewSource, 'beneficiary-detail-scrim', 'Beneficiary detail drawer must provide a scrim close target.');
 assertIncludes(viewSource, 'beneficiary-status-chip', 'Verification status must be rendered as a text status chip.');
 assertIncludes(viewSource, 'Prototype data only', 'Prototype figures must be explicitly labelled as non-official demonstration data.');
 assertIncludes(viewSource, 'No data for the selected filters', 'List must provide an explicit empty state.');
@@ -49,6 +57,13 @@ assertIncludes(viewSource, 'beneficiary-card-list', 'Mobile layout must provide 
 assertPattern(viewSource, /@media \(max-width: 760px\)[\s\S]*\.beneficiary-table-wrap\s*{\s*display: none;/, 'Responsive rule must hide the desktop table on narrow screens.');
 assertPattern(viewSource, /@media \(max-width: 760px\)[\s\S]*\.beneficiary-card-list\s*{\s*display: grid;/, 'Responsive rule must show record cards on narrow screens.');
 assertPattern(dataSource, /export const beneficiaryRecords: BeneficiaryRecord\[] = \[[\s\S]*BEN-/, 'Prototype beneficiary data must live in a separate structured data file.');
+assertIncludes(dataSource, 'projectParticipation', 'Prototype beneficiary entity must include programme participation data.');
+assertIncludes(dataSource, 'finance:', 'Prototype beneficiary entity must include finance snapshot data.');
+assertIncludes(dataSource, 'technologiesFinanced', 'Prototype beneficiary entity must include financed technology relationships.');
+assertIncludes(dataSource, 'trainingSummary', 'Prototype beneficiary entity must include training summary data.');
+assertIncludes(dataSource, 'latestSubmission', 'Prototype beneficiary entity must include latest submission state.');
+assertIncludes(dataSource, 'outcomeSnapshot', 'Prototype beneficiary entity must include monitored outcome data.');
+assertIncludes(dataSource, 'futureDataverseMapping', 'Prototype beneficiary entity must include future Dataverse mapping notes.');
 
 const surfaceCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/ui/SurfaceCard.vue');
 const surfaceCardSource = readFileSync(surfaceCardPath, 'utf8');

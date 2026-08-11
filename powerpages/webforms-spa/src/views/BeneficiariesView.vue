@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Filter, Search, SlidersHorizontal, Users } from '@lucide/vue';
+import { Eye, Filter, Search, SlidersHorizontal, Users, X } from '@lucide/vue';
 import SurfaceCard from '../components/ui/SurfaceCard.vue';
 import { beneficiaryRecords, type BeneficiaryRecord } from '../prototype/beneficiaries';
 
 const searchTerm = ref('');
 const activeRegion = ref('All regions');
 const activeVerification = ref('All statuses');
+const selectedBeneficiaryId = ref('');
 
 const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryRecords.map((record) => record.region))).sort()]);
 const verificationStatuses = ['All statuses', 'Verified', 'Under review', 'Incomplete'];
@@ -24,12 +25,21 @@ const filteredBeneficiaries = computed(() => {
       record.loanType,
       record.technology,
       record.verificationStatus,
+      record.projectParticipation.programme,
+      record.projectParticipation.project,
+      record.projectParticipation.implementationPartner,
+      record.latestSubmission.form,
+      record.latestSubmission.status,
     ].some((value) => value.toLowerCase().includes(search));
     const matchesRegion = activeRegion.value === 'All regions' || record.region === activeRegion.value;
     const matchesVerification = activeVerification.value === 'All statuses' || record.verificationStatus === activeVerification.value;
     return matchesSearch && matchesRegion && matchesVerification;
   });
 });
+
+const selectedBeneficiary = computed(() => (
+  beneficiaryRecords.find((record) => record.id === selectedBeneficiaryId.value) ?? null
+));
 
 const summaryMetrics = computed(() => {
   const activeBorrowers = beneficiaryRecords.filter((record) => record.borrowerStatus === 'Active borrower').length;
@@ -59,6 +69,14 @@ function clearAllFilters() {
   searchTerm.value = '';
   activeRegion.value = 'All regions';
   activeVerification.value = 'All statuses';
+}
+
+function openBeneficiary(record: BeneficiaryRecord) {
+  selectedBeneficiaryId.value = record.id;
+}
+
+function closeBeneficiary() {
+  selectedBeneficiaryId.value = '';
 }
 
 function statusTone(status: BeneficiaryRecord['verificationStatus']) {
@@ -154,10 +172,11 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
               <th scope="col">Training</th>
               <th scope="col">Verification</th>
               <th scope="col">Updated</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="record in filteredBeneficiaries" :key="record.id" tabindex="0">
+            <tr v-for="record in filteredBeneficiaries" :key="record.id" tabindex="0" @dblclick="openBeneficiary(record)">
               <td>
                 <strong>{{ record.name }}</strong>
                 <span>{{ record.id }} · {{ record.category }}</span>
@@ -176,6 +195,12 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
                 </span>
               </td>
               <td>{{ record.lastUpdated }}</td>
+              <td>
+                <button class="beneficiary-row-action" type="button" @click="openBeneficiary(record)">
+                  <Eye aria-hidden="true" />
+                  View details
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -207,9 +232,184 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
               {{ record.verificationStatus }}
             </span>
           </footer>
+          <button class="beneficiary-row-action" type="button" @click="openBeneficiary(record)">
+            <Eye aria-hidden="true" />
+            View details
+          </button>
         </article>
       </div>
     </SurfaceCard>
+
+    <button
+      v-if="selectedBeneficiary"
+      class="beneficiary-detail-scrim"
+      type="button"
+      aria-label="Close beneficiary detail"
+      @click="closeBeneficiary"
+    ></button>
+
+    <aside
+      v-if="selectedBeneficiary"
+      class="beneficiary-detail-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="beneficiary-detail-title"
+    >
+      <header class="beneficiary-detail-header">
+        <div>
+          <p class="beneficiaries-eyebrow">Beneficiary detail</p>
+          <h2 id="beneficiary-detail-title">{{ selectedBeneficiary.name }}</h2>
+          <p>{{ selectedBeneficiary.id }} · {{ selectedBeneficiary.category }}</p>
+        </div>
+        <button class="beneficiary-detail-close" type="button" aria-label="Close beneficiary detail" @click="closeBeneficiary">
+          <X aria-hidden="true" />
+        </button>
+      </header>
+
+      <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the proposed entity shape for prototype review.</p>
+
+      <section class="beneficiary-detail-section" aria-label="Profile summary">
+        <h3>Profile summary</h3>
+        <dl class="beneficiary-detail-grid">
+          <div>
+            <dt>Location</dt>
+            <dd>{{ selectedBeneficiary.region }} · {{ selectedBeneficiary.district }}</dd>
+          </div>
+          <div>
+            <dt>Borrower status</dt>
+            <dd>{{ selectedBeneficiary.borrowerStatus }}</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>
+              <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(selectedBeneficiary.verificationStatus)}`">
+                {{ selectedBeneficiary.verificationStatus }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>{{ selectedBeneficiary.lastUpdated }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Programme participation">
+        <h3>Programme participation</h3>
+        <dl class="beneficiary-detail-list">
+          <div>
+            <dt>Programme</dt>
+            <dd>{{ selectedBeneficiary.projectParticipation.programme }}</dd>
+          </div>
+          <div>
+            <dt>Project</dt>
+            <dd>{{ selectedBeneficiary.projectParticipation.project }}</dd>
+          </div>
+          <div>
+            <dt>Implementation partner</dt>
+            <dd>{{ selectedBeneficiary.projectParticipation.implementationPartner }}</dd>
+          </div>
+          <div>
+            <dt>Enrolment</dt>
+            <dd>{{ selectedBeneficiary.projectParticipation.enrolmentDate }} · {{ selectedBeneficiary.projectParticipation.participationRole }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Finance snapshot">
+        <h3>Finance snapshot</h3>
+        <dl class="beneficiary-detail-grid">
+          <div>
+            <dt>Loan reference</dt>
+            <dd>{{ selectedBeneficiary.finance.loanAccountRef }}</dd>
+          </div>
+          <div>
+            <dt>Disbursed</dt>
+            <dd>{{ selectedBeneficiary.finance.disbursedAmount }}</dd>
+          </div>
+          <div>
+            <dt>Outstanding</dt>
+            <dd>{{ selectedBeneficiary.finance.outstandingBalance }}</dd>
+          </div>
+          <div>
+            <dt>Repayment rate</dt>
+            <dd>{{ selectedBeneficiary.finance.repaymentRate }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Technologies financed">
+        <h3>Technologies financed</h3>
+        <ul class="beneficiary-technology-list">
+          <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
+            <strong>{{ technology.name }}</strong>
+            <span>{{ technology.category }} · {{ technology.adoptionStage }}</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Training and latest submission">
+        <h3>Training and data submission</h3>
+        <dl class="beneficiary-detail-grid">
+          <div>
+            <dt>Sessions attended</dt>
+            <dd>{{ selectedBeneficiary.trainingSummary.sessionsAttended }}</dd>
+          </div>
+          <div>
+            <dt>Completion</dt>
+            <dd>{{ selectedBeneficiary.trainingSummary.completionRate }}</dd>
+          </div>
+          <div>
+            <dt>Latest topic</dt>
+            <dd>{{ selectedBeneficiary.trainingSummary.lastTopic }}</dd>
+          </div>
+          <div>
+            <dt>Submission</dt>
+            <dd>{{ selectedBeneficiary.latestSubmission.status }} · {{ selectedBeneficiary.latestSubmission.completeness }}</dd>
+          </div>
+        </dl>
+        <p class="beneficiary-detail-secondary">
+          {{ selectedBeneficiary.latestSubmission.form }} · {{ selectedBeneficiary.latestSubmission.reportingPeriod }} ·
+          {{ selectedBeneficiary.latestSubmission.dataSource }}
+        </p>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Outcome snapshot">
+        <h3>Outcome snapshot</h3>
+        <dl class="beneficiary-detail-list">
+          <div>
+            <dt>Area under improved practices</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
+          </div>
+          <div>
+            <dt>Yield increase</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
+          </div>
+          <div>
+            <dt>Climate estimate</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Future Dataverse mapping">
+        <h3>Future Dataverse mapping</h3>
+        <dl class="beneficiary-detail-list">
+          <div>
+            <dt>Target table</dt>
+            <dd>{{ selectedBeneficiary.futureDataverseMapping.table }}</dd>
+          </div>
+          <div>
+            <dt>Record ID</dt>
+            <dd>{{ selectedBeneficiary.futureDataverseMapping.recordId }}</dd>
+          </div>
+          <div>
+            <dt>Relationship notes</dt>
+            <dd>{{ selectedBeneficiary.futureDataverseMapping.relationshipNotes }}</dd>
+          </div>
+        </dl>
+      </section>
+    </aside>
   </section>
 </template>
 
@@ -278,6 +478,8 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 }
 
 .beneficiaries-hero__icon svg,
+.beneficiary-row-action svg,
+.beneficiary-detail-close svg,
 .beneficiary-filter-button svg,
 .beneficiary-search__field svg,
 .beneficiary-empty-state svg {
@@ -389,7 +591,9 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 .beneficiary-filter select:focus-visible,
 .beneficiary-filter-button:focus-visible,
 .beneficiary-active-filters button:focus-visible,
-.beneficiary-table tbody tr:focus-visible {
+.beneficiary-table tbody tr:focus-visible,
+.beneficiary-row-action:focus-visible,
+.beneficiary-detail-close:focus-visible {
   outline: 3px solid rgba(21, 128, 61, 0.24);
   outline-offset: 2px;
 }
@@ -441,7 +645,7 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 
 .beneficiary-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1240px;
   border-collapse: collapse;
   color: var(--m3-on-surface);
   font-size: 0.84rem;
@@ -476,6 +680,28 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 .beneficiary-table td strong,
 .beneficiary-table td span {
   display: block;
+}
+
+.beneficiary-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #B7D6BF;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: var(--m3-primary-dark);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.beneficiary-row-action:hover {
+  background: #EAF7EE;
 }
 
 .beneficiary-table td span {
@@ -529,6 +755,145 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 
 .beneficiary-card-list {
   display: none;
+}
+
+.beneficiary-detail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  border: 0;
+  background: rgba(6, 78, 59, 0.22);
+  cursor: pointer;
+}
+
+.beneficiary-detail-drawer {
+  position: fixed;
+  inset: 16px 16px 16px auto;
+  z-index: 46;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  width: min(520px, calc(100vw - 32px));
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid var(--m3-outline);
+  border-radius: 22px;
+  background: var(--m3-surface);
+  box-shadow: 0 24px 72px rgba(23, 33, 28, 0.22);
+}
+
+.beneficiary-detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.beneficiary-detail-header h2 {
+  margin: 0;
+  color: var(--m3-on-surface);
+  font-size: 1.35rem;
+  line-height: 1.16;
+}
+
+.beneficiary-detail-header p:not(.beneficiaries-eyebrow),
+.beneficiary-detail-note,
+.beneficiary-detail-secondary {
+  margin: 6px 0 0;
+  color: var(--m3-on-surface-variant);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.beneficiary-detail-close {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 999px;
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface);
+  cursor: pointer;
+}
+
+.beneficiary-detail-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 16px;
+  background: var(--m3-surface-container);
+}
+
+.beneficiary-detail-section h3 {
+  margin: 0;
+  color: var(--m3-on-surface);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.beneficiary-detail-grid,
+.beneficiary-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.beneficiary-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.beneficiary-detail-grid div,
+.beneficiary-detail-list div {
+  min-width: 0;
+}
+
+.beneficiary-detail-grid dt,
+.beneficiary-detail-list dt {
+  margin: 0 0 3px;
+  color: var(--m3-on-surface-variant);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.beneficiary-detail-grid dd,
+.beneficiary-detail-list dd {
+  margin: 0;
+  color: var(--m3-on-surface);
+  font-size: 0.84rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.beneficiary-technology-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.beneficiary-technology-list li {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 12px;
+  background: #FFFFFF;
+}
+
+.beneficiary-technology-list strong {
+  color: var(--m3-on-surface);
+  font-size: 0.84rem;
+}
+
+.beneficiary-technology-list span {
+  color: var(--m3-on-surface-variant);
+  font-size: 0.76rem;
+  font-weight: 750;
 }
 
 @media (max-width: 1180px) {
@@ -611,6 +976,21 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
     justify-content: space-between;
     gap: 12px;
     align-items: center;
+  }
+
+  .beneficiary-record-card > .beneficiary-row-action {
+    justify-self: start;
+  }
+
+  .beneficiary-detail-drawer {
+    inset: auto 0 0;
+    width: 100%;
+    max-height: calc(100vh - 32px);
+    border-radius: 22px 22px 0 0;
+  }
+
+  .beneficiary-detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
