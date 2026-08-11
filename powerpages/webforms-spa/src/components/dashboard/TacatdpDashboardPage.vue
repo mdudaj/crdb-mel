@@ -478,8 +478,10 @@ function iconFor(metric: KpiMetric) {
       </DashboardCard>
 
       <DashboardCard :span="6" variant="goal" title="Program Impact Goal">
+        <template #background>
+          <img class="goal-illustration" :src="programImpactFarmer" alt="">
+        </template>
         <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
-        <img class="goal-illustration" :src="programImpactFarmer" alt="" aria-hidden="true">
       </DashboardCard>
     </section>
   </DashboardPage>
@@ -800,19 +802,26 @@ a,
 }
 
 .programme-goal-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 18rem;
   margin: 0;
   color: var(--dash-text);
   font-size: 0.88rem;
   line-height: 1.45;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .goal-illustration {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   width: 100%;
-  max-height: 150px;
-  margin: 0;
-  align-self: end;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   object-position: center bottom;
+  opacity: 0.92;
+  pointer-events: none;
 }
 
 @media (max-width: 1280px) {

@@ -21,6 +21,9 @@ withDefaults(defineProps<{
       variant === 'goal' ? 'dashboard-card--goal' : '',
     ]"
   >
+    <div v-if="$slots.background" class="dashboard-card__background" aria-hidden="true">
+      <slot name="background" />
+    </div>
     <header v-if="title || $slots.header" class="dashboard-card__header">
       <slot name="header">
         <h2>{{ title }}</h2>
@@ -37,6 +40,7 @@ withDefaults(defineProps<{
 
 <style scoped>
 .dashboard-card {
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--dash-space-3, 12px);
@@ -51,10 +55,23 @@ withDefaults(defineProps<{
 
 .dashboard-card__header,
 .dashboard-card__footer {
+  position: relative;
+  z-index: 1;
   min-width: 0;
 }
 
+.dashboard-card__background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .dashboard-card__content {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: var(--dash-space-3, 12px);
   align-content: start;
@@ -94,6 +111,11 @@ withDefaults(defineProps<{
   overflow: hidden;
   min-height: 260px;
   background: linear-gradient(180deg, #FFFFFF 0%, #EAF7EE 58%, #DDF2E4 100%);
+}
+
+.dashboard-card--goal .dashboard-card__header,
+.dashboard-card--goal .dashboard-card__content {
+  z-index: 1;
 }
 
 @media (max-width: 1279px) {
