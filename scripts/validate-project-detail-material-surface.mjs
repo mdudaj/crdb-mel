@@ -51,9 +51,18 @@ assertIncludes(viewSource, 'function projectionStatusTone(value?: number): strin
 
 assertIncludes(viewSource, 'class="material-surface project-detail-surface export-workspace"', 'Exports tab must use the shared Material surface.');
 assertIncludes(viewSource, 'class="material-surface project-detail-surface powerbi-workspace"', 'Power BI tab must use the shared Material surface.');
+assertIncludes(viewSource, 'class="material-detail-section record-detail-panel"', 'Project record detail panel must use the shared Material detail section abstraction.');
+assertIncludes(viewSource, 'class="material-detail-list answer-list"', 'Project record answers must use the shared Material detail list abstraction.');
+assertIncludes(viewSource, 'class="material-detail-row answer-row"', 'Project record answer rows must use the shared Material detail row abstraction.');
+assertIncludes(viewSource, 'class="material-detail-section export-create-panel"', 'Project exports create panel must use the shared Material detail section abstraction.');
+assertIncludes(viewSource, 'class="material-row named-export-row" tabindex="0"', 'Saved export rows must use the shared Material row abstraction.');
+assertIncludes(viewSource, 'class="material-row powerbi-table-row" tabindex="0"', 'Power BI table rows must use the shared Material row abstraction.');
 
 assertIncludes(stylesSource, '.material-surface', 'Shared Material surface styles must exist.');
 assertIncludes(stylesSource, '.material-surface-header', 'Shared Material surface header styles must exist.');
+assertIncludes(stylesSource, '.material-detail-section', 'Shared Material detail section styles must exist.');
+assertIncludes(stylesSource, '.material-detail-list', 'Shared Material detail list styles must exist.');
+assertIncludes(stylesSource, '.material-detail-row', 'Shared Material detail row styles must exist.');
 assertIncludes(stylesSource, '.material-count-chip', 'Shared Material count chip styles must exist.');
 assertIncludes(stylesSource, '.data-table-panel .project-detail-surface__header', 'Project detail Data header must support title, count, and search layout.');
 assertIncludes(stylesSource, '.material-table tbody tr:hover', 'Project detail table rows must use shared hover/focus feedback.');

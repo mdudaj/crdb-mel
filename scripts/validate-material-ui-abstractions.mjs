@@ -93,6 +93,26 @@ for (const userDetailFragment of [
   assertIncludes(viewSource, userDetailFragment, `Users detail drawer must use shared Material detail abstraction: ${userDetailFragment}`);
 }
 
+for (const secondarySurfaceFragment of [
+  'class="material-detail-section record-detail-panel"',
+  'class="material-detail-header record-detail-header"',
+  'class="material-detail-list answer-list"',
+  'class="material-detail-row answer-row"',
+  'class="material-detail-section export-create-panel"',
+  'class="material-detail-section named-export-list"',
+  'class="material-row named-export-row"',
+  'class="material-detail-section connection-panel"',
+  'class="material-detail-section powerbi-steps"',
+  'class="material-detail-section powerbi-table-list"',
+  'class="material-row powerbi-table-row"',
+  'class="material-detail-list access-authorization-list"',
+  'class="material-row access-readiness-row"',
+  'class="material-detail-list access-preview-list"',
+  'class="material-detail-list manual-invitation-grid"',
+]) {
+  assertIncludes(viewSource, secondarySurfaceFragment, `Secondary project/access surface must use shared Material abstraction: ${secondarySurfaceFragment}`);
+}
+
 for (const beneficiaryFragment of [
   'class="material-list-surface beneficiary-list"',
   'class="material-surface-header beneficiary-list__header"',

@@ -3268,8 +3268,8 @@ onUnmounted(() => {
               </p>
             </nav>
 
-            <section v-if="selectedReportRow" class="record-detail-panel" aria-labelledby="record-detail-title">
-              <header class="record-detail-header">
+            <section v-if="selectedReportRow" class="material-detail-section record-detail-panel" aria-labelledby="record-detail-title">
+              <header class="material-detail-header record-detail-header">
                 <div>
                   <p class="eyebrow">Record detail</p>
                   <h3 id="record-detail-title">{{ selectedReportRow.mp_displayname || selectedReportRow.mp_instanceid }}</h3>
@@ -3282,8 +3282,8 @@ onUnmounted(() => {
                 <h2>Loading answers</h2>
                 <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               </section>
-              <dl v-else class="answer-list">
-                <div v-for="answer in reportAnswers" :key="answer.mp_submissionanswerid" class="answer-row">
+              <dl v-else class="material-detail-list answer-list">
+                <div v-for="answer in reportAnswers" :key="answer.mp_submissionanswerid" class="material-detail-row answer-row">
                   <dt>{{ answer.mp_fieldlabel || answer.mp_fieldname || answer.mp_fieldpath }}</dt>
                   <dd>{{ formatAnswerValue(answer) }}</dd>
                   <small>{{ answer.mp_fieldpath }}<template v-if="answer._mp_submissionrepeatrow_value"> · Repeat answer</template></small>
@@ -3306,7 +3306,7 @@ onUnmounted(() => {
             </header>
             <section v-if="exportMessage" class="status-banner status-banner--success" aria-live="polite">{{ exportMessage }}</section>
             <section v-if="exportError" class="status-banner status-banner--error" aria-live="polite">{{ exportError }}</section>
-            <div class="export-create-panel">
+            <div class="material-detail-section export-create-panel">
               <label class="filter-field export-name-field">
                 <span>Export name</span>
                 <input :value="exportName" type="text" readonly aria-readonly="true">
@@ -3331,9 +3331,9 @@ onUnmounted(() => {
                 <p>CSV does not include repeat rows. XLSX remains unavailable until repeat-group data and a governed workbook generator are verified.</p>
               </div>
             </div>
-            <section class="named-export-list" aria-labelledby="saved-exports-title">
+            <section class="material-detail-section named-export-list" aria-labelledby="saved-exports-title">
               <h3 id="saved-exports-title">Saved exports</h3>
-              <article v-for="setting in exportSettings" :key="setting.mp_exportsettingid" class="named-export-row">
+              <article v-for="setting in exportSettings" :key="setting.mp_exportsettingid" class="material-row named-export-row" tabindex="0">
                 <div>
                   <strong>{{ setting.mp_name }}</strong>
                   <span>CSV · Current filters · Updated {{ formatDate(setting.mp_updatedat || setting.mp_createdat) }}</span>
@@ -3359,7 +3359,7 @@ onUnmounted(() => {
                 <p>Use the Microsoft Dataverse connector and an organizational account with reporting-table read access.</p>
               </div>
             </header>
-            <section class="connection-panel" aria-labelledby="connection-title">
+            <section class="material-detail-section connection-panel" aria-labelledby="connection-title">
               <div>
                 <span class="field-label" id="connection-title">Environment URL</span>
                 <code>{{ powerBiEnvironmentUrl }}</code>
@@ -3371,7 +3371,7 @@ onUnmounted(() => {
               </button>
             </section>
             <p v-if="powerBiCopyStatus" class="copy-status" aria-live="polite">{{ powerBiCopyStatus }}</p>
-            <section class="powerbi-steps" aria-labelledby="powerbi-steps-title">
+            <section class="material-detail-section powerbi-steps" aria-labelledby="powerbi-steps-title">
               <h3 id="powerbi-steps-title">Connection steps</h3>
               <ol>
                 <li>In Power BI Desktop, select Get data, then Microsoft Dataverse.</li>
@@ -3380,9 +3380,9 @@ onUnmounted(() => {
                 <li>Relate repeat and answer tables to the root report table through the submission report row lookup.</li>
               </ol>
             </section>
-            <section class="powerbi-table-list" aria-labelledby="powerbi-tables-title">
+            <section class="material-detail-section powerbi-table-list" aria-labelledby="powerbi-tables-title">
               <h3 id="powerbi-tables-title">Reporting tables</h3>
-              <article v-for="table in powerBiTables" :key="table.logical" class="powerbi-table-row">
+              <article v-for="table in powerBiTables" :key="table.logical" class="material-row powerbi-table-row" tabindex="0">
                 <Database class="action-icon" aria-hidden="true" />
                 <div>
                   <strong>{{ table.label }}</strong>
@@ -4336,27 +4336,27 @@ onUnmounted(() => {
               <p class="eyebrow">Route guard</p>
               <h4>Authorisation</h4>
             </header>
-            <dl class="access-authorization-list">
-              <div>
+            <dl class="material-detail-list access-authorization-list">
+              <div class="material-detail-row">
                 <dt>Decision source</dt>
                 <dd>{{ accessAuthorizationSourceLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Required role</dt>
                 <dd>{{ requiredAccessRoleLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Detected roles</dt>
                 <dd>{{ detectedAccessRoleLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Matched admin role</dt>
                 <dd>{{ matchedAccessRoleLabel }}</dd>
               </div>
             </dl>
           </section>
           <section class="access-readiness-list" aria-label="Write-path status checklist">
-            <article v-for="gate in accessWriteReadiness.requiredGates" :key="gate" class="access-readiness-row">
+            <article v-for="gate in accessWriteReadiness.requiredGates" :key="gate" class="material-row access-readiness-row" tabindex="0">
               <span class="state-chip state-chip--warning">required</span>
               <div>
                 <strong>Required</strong>
@@ -4374,7 +4374,7 @@ onUnmounted(() => {
           role="tabpanel"
           aria-label="Add user"
         >
-          <header class="record-detail-header">
+          <header class="material-detail-header record-detail-header">
             <div>
               <p class="eyebrow">Access workflow</p>
               <h3 id="access-workflow-title">Create, invite and assign</h3>
@@ -4457,40 +4457,40 @@ onUnmounted(() => {
               <span>Business reason</span>
               <textarea v-model="accessWorkflowReason" rows="3" placeholder="Capture the approved business reason before activation."></textarea>
             </label>
-            <dl class="access-preview-list">
-              <div>
+            <dl class="material-detail-list access-preview-list">
+              <div class="material-detail-row">
                 <dt>Workflow</dt>
                 <dd>{{ accessWorkflowOnboardingLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Name</dt>
                 <dd>{{ accessWorkflowFullName }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>User</dt>
                 <dd>{{ accessWorkflowEmailNormalized }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Contact</dt>
                 <dd>{{ formatContactState(accessWorkflowContactState) }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Role</dt>
                 <dd>{{ accessWorkflowRole }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Project</dt>
                 <dd>{{ accessWorkflowSelectedProject?.name || 'No project selected' }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Forms</dt>
                 <dd>{{ accessWorkflowSelectedForms.length }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Reason</dt>
                 <dd>{{ accessWorkflowReasonText }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Email</dt>
                 <dd>{{ accessWorkflowDeliveryLabel }}</dd>
               </div>
@@ -4530,24 +4530,24 @@ onUnmounted(() => {
                   Queue request {{ accessWorkflowOnboardingResult.requestId }}:
                   {{ accessWorkflowOnboardingResult.emailMessage }}
                 </p>
-                <dl v-if="accessWorkflowOnboardingResult" class="access-preview-list access-preview-list--compact">
-                  <div>
+                <dl v-if="accessWorkflowOnboardingResult" class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div class="material-detail-row">
                     <dt>Email delivery</dt>
                     <dd>{{ accessWorkflowOnboardingResult.emailDelivery }}</dd>
                   </div>
                 </dl>
               </header>
               <article v-for="result in accessWorkflowSubmitResults" :key="result.requestId" class="access-preview-record">
-                <dl class="access-preview-list access-preview-list--compact">
-                  <div>
+                <dl class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div class="material-detail-row">
                     <dt>Request id</dt>
                     <dd>{{ result.requestId }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Status</dt>
                     <dd>{{ result.status }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Audit key</dt>
                     <dd>{{ result.auditKey }}</dd>
                   </div>
@@ -4600,16 +4600,16 @@ onUnmounted(() => {
                   <p class="eyebrow">Manual invitation</p>
                   <h5>{{ manualInvitationExpired ? 'Code expired' : 'Code ready' }}</h5>
                 </header>
-                <dl class="manual-invitation-grid">
-                  <div>
+                <dl class="material-detail-list manual-invitation-grid">
+                  <div class="material-detail-row">
                     <dt>Redeem link</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationRedeemUrl }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Invitation code</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationCode }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Expires</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationExpiresAt ? formatDate(accessWorkflowOnboardingResult.invitationExpiresAt) : 'Not set' }}</dd>
                   </div>
@@ -4640,8 +4640,8 @@ onUnmounted(() => {
 
               <details class="onboarding-technical-details">
                 <summary>Technical details</summary>
-                <dl class="access-preview-list access-preview-list--compact">
-                  <div v-for="[label, value] in onboardingTechnicalSummary" :key="label">
+                <dl class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div v-for="[label, value] in onboardingTechnicalSummary" :key="label" class="material-detail-row">
                     <dt>{{ label }}</dt>
                     <dd>{{ value }}</dd>
                   </div>
@@ -4650,7 +4650,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <footer class="access-workflow-actions">
+          <footer class="material-drawer-actions access-workflow-actions">
             <button class="icon-action icon-action--secondary" type="button" :disabled="accessWorkflowStep === 1" @click="previousAccessWorkflowStep">
               <ArrowLeft class="action-icon" aria-hidden="true" />
               Back
