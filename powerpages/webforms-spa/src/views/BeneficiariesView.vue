@@ -446,7 +446,7 @@ onUnmounted(() => {
 
       <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
-      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Profile and participation">
+      <section class="beneficiary-detail-segment" aria-label="Profile and participation">
         <section class="material-detail-section beneficiary-detail-section" aria-label="Profile">
           <h3>Profile</h3>
           <dl class="material-detail-list beneficiary-detail-grid">
@@ -492,7 +492,7 @@ onUnmounted(() => {
         </section>
       </section>
 
-      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Beneficiary model">
+      <section class="beneficiary-detail-segment" aria-label="Beneficiary model">
         <section class="material-detail-section beneficiary-detail-section" aria-label="Record matching">
           <h3>Record matching</h3>
           <dl class="material-detail-list beneficiary-detail-grid">
@@ -538,7 +538,7 @@ onUnmounted(() => {
         </section>
       </section>
 
-      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Programme delivery">
+      <section class="beneficiary-detail-segment" aria-label="Programme delivery">
         <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
           <h3>Finance</h3>
           <dl class="material-detail-list beneficiary-detail-grid">
@@ -612,7 +612,7 @@ onUnmounted(() => {
         </section>
       </section>
 
-      <section class="beneficiary-detail-segment beneficiary-detail-segment--accented" aria-label="Evidence and location">
+      <section class="beneficiary-detail-segment" aria-label="Evidence and location">
         <section class="material-detail-section beneficiary-detail-section" aria-label="Data lineage">
           <h3>Data lineage</h3>
           <dl class="material-detail-list beneficiary-detail-grid">
@@ -1214,14 +1214,6 @@ onUnmounted(() => {
   border: 1px solid var(--m3-outline);
   border-radius: 18px;
   background: color-mix(in srgb, var(--m3-surface-container) 68%, #FFFFFF);
-}
-
-.beneficiary-detail-segment--accented::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(180deg, #34A853, var(--m3-primary));
-  content: "";
 }
 
 .beneficiary-detail-section {
