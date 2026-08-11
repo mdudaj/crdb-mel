@@ -956,6 +956,13 @@ function formatProjectionStatus(value?: number): string {
   return value == null ? 'Unknown' : `Projection ${value}`;
 }
 
+function projectionStatusTone(value?: number): string {
+  if (value === 100000000) return 'success';
+  if (value === 100000001) return 'warning';
+  if (value === 100000002) return 'warning';
+  return 'neutral';
+}
+
 function formatAnswerValue(answer: SubmissionAnswerRow): string {
   if (answer.mp_valuetext) return answer.mp_valuetext;
   if (answer.mp_valuedecimal != null) return String(answer.mp_valuedecimal);
@@ -3044,12 +3051,14 @@ onUnmounted(() => {
             </article>
           </section>
 
-          <section v-else-if="activeFormSection === 'data'" class="data-table-panel" role="tabpanel" aria-label="Submitted data">
-            <div class="record-toolbar">
+          <section v-else-if="activeFormSection === 'data'" class="project-detail-surface data-table-panel" role="tabpanel" aria-labelledby="project-data-title">
+            <div class="record-toolbar project-detail-surface__header">
               <div>
                 <p class="eyebrow">Data</p>
-                <h3>Reporting records</h3>
+                <h3 id="project-data-title">Reporting records</h3>
+                <p>Submitted and projected records for the selected project form.</p>
               </div>
+              <span class="project-detail-count">{{ reportTotal }} record{{ reportTotal === 1 ? '' : 's' }}</span>
               <label class="record-search">
                 <Search class="record-search__icon" aria-hidden="true" />
                 <span class="sr-only">Search submitted data</span>
@@ -3140,8 +3149,9 @@ onUnmounted(() => {
               <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             </section>
 
-            <div v-else class="responsive-table" role="region" aria-label="Reporting data table" tabindex="0">
+            <div v-else class="responsive-table project-detail-table" role="region" aria-label="Reporting data table" tabindex="0">
               <table>
+                <caption class="sr-only">Reporting records with record name, version, updated date, review state, projection status, and row actions.</caption>
                 <thead>
                   <tr>
                     <th scope="col">Record</th>
@@ -3153,15 +3163,15 @@ onUnmounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="reportRow in reportRows" :key="reportRow.mp_submissionreportrowid">
+                  <tr v-for="reportRow in reportRows" :key="reportRow.mp_submissionreportrowid" tabindex="0">
                     <td>
                       <strong>{{ reportRow.mp_displayname || reportRow.mp_instanceid }}</strong>
                       <span>{{ reportRow.mp_instanceid }}</span>
                     </td>
-                    <td>{{ reportRow.mp_versionnumber || 1 }}</td>
+                    <td class="project-detail-table__number">{{ reportRow.mp_versionnumber || 1 }}</td>
                     <td>{{ formatDate(reportRow.mp_updatedat || reportRow.mp_submittedat) }}</td>
                     <td>{{ formatReviewState(reportRow.mp_reviewstate) }}</td>
-                    <td><span class="state-chip">{{ formatProjectionStatus(reportRow.mp_projectionstatus) }}</span></td>
+                    <td><span class="state-chip" :class="`state-chip--${projectionStatusTone(reportRow.mp_projectionstatus)}`">{{ formatProjectionStatus(reportRow.mp_projectionstatus) }}</span></td>
                     <td>
                       <div class="table-actions">
                         <button
@@ -3264,7 +3274,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else-if="activeFormSection === 'exports'" class="export-workspace" role="tabpanel" aria-label="Exports">
+          <section v-else-if="activeFormSection === 'exports'" class="project-detail-surface export-workspace" role="tabpanel" aria-label="Exports">
             <header class="section-heading">
               <div>
                 <p class="eyebrow">Exports</p>
@@ -3318,7 +3328,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else class="powerbi-workspace" role="tabpanel" aria-label="Power BI">
+          <section v-else class="project-detail-surface powerbi-workspace" role="tabpanel" aria-label="Power BI">
             <header class="section-heading section-heading--with-icon">
               <BarChart3 class="guidance-icon" aria-hidden="true" />
               <div>
