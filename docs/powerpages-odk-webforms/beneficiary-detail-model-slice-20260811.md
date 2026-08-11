@@ -41,7 +41,7 @@ The detail drawer includes compact governance sections for:
 - `Group/member links`: beneficiary type, member linkage, and membership state. This previews `mp_BeneficiaryGroupMembership` while keeping group beneficiaries valid as entities in their own right.
 - `Location history`: current location, source, effective date, and history state. This previews `mp_BeneficiaryLocationHistory` so location corrections remain auditable.
 
-After Mshirika review, the technical Dataverse table mapping was moved behind a compact `Technical mapping` disclosure so business users see the operational sections first. The drawer groups related detail cards in internal segment containers, but it does not apply left shade accent rails to the drawer, segment containers, or individual detail cards. The global `SurfaceCard` metric-card accent rule remains unchanged and stays limited to metric/summary cards.
+After Mshirika review, the technical Dataverse table mapping was moved behind a compact `Technical mapping` disclosure so business users see the operational sections first. The drawer uses one visible Material section container per detail block and does not add extra segment wrappers or left shade accent rails. The global `SurfaceCard` metric-card accent rule remains unchanged and stays limited to metric/summary cards.
 
 ## Verification
 
