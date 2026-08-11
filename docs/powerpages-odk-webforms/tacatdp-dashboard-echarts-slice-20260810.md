@@ -178,3 +178,50 @@ Post-upload verification downloaded the site again and confirmed the deployed Ho
 The downloaded `index-_YAHDKxX.mjs` bundle passed `node --check`.
 
 Deployment note: with PAC 2.9.3, the successful upload used a clean fresh Enhanced-model package. The overlay replaced the fresh package's existing Home copy files in place and copied only the required Home-referenced web files. Do not copy the repository `web-pages/home` folder wholesale into a fresh package, because the fresh download may use `content-pages/Home.en-US...` while the repository mirror uses `content-pages/en-US/...`; mixing both creates duplicate or primary-key-missing webpage records.
+
+## CRDB dashboard chart spacing revision
+
+On 2026-08-11, the dashboard chart spacing revision was deployed directly to CRDB after device-code PAC authentication with the delegated Denis Muroba profile.
+
+Revision scope:
+
+- pushed the Loan Portfolio by Type doughnut left and its legend slightly right/down so the first legend marker no longer touches the doughnut;
+- moved Loan Performance centre text into the native ECharts doughnut title, matching the Loan Portfolio by Type pattern;
+- changed the Tanzania regional map visual legend to a more granular piecewise disbursed legend;
+- shifted the map layout left/centre-left to reserve readable right-side legend space.
+
+Target:
+
+- Environment: `TACATDP-CRDB-Dev`
+- Environment URL: `https://org5eb0379b.crm4.dynamics.com/`
+- Website: `TACATDP Monitoring Tool`
+- Website ID: `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`
+- PAC user: `dmuroba@CRDBBANK.CO.TZ`
+- Source branch/commit: `prototype-next-delivery` / `d3d4f21`
+
+Build and package marker:
+
+```text
+tacatdp-dashboard-20260811-004
+```
+
+Deployment used a clean fresh Enhanced-model CRDB package, replaced the fresh package Home copy files in place, copied only the required Home-referenced web files, and uploaded with:
+
+```text
+pac pages upload --environment https://org5eb0379b.crm4.dynamics.com/ --path <fresh-package>/tacatdp-monitoring-tool --modelVersion Enhanced --forceUploadAll
+```
+
+Result:
+
+```text
+Power Pages website upload succeeded in 236.56 secs.
+```
+
+Post-upload verification downloaded the CRDB site again and confirmed the deployed Home fragments reference:
+
+```text
+/assets/index-BKbav0i7.mjs?v=tacatdp-dashboard-20260811-004
+/assets/index-onZrj1qI.css?v=tacatdp-dashboard-20260811-004
+```
+
+The downloaded `index-BKbav0i7.mjs` bundle passed `node --check`.
