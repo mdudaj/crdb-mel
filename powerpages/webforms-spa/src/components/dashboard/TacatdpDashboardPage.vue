@@ -45,10 +45,6 @@ type DashboardChartOption = ComposeOption<
   | VisualMapComponentOption
 >;
 
-const programImpactFarmerStyle = {
-  backgroundImage: `url(${programImpactFarmer})`,
-};
-
 type TanzaniaAdm1Feature = {
   properties?: {
     shapeName?: string;
@@ -483,7 +479,7 @@ function iconFor(metric: KpiMetric) {
 
       <DashboardCard :span="6" variant="goal" title="Program Impact Goal">
         <p class="programme-goal-copy">Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.</p>
-        <div class="goal-illustration" :style="programImpactFarmerStyle" aria-hidden="true"></div>
+        <img class="goal-illustration" :src="programImpactFarmer" alt="" aria-hidden="true">
       </DashboardCard>
     </section>
   </DashboardPage>
@@ -811,13 +807,12 @@ a,
 }
 
 .goal-illustration {
-  width: calc(100% + 32px);
-  height: 154px;
-  margin: -12px -16px -16px;
+  width: 100%;
+  max-height: 150px;
+  margin: 0;
   align-self: end;
-  background-position: center bottom;
-  background-repeat: no-repeat;
-  background-size: 136% auto;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 @media (max-width: 1280px) {
