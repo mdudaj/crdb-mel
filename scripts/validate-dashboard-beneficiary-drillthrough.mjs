@@ -46,7 +46,8 @@ assertIncludes(beneficiariesSource, "params.set('borrowerStatus', activeBorrower
 assertIncludes(beneficiariesSource, "params.set('trained', activeTraining.value === 'Trained' ? 'true' : 'false')", 'Training filter must be persisted as a URL parameter.');
 assertIncludes(beneficiariesSource, "params.set('technology', activeTechnology.value)", 'Technology filter must be persisted in the URL.');
 assertIncludes(beneficiariesSource, "params.set('submissionStatus', activeSubmissionStatus.value)", 'Submission-status filter must be persisted in the URL.');
-assertIncludes(beneficiariesSource, 'Dashboard drill-through · Filters are preserved in the URL', 'Beneficiaries route must show visible drill-through context.');
+assertIncludes(beneficiariesSource, 'Opened from dashboard', 'Beneficiaries route must show visible dashboard drill-through context.');
+assertIncludes(beneficiariesSource, 'Back to Dashboard', 'Beneficiaries route must provide a dashboard return action when opened from dashboard drill-through.');
 assertIncludes(beneficiariesSource, "Technology: ${activeTechnology.value}", 'Active filter chips must expose technology drill-through state.');
 assertIncludes(beneficiariesSource, "Borrower: ${activeBorrowerStatus.value}", 'Active filter chips must expose borrower drill-through state.');
 assertIncludes(beneficiariesSource, "Training: ${activeTraining.value}", 'Active filter chips must expose training drill-through state.');

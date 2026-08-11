@@ -112,6 +112,9 @@ const activeFilters = computed(() => [
   searchTerm.value.trim() ? { key: 'search', label: `Search: ${searchTerm.value.trim()}` } : null,
 ].filter((filter): filter is { key: string; label: string } => Boolean(filter)));
 
+const hasDashboardContext = computed(() => drillthroughSource.value === 'dashboard');
+const filterSummary = computed(() => activeFilters.value.map((filter) => filter.label).join(' · '));
+
 function syncBeneficiaryHashFilters() {
   if (suppressHashSync.value || window.location.hash.split('?')[0].replace(/^#\/?/, '') !== 'beneficiaries') return;
 
@@ -174,6 +177,14 @@ function clearAllFilters() {
   syncBeneficiaryHashFilters();
 }
 
+function openAllBeneficiaries() {
+  clearAllFilters();
+}
+
+function backToDashboard() {
+  window.location.hash = '#/dashboard';
+}
+
 function openBeneficiary(record: BeneficiaryRecord) {
   selectedBeneficiaryId.value = record.id;
 }
@@ -232,9 +243,13 @@ onUnmounted(() => {
         <span class="beneficiary-list__count">{{ filteredBeneficiaries.length }} shown</span>
       </header>
 
-      <div v-if="drillthroughSource === 'dashboard'" class="beneficiary-drillthrough-context" role="status">
-        Dashboard drill-through · Filters are preserved in the URL for review and sharing.
-      </div>
+      <section v-if="hasDashboardContext" class="beneficiary-drillthrough-context" aria-label="Dashboard drill-through context">
+        <div>
+          <strong>Opened from dashboard</strong>
+          <span>{{ filterSummary || 'Dashboard context is active. Filters are preserved in the URL for review and sharing.' }}</span>
+        </div>
+        <button class="beneficiary-row-action" type="button" @click="backToDashboard">Back to Dashboard</button>
+      </section>
 
       <form class="beneficiary-toolbar" role="search" aria-label="Search and filter beneficiary records" @submit.prevent>
         <label class="beneficiary-search">
@@ -296,7 +311,13 @@ onUnmounted(() => {
       <div v-if="filteredBeneficiaries.length === 0" class="beneficiary-empty-state" role="status">
         <SlidersHorizontal aria-hidden="true" />
         <strong>No data for the selected filters</strong>
-        <span>Clear filters or adjust the search term to review prototype beneficiary records.</span>
+        <span v-if="hasDashboardContext">Dashboard drill-through filters: {{ filterSummary || 'no active filters' }}.</span>
+        <span v-else>Clear filters or adjust the search term to review prototype beneficiary records.</span>
+        <div class="beneficiary-empty-state__actions">
+          <button class="beneficiary-row-action" type="button" @click="clearAllFilters">Clear filters</button>
+          <button v-if="hasDashboardContext" class="beneficiary-row-action" type="button" @click="openAllBeneficiaries">Open all beneficiaries</button>
+          <button v-if="hasDashboardContext" class="beneficiary-row-action" type="button" @click="backToDashboard">Back to Dashboard</button>
+        </div>
       </div>
 
       <div v-else class="beneficiary-table-wrap">
@@ -394,21 +415,36 @@ onUnmounted(() => {
       aria-modal="true"
       aria-labelledby="beneficiary-detail-title"
     >
-      <header class="beneficiary-detail-header">
-        <div>
+      <header class="beneficiary-detail-header beneficiary-detail-header--structured">
+        <div class="beneficiary-detail-identity">
           <p class="beneficiaries-eyebrow">Beneficiary detail</p>
           <h2 id="beneficiary-detail-title">{{ selectedBeneficiary.name }}</h2>
-          <p>{{ selectedBeneficiary.id }} · {{ selectedBeneficiary.category }}</p>
+          <div class="beneficiary-detail-tags" aria-label="Beneficiary identity summary">
+            <span>{{ selectedBeneficiary.id }}</span>
+            <span>{{ selectedBeneficiary.category }}</span>
+            <span>{{ selectedBeneficiary.region }} · {{ selectedBeneficiary.district }}</span>
+            <span class="beneficiary-status-chip" :class="`beneficiary-status-chip--${statusTone(selectedBeneficiary.verificationStatus)}`">
+              {{ selectedBeneficiary.verificationStatus }}
+            </span>
+          </div>
         </div>
         <button class="beneficiary-detail-close" type="button" aria-label="Close beneficiary detail" @click="closeBeneficiary">
           <X aria-hidden="true" />
         </button>
       </header>
 
+      <section v-if="hasDashboardContext" class="beneficiary-detail-context" aria-label="Dashboard drill-through context">
+        <div>
+          <strong>Opened from dashboard</strong>
+          <span>{{ filterSummary || 'Dashboard context is active.' }}</span>
+        </div>
+        <button class="beneficiary-row-action" type="button" @click="backToDashboard">Back to Dashboard</button>
+      </section>
+
       <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
-      <section class="beneficiary-detail-section" aria-label="Profile summary">
-        <h3>Profile summary</h3>
+      <section class="beneficiary-detail-section" aria-label="Profile">
+        <h3>Profile</h3>
         <dl class="beneficiary-detail-grid">
           <div>
             <dt>Location</dt>
@@ -431,11 +467,7 @@ onUnmounted(() => {
             <dd>{{ selectedBeneficiary.lastUpdated }}</dd>
           </div>
         </dl>
-      </section>
-
-      <section class="beneficiary-detail-section" aria-label="Programme participation">
-        <h3>Programme participation</h3>
-        <dl class="beneficiary-detail-list">
+        <dl class="beneficiary-detail-list beneficiary-detail-list--nested">
           <div>
             <dt>Programme</dt>
             <dd>{{ selectedBeneficiary.projectParticipation.programme }}</dd>
@@ -455,8 +487,8 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Finance snapshot">
-        <h3>Finance snapshot</h3>
+      <section class="beneficiary-detail-section" aria-label="Finance">
+        <h3>Finance</h3>
         <dl class="beneficiary-detail-grid">
           <div>
             <dt>Loan reference</dt>
@@ -477,8 +509,8 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Technologies financed">
-        <h3>Technologies financed</h3>
+      <section class="beneficiary-detail-section" aria-label="Technology">
+        <h3>Technology</h3>
         <ul class="beneficiary-technology-list">
           <li v-for="technology in selectedBeneficiary.technologiesFinanced" :key="`${selectedBeneficiary.id}:${technology.name}`">
             <strong>{{ technology.name }}</strong>
@@ -487,8 +519,8 @@ onUnmounted(() => {
         </ul>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Training summary">
-        <h3>Training summary</h3>
+      <section class="beneficiary-detail-section" aria-label="Training">
+        <h3>Training</h3>
         <dl class="beneficiary-detail-grid">
           <div>
             <dt>Sessions attended</dt>
@@ -505,6 +537,24 @@ onUnmounted(() => {
           <div>
             <dt>Last training</dt>
             <dd>{{ selectedBeneficiary.trainingSummary.lastTrainingDate }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="beneficiary-detail-section" aria-label="Outcomes">
+        <h3>Outcomes</h3>
+        <dl class="beneficiary-detail-list">
+          <div>
+            <dt>Area under improved practices</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
+          </div>
+          <div>
+            <dt>Yield increase</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
+          </div>
+          <div>
+            <dt>Climate estimate</dt>
+            <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
           </div>
         </dl>
       </section>
@@ -535,26 +585,8 @@ onUnmounted(() => {
         </p>
       </section>
 
-      <section class="beneficiary-detail-section" aria-label="Outcome snapshot">
-        <h3>Outcome snapshot</h3>
-        <dl class="beneficiary-detail-list">
-          <div>
-            <dt>Area under improved practices</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.areaUnderImprovedPractices }}</dd>
-          </div>
-          <div>
-            <dt>Yield increase</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.yieldIncrease }}</dd>
-          </div>
-          <div>
-            <dt>Climate estimate</dt>
-            <dd>{{ selectedBeneficiary.outcomeSnapshot.climateEstimate }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="beneficiary-detail-section" aria-label="Dataverse mapping">
-        <h3>Dataverse mapping</h3>
+      <section class="beneficiary-detail-section" aria-label="Technical Dataverse mapping">
+        <h3>Technical Dataverse mapping</h3>
         <ul class="beneficiary-mapping-targets" aria-label="Mapped Dataverse tables">
           <li v-for="target in beneficiaryDataverseTargets" :key="target">{{ target }}</li>
         </ul>
@@ -705,6 +737,10 @@ onUnmounted(() => {
 }
 
 .beneficiary-drillthrough-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
   padding: 10px 12px;
   border: 1px solid #B7D6BF;
   border-radius: 12px;
@@ -712,6 +748,19 @@ onUnmounted(() => {
   color: var(--m3-primary-dark);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.beneficiary-drillthrough-context div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.beneficiary-drillthrough-context span {
+  color: #315D44;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .beneficiary-toolbar {
@@ -765,6 +814,7 @@ onUnmounted(() => {
 .beneficiary-filter select:focus-visible,
 .beneficiary-filter-button:focus-visible,
 .beneficiary-active-filters button:focus-visible,
+.beneficiary-empty-state__actions button:focus-visible,
 .beneficiary-table tbody tr:focus-visible,
 .beneficiary-row-action:focus-visible,
 .beneficiary-detail-close:focus-visible {
@@ -916,6 +966,7 @@ onUnmounted(() => {
   place-items: center;
   gap: 8px;
   min-height: 220px;
+  padding: 24px;
   border: 1px dashed var(--m3-outline-strong);
   border-radius: 14px;
   background: var(--m3-surface-container);
@@ -925,6 +976,19 @@ onUnmounted(() => {
 
 .beneficiary-empty-state strong {
   color: var(--m3-on-surface);
+}
+
+.beneficiary-empty-state > span {
+  max-width: 620px;
+  line-height: 1.45;
+}
+
+.beneficiary-empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .beneficiary-card-list {
@@ -963,11 +1027,38 @@ onUnmounted(() => {
   align-items: start;
 }
 
+.beneficiary-detail-identity {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
 .beneficiary-detail-header h2 {
   margin: 0;
   color: var(--m3-on-surface);
   font-size: 1.35rem;
   line-height: 1.16;
+}
+
+.beneficiary-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.beneficiary-detail-tags > span:not(.beneficiary-status-chip) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 999px;
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface-variant);
+  font-size: 0.74rem;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .beneficiary-detail-header p:not(.beneficiaries-eyebrow),
@@ -977,6 +1068,35 @@ onUnmounted(() => {
   color: var(--m3-on-surface-variant);
   font-size: 0.84rem;
   line-height: 1.45;
+}
+
+.beneficiary-detail-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #B7D6BF;
+  border-radius: 14px;
+  background: #EAF7EE;
+}
+
+.beneficiary-detail-context div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.beneficiary-detail-context strong {
+  color: var(--m3-primary-dark);
+  font-size: 0.84rem;
+}
+
+.beneficiary-detail-context span {
+  color: #315D44;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .beneficiary-detail-close {
@@ -1013,6 +1133,12 @@ onUnmounted(() => {
   display: grid;
   gap: 10px;
   margin: 0;
+}
+
+.beneficiary-detail-list--nested {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--m3-outline);
 }
 
 .beneficiary-detail-grid {
@@ -1117,6 +1243,12 @@ onUnmounted(() => {
 
   .beneficiary-list__header {
     display: grid;
+  }
+
+  .beneficiary-drillthrough-context,
+  .beneficiary-detail-context {
+    display: grid;
+    justify-items: start;
   }
 
   .beneficiary-table-wrap {
