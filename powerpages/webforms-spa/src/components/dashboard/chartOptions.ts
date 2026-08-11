@@ -21,8 +21,8 @@ export type DashboardChartOption = ComposeOption<
   | VisualMapComponentOption
 >;
 
-export const DISBURSEMENT_TREND_GRID_LEFT = 72;
-export const DISBURSEMENT_TREND_POINT_LABEL_DISTANCE = 10;
+export const DISBURSEMENT_TREND_GRID_LEFT = 64;
+export const DISBURSEMENT_TREND_POINT_LABEL_DISTANCE = 12;
 
 export function buildDisbursementTrendOption(disbursementTrend: TrendPoint[]): DashboardChartOption {
   return {
@@ -41,9 +41,17 @@ export function buildDisbursementTrendOption(disbursementTrend: TrendPoint[]): D
     },
     yAxis: {
       type: 'value',
+      name: 'TZS, billions',
+      nameLocation: 'end',
+      nameGap: 12,
+      nameTextStyle: {
+        color: '#64706A',
+        fontSize: 11,
+        fontWeight: 600,
+      },
       axisLabel: {
-        formatter: '{value}B',
-        margin: 14,
+        formatter: '{value}',
+        margin: 12,
       },
       splitLine: { lineStyle: { color: '#E3E8E5' } },
     },
