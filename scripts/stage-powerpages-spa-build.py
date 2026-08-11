@@ -18,11 +18,15 @@ HOME_FILES = [
     SITE / "web-pages/home/Home.webpage.copy.html",
     SITE / "web-pages/home/content-pages/en-US/Home.webpage.copy.html",
 ]
+UPLOAD_HOME_TARGETS = [
+    UPLOAD / "web-pages/home/Home.webpage.copy.html",
+    UPLOAD / "web-pages/home/content-pages/Home.en-US.webpage.copy.html",
+]
 PARENT_PAGE_ID = "60efc37d-aded-4014-912d-8a1cdefa876d"
 PUBLISHING_STATE_ID = "357decb2-7d20-468f-9898-1da7459f66b9"
 WEBFILE_NAMESPACE = uuid.UUID("b3107b66-8078-4bfe-bd96-e84ad7e46111")
 ANNOTATION_NAMESPACE = uuid.UUID("d2e9a15c-80fb-4828-b8b7-4e8646df75a8")
-BUILD_MARKER = "tacatdp-dashboard-20260811-012"
+BUILD_MARKER = "tacatdp-dashboard-20260811-013"
 
 
 def fail(message: str) -> None:
@@ -109,9 +113,25 @@ def update_home_fragments() -> None:
 
 
 def refresh_upload_mirror() -> None:
-    if UPLOAD.exists():
-        shutil.rmtree(UPLOAD)
-    shutil.copytree(SITE, UPLOAD)
+    if not UPLOAD.exists():
+        fail("missing fresh Power Pages upload package; run pac pages download before staging")
+
+    upload_web_files = UPLOAD / "web-files"
+    upload_web_files.mkdir(parents=True, exist_ok=True)
+
+    for home, target in zip(HOME_FILES, UPLOAD_HOME_TARGETS, strict=True):
+        if not target.parent.exists():
+            fail(f"fresh upload package is missing {target.parent.relative_to(ROOT)}")
+        shutil.copy2(home, target)
+
+    for asset in sorted(path for path in DIST_ASSETS.iterdir() if path.is_file() and not path.name.endswith(".map")):
+        shutil.copy2(asset, upload_web_files / asset.name)
+        site_metadata = WEB_FILES / f"{asset.name}.webfile.yml"
+        upload_metadata = upload_web_files / f"{asset.name}.webfile.yml"
+        if site_metadata.exists():
+            shutil.copy2(site_metadata, upload_metadata)
+        elif not upload_metadata.exists():
+            upload_metadata.write_text(metadata_for(asset.name))
 
 
 def main() -> None:
