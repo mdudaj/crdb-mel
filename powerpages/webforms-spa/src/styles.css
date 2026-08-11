@@ -840,7 +840,6 @@ body {
   width: min(420px, 100%);
   padding: clamp(28px, 7vw, 46px);
   border: 1px solid var(--mt-color-border-strong);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   color: var(--mt-color-text);
@@ -903,7 +902,6 @@ body {
   margin-bottom: var(--mt-space-4);
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -1474,20 +1472,6 @@ body {
   overflow: hidden;
 }
 
-.project-card::before,
-.form-card::before,
-.data-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 7px;
-  background: linear-gradient(180deg, var(--mt-color-brand), var(--mt-color-primary-strong));
-}
-
-.data-card--draft::before {
-  background: linear-gradient(180deg, var(--mt-color-accent), var(--mt-color-brand));
-}
-
 .project-card--entry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1677,7 +1661,6 @@ body {
   min-height: 84px;
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -1765,7 +1748,6 @@ body {
   align-items: center;
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
 }
@@ -2129,7 +2111,6 @@ body {
   width: min(520px, calc(100vw - 28px));
   height: 100vh;
   padding: var(--mt-space-5);
-  border-left: 7px solid var(--mt-color-brand);
   background: var(--mt-color-surface);
   box-shadow: -18px 0 38px rgba(18, 56, 24, 0.16);
   overflow-y: auto;
@@ -2166,7 +2147,6 @@ body {
   gap: var(--mt-space-4);
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-accent);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -3237,7 +3217,6 @@ body {
   gap: var(--mt-space-3);
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -3515,7 +3494,6 @@ body {
   gap: var(--mt-space-4);
   padding: var(--mt-space-5);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -3652,7 +3630,6 @@ body {
 .connection-panel {
   padding: var(--mt-space-5);
   border: 1px solid var(--mt-color-border);
-  border-left: 7px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
   box-shadow: var(--mt-shadow-soft);
@@ -3766,7 +3743,6 @@ body {
   padding: var(--mt-space-4) var(--mt-space-5);
   border: 1px solid var(--mt-color-border);
   border-radius: var(--mt-radius-md);
-  border-left: 7px solid var(--mt-color-brand);
   background:
     linear-gradient(90deg, var(--mt-color-primary-soft), rgba(255, 255, 255, 0) 34%),
     var(--mt-color-surface);
