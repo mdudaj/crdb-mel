@@ -49,6 +49,9 @@ The schema extension adds current-state and analytics-friendly child tables arou
 | `mp_BeneficiaryTrainingParticipation` | Training/capacity-building participation summary. |
 | `mp_BeneficiaryOutcomeSnapshot` | Measured, estimated, or modelled outcome fact for reporting. |
 | `mp_BeneficiarySubmissionLink` | Lineage between submissions and the beneficiary records they update. |
+| `mp_BeneficiaryIdentityMatch` | Review queue for candidate matches before merging or updating a tracked entity. |
+| `mp_BeneficiaryGroupMembership` | Membership between group beneficiaries and individual tracked entities. |
+| `mp_BeneficiaryLocationHistory` | Time-bound geography history for beneficiaries whose location changes or is corrected. |
 
 ## Relationship model
 
@@ -61,7 +64,10 @@ mp_Project
   │   ├─ mp_BeneficiaryTechnologyAdoption ── mp_VocabularyTerm
   │   ├─ mp_BeneficiaryTrainingParticipation ── mp_VocabularyTerm
   │   ├─ mp_BeneficiaryOutcomeSnapshot ── mp_Submission / mp_Encounter
-  │   └─ mp_BeneficiarySubmissionLink ── mp_Submission
+  │   ├─ mp_BeneficiarySubmissionLink ── mp_Submission
+  │   ├─ mp_BeneficiaryIdentityMatch ── mp_Submission / mp_TrackedEntity(candidate)
+  │   ├─ mp_BeneficiaryGroupMembership ── mp_TrackedEntity(member)
+  │   └─ mp_BeneficiaryLocationHistory
   └─ mp_Submission
 ```
 
@@ -84,11 +90,28 @@ mp_Project
 | `outcomeSnapshot` | One or more `mp_BeneficiaryOutcomeSnapshot` rows. |
 | `futureDataverseMapping` | Prototype-only helper text; should point to `mp_TrackedEntity` plus extension tables. |
 
+## Prototype-to-product boundaries
+
+The prototype can show a beneficiary as a single card or detail drawer, but the product model must keep these concepts separate:
+
+- The raw baseline or monitoring submission remains immutable evidence.
+- `mp_TrackedEntity` is the reusable beneficiary identity across reporting cycles.
+- `mp_BeneficiaryProfile` is the current operational profile projection.
+- `mp_BeneficiaryIdentityMatch` is the deduplication and review queue. It prevents the import path from silently creating duplicate farmers, groups, AMCOS, or SACCOS records when names, phone numbers, locations, or external references are similar.
+- `mp_BeneficiaryGroupMembership` represents group-to-member relationships. A farmer group, AMCOS, or SACCOS can be a beneficiary in its own right while still linking to individual farmers when member-level tracking becomes approved.
+- `mp_BeneficiaryLocationHistory` records corrected or changed geography over time instead of overwriting the only location evidence.
+- Finance snapshots in `mp_BeneficiaryFinanceLink` are reporting/integration references only; they are not a replacement for CRDB core banking systems.
+
+The first implementation should create or update `mp_TrackedEntity` only after the identity match decision is clear. Until then, baseline submissions can remain linked through `mp_BeneficiarySubmissionLink` with `mp_reviewstatus=Under review`.
+
 ## Governance rules
 
 - Do not store sensitive core banking identifiers in the portal-facing schema without a security/privacy review.
 - Use masked finance references or integration keys until CRDB approves the finance integration boundary.
 - Keep source submission lineage for every derived finance, technology, training, and outcome fact where available.
+- Do not auto-merge beneficiary records from fuzzy matching alone. Store candidate matches, confidence, matching signals, reviewer decision, and reviewer timestamp.
+- Store group membership separately from beneficiary profile data. Do not flatten member farmers into group profile text fields.
+- Preserve location history when a beneficiary location changes or is corrected; dashboard filters may use the current profile location, but audit and longitudinal analysis need the historical rows.
 - Differentiate measured, estimated, modelled, and awaiting-verification values with `mp_measurementmethod`.
 - Keep `mp_Project` required on child tables so the model remains multi-project and delegation-safe.
 - Use governed vocabulary terms for TACATDP technology and training categories when importing controlled values.
@@ -100,7 +123,10 @@ mp_Project
 2. Which finance references can be stored safely in Dataverse and shown in Power Pages?
 3. Should beneficiary category be a Dataverse Choice or a `mp_VocabularyTerm` lookup from a governed scheme?
 4. Which outcome indicators should be first-class projection rows versus calculated dashboard aggregates?
-5. Should group beneficiaries have explicit member relationships in this slice or later?
+5. Which identity matching signals are approved for use: name, phone, village, national identifier, group membership, CRDB customer reference, or project-issued beneficiary code?
+6. Which user role is allowed to approve a beneficiary merge or identity-link decision?
+7. Should group membership be enabled in the prototype seed data now, or kept as schema-only until member-level collection is added?
+8. Should current profile geography reference `mp_VillageReference` immediately, or keep text snapshots until the first schema import validates high-volume lookup performance?
 
 ## Implementation instructions for the next backend slice
 

@@ -21,7 +21,7 @@ Generated review artifact for TACATDP. This document does not authorize or perfo
 5. Review renderer metadata extensions in `form-renderer-contract.json`, especially `RenderMode`, `NavigationMode`, `ControlKind`, `LookupProviderType`, and rule-expression scope, before adding them to Dataverse.
 6. Create high-volume reference data table `mp_VillageReference` with indexed `RegionCode`, `DistrictCode`, and `WardCode` columns for delegated cascading lookup filters.
 7. Create runtime tables and relationships: `mp_TrackedEntity`, `mp_EntityIdentifier`, `mp_Encounter`, `mp_Submission`, `mp_GroupInstance`, `mp_AnswerValue`, `mp_MultiSelectAnswer`, `mp_Attachment`, `mp_SubmissionReview`, `mp_AuditEvent`.
-8. Create beneficiary extension tables from `beneficiary-entity-extension-schema.json` only after reviewing `docs/powerpages-odk-webforms/beneficiary-dataverse-schema-plan-20260811.md`. These tables extend `mp_TrackedEntity`; they do not replace it with a TACATDP-only beneficiary identity table.
+8. Create beneficiary extension tables from `beneficiary-entity-extension-schema.json` only after reviewing `docs/powerpages-odk-webforms/beneficiary-dataverse-schema-plan-20260811.md`. These tables extend `mp_TrackedEntity`; they do not replace it with a TACATDP-only beneficiary identity table. The extension includes review-only identity matching, group membership, and location history tables; do not enable auto-merge or profile overwrite behavior until the matching governance questions are answered.
 9. Create projection/export tables: `mp_ExportProfile`, `mp_ExportColumn`.
 10. For the ODK Central-inspired Power Pages prototype path, create canonical tables from `odk-central-inspired-mvp-schema.json`: `Projects`, `Forms`, `FormVersions`, `FormAssignments`, `FormAttachments`, `Submissions`, `SubmissionVersions`, and `SubmissionAttachments`.
 11. Create reporting projection tables from `reporting-projection-schema.json`: `SubmissionReportRows`, `SubmissionRepeatRows`, `SubmissionAnswers`, and `ExportSettings`. Run `python3 scripts/dataverse-schema-plan.py --schema-file schemas/dataverse/reporting-projection-schema.json` first and confirm it is additive.
@@ -54,7 +54,7 @@ Villages are intentionally not stored as generic `mp_VocabularyTerm` rows in thi
 - `platform-alternate-keys.csv`: 22 alternate keys.
 - `form-renderer-contract.json`: renderer surfaces, metadata extensions, supported rule subset, control mapping, and pilot flows.
 - `odk-central-inspired-mvp-schema.json`: canonical Power Pages/ODK-style runtime tables.
-- `beneficiary-entity-extension-schema.json`: additive beneficiary profile, participation, finance, technology, training, outcome, and submission-lineage extension tables around `mp_TrackedEntity`.
+- `beneficiary-entity-extension-schema.json`: additive beneficiary profile, participation, finance, technology, training, outcome, submission-lineage, identity-match, group-membership, and location-history extension tables around `mp_TrackedEntity`.
 - `reporting-projection-schema.json`: additive reporting, export, and Power BI projection tables.
 - `access-audit-schema.json`: additive User & Access audit log table required before portal access writes.
 - `onboarding-request-schema.json`: additive User & Access queue table required before create/invite/assign onboarding submit is enabled.

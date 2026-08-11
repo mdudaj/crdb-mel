@@ -21,7 +21,9 @@
     "Keep submitted XForm payloads and submission versions as source of truth; beneficiary extension tables are current-state and analytics surfaces.",
     "Keep finance, technology, training, and outcome facts as separate child tables so repeated and longitudinal records do not overwrite each other.",
     "Use VocabularyTerm lookups for governed options such as technology, training topic, beneficiary category, verification status, adoption stage, and measurement method where practical.",
-    "Use Submission and Encounter lookups to preserve lineage from a beneficiary summary fact back to a collected monitoring event."
+    "Use Submission and Encounter lookups to preserve lineage from a beneficiary summary fact back to a collected monitoring event.",
+    "Use a reviewable identity-match queue before merging or updating tracked entities from baseline submissions.",
+    "Model group membership and location history as separate child records so group beneficiaries and location corrections remain auditable."
   ],
   "tables": [
     {
@@ -452,6 +454,219 @@
           "notes": "Submitted, under review, approved, returned, incomplete, overdue."
         }
       ]
+    },
+    {
+      "name": "mp_BeneficiaryIdentityMatch",
+      "display_name": "Beneficiary Identity Match",
+      "primary_name_column": "mp_matchkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Review queue for candidate beneficiary identity matches before updating, linking, or merging tracked entities.",
+      "columns": [
+        {
+          "name": "mp_matchkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as projectCode:sourceSubmission:candidateTrackedEntity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_sourcesubmission",
+          "type": "Lookup:mp_Submission",
+          "required": true,
+          "notes": "Submission that introduced the candidate beneficiary."
+        },
+        {
+          "name": "mp_candidateentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": false,
+          "notes": "Existing tracked entity that may match the submitted beneficiary."
+        },
+        {
+          "name": "mp_submitteddisplayname",
+          "type": "Text",
+          "required": false,
+          "notes": "Display name from the submitted record for reviewer context."
+        },
+        {
+          "name": "mp_confidencescore",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Optional match confidence score; must not auto-merge records without review."
+        },
+        {
+          "name": "mp_matchsignals",
+          "type": "Text",
+          "required": false,
+          "notes": "Human-readable signal summary such as name, phone, village, group, or external reference match."
+        },
+        {
+          "name": "mp_decision",
+          "type": "Choice",
+          "required": true,
+          "notes": "Pending review, link to existing, create new entity, reject match, or needs investigation."
+        },
+        {
+          "name": "mp_reviewedby",
+          "type": "Text",
+          "required": false,
+          "notes": "Reviewer display name or system-user snapshot; do not store credentials."
+        },
+        {
+          "name": "mp_reviewedat",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Timestamp of identity decision."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryGroupMembership",
+      "display_name": "Beneficiary Group Membership",
+      "primary_name_column": "mp_membershipkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Relationship between a group beneficiary and an individual or organization member tracked entity.",
+      "columns": [
+        {
+          "name": "mp_membershipkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as projectCode:groupEntityKey:memberEntityKey:startDate."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_groupentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Group, AMCOS, SACCOS, cooperative, or organization beneficiary."
+        },
+        {
+          "name": "mp_memberentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Member beneficiary entity."
+        },
+        {
+          "name": "mp_memberrole",
+          "type": "Choice",
+          "required": false,
+          "notes": "Member, leader, contact person, treasurer, or other governed role."
+        },
+        {
+          "name": "mp_startdate",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Membership start date."
+        },
+        {
+          "name": "mp_enddate",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Membership end date when known."
+        },
+        {
+          "name": "mp_status",
+          "type": "Choice",
+          "required": true,
+          "notes": "Active, pending verification, inactive, or disputed."
+        },
+        {
+          "name": "mp_sourcesubmission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Submission that reported or updated the membership."
+        }
+      ]
+    },
+    {
+      "name": "mp_BeneficiaryLocationHistory",
+      "display_name": "Beneficiary Location History",
+      "primary_name_column": "mp_locationkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Time-bound beneficiary geography history for location changes and corrections.",
+      "columns": [
+        {
+          "name": "mp_locationkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as trackedEntityKey:region:district:ward:village:startDate."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": true,
+          "notes": "Beneficiary identity."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/program boundary."
+        },
+        {
+          "name": "mp_region",
+          "type": "Text",
+          "required": false,
+          "notes": "Region label snapshot."
+        },
+        {
+          "name": "mp_district",
+          "type": "Text",
+          "required": false,
+          "notes": "District label snapshot."
+        },
+        {
+          "name": "mp_ward",
+          "type": "Text",
+          "required": false,
+          "notes": "Ward label snapshot."
+        },
+        {
+          "name": "mp_village",
+          "type": "Text",
+          "required": false,
+          "notes": "Village label snapshot."
+        },
+        {
+          "name": "mp_villagereference",
+          "type": "Lookup:mp_VillageReference",
+          "required": false,
+          "notes": "Governed village reference when available."
+        },
+        {
+          "name": "mp_effectivefrom",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Date from which this location applies."
+        },
+        {
+          "name": "mp_effectiveto",
+          "type": "DateOnly",
+          "required": false,
+          "notes": "Date until which this location applies."
+        },
+        {
+          "name": "mp_iscurrent",
+          "type": "Boolean",
+          "required": true,
+          "notes": "Marks the current dashboard/filter location."
+        },
+        {
+          "name": "mp_sourcesubmission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Submission that reported or corrected the location."
+        }
+      ]
     }
   ],
   "relationships": [
@@ -594,6 +809,83 @@
       "lookup_column": "mp_submission",
       "required": true,
       "notes": "Submission lineage."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryIdentityMatch",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryIdentityMatch",
+      "lookup_column": "mp_sourcesubmission",
+      "required": true,
+      "notes": "Source submission for identity match review."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryIdentityMatch",
+      "lookup_column": "mp_candidateentity",
+      "required": false,
+      "notes": "Candidate existing tracked entity."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryGroupMembership",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryGroupMembership",
+      "lookup_column": "mp_groupentity",
+      "required": true,
+      "notes": "Group beneficiary identity."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryGroupMembership",
+      "lookup_column": "mp_memberentity",
+      "required": true,
+      "notes": "Member beneficiary identity."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryGroupMembership",
+      "lookup_column": "mp_sourcesubmission",
+      "required": false,
+      "notes": "Source submission for membership evidence."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_BeneficiaryLocationHistory",
+      "lookup_column": "mp_trackedentity",
+      "required": true,
+      "notes": "Beneficiary identity."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_BeneficiaryLocationHistory",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope."
+    },
+    {
+      "referenced_table": "mp_VillageReference",
+      "referencing_table": "mp_BeneficiaryLocationHistory",
+      "lookup_column": "mp_villagereference",
+      "required": false,
+      "notes": "Governed village reference."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_BeneficiaryLocationHistory",
+      "lookup_column": "mp_sourcesubmission",
+      "required": false,
+      "notes": "Source submission for location evidence."
     }
   ],
   "alternate_keys": [
@@ -652,6 +944,30 @@
         "mp_linkkey"
       ],
       "notes": "Idempotent submission lineage key."
+    },
+    {
+      "table": "mp_BeneficiaryIdentityMatch",
+      "name": "AK_BeneficiaryIdentityMatch_Key",
+      "columns": [
+        "mp_matchkey"
+      ],
+      "notes": "Idempotent identity match review key."
+    },
+    {
+      "table": "mp_BeneficiaryGroupMembership",
+      "name": "AK_BeneficiaryGroupMembership_Key",
+      "columns": [
+        "mp_membershipkey"
+      ],
+      "notes": "Idempotent group membership key."
+    },
+    {
+      "table": "mp_BeneficiaryLocationHistory",
+      "name": "AK_BeneficiaryLocationHistory_Key",
+      "columns": [
+        "mp_locationkey"
+      ],
+      "notes": "Idempotent location history key."
     }
   ]
 }

@@ -40,6 +40,9 @@ const requiredTables = [
   'mp_BeneficiaryTrainingParticipation',
   'mp_BeneficiaryOutcomeSnapshot',
   'mp_BeneficiarySubmissionLink',
+  'mp_BeneficiaryIdentityMatch',
+  'mp_BeneficiaryGroupMembership',
+  'mp_BeneficiaryLocationHistory',
 ];
 
 for (const table of requiredTables) {
@@ -51,6 +54,11 @@ assertIncludes(schemaSource, 'mp_TrackedEntity', 'Beneficiary schema must use mp
 assertIncludes(schemaSource, 'Lookup:mp_Project', 'Beneficiary extension rows must stay project-scoped.');
 assertIncludes(schemaSource, 'Lookup:mp_Submission', 'Beneficiary extension rows must preserve source submission lineage.');
 assertIncludes(schemaSource, 'Lookup:mp_VocabularyTerm', 'Technology/training values must support governed vocabulary lookups.');
+assertIncludes(schemaSource, 'mp_BeneficiaryIdentityMatch', 'Beneficiary schema must include an identity match review table.');
+assertIncludes(schemaSource, 'mp_BeneficiaryGroupMembership', 'Beneficiary schema must include group membership relationships.');
+assertIncludes(schemaSource, 'mp_BeneficiaryLocationHistory', 'Beneficiary schema must include location history.');
+assertIncludes(schemaSource, 'Lookup:mp_VillageReference', 'Location history must support governed village references.');
+assertIncludes(schemaSource, 'must not auto-merge records without review', 'Identity matching must not allow silent fuzzy-match merges.');
 
 for (const table of schema.tables) {
   assert(table.primary_name_column, `${table.name} must define a primary_name_column.`);
@@ -61,18 +69,37 @@ for (const table of schema.tables) {
 }
 
 const relationshipTargets = new Set(schema.relationships.map((relationship) => `${relationship.referenced_table}->${relationship.referencing_table}.${relationship.lookup_column}`));
-for (const table of requiredTables) {
-  if (table === 'mp_BeneficiarySubmissionLink') continue;
+const directTrackedEntityTables = [
+  'mp_BeneficiaryProfile',
+  'mp_BeneficiaryProgrammeParticipation',
+  'mp_BeneficiaryFinanceLink',
+  'mp_BeneficiaryTechnologyAdoption',
+  'mp_BeneficiaryTrainingParticipation',
+  'mp_BeneficiaryOutcomeSnapshot',
+  'mp_BeneficiaryLocationHistory',
+];
+
+for (const table of directTrackedEntityTables) {
   assert(
     relationshipTargets.has(`mp_TrackedEntity->${table}.mp_trackedentity`),
     `${table} must relate back to mp_TrackedEntity.`,
   );
 }
 assert(relationshipTargets.has('mp_Submission->mp_BeneficiarySubmissionLink.mp_submission'), 'Submission link must relate to mp_Submission.');
+assert(relationshipTargets.has('mp_Submission->mp_BeneficiaryIdentityMatch.mp_sourcesubmission'), 'Identity match must relate to the source submission.');
+assert(relationshipTargets.has('mp_TrackedEntity->mp_BeneficiaryIdentityMatch.mp_candidateentity'), 'Identity match must relate to a candidate tracked entity.');
+assert(relationshipTargets.has('mp_TrackedEntity->mp_BeneficiaryGroupMembership.mp_groupentity'), 'Group membership must relate to the group tracked entity.');
+assert(relationshipTargets.has('mp_TrackedEntity->mp_BeneficiaryGroupMembership.mp_memberentity'), 'Group membership must relate to the member tracked entity.');
+assert(relationshipTargets.has('mp_VillageReference->mp_BeneficiaryLocationHistory.mp_villagereference'), 'Location history must relate to village reference data.');
 
 assertIncludes(planSource, 'Use the existing generic `mp_TrackedEntity`', 'Plan must document the tracked-entity identity decision.');
 assertIncludes(planSource, 'No Dataverse environment write', 'Plan must state no environment write is authorized.');
 assertIncludes(planSource, 'Prototype-to-Dataverse mapping', 'Plan must include prototype-to-schema mapping.');
+assertIncludes(planSource, 'Prototype-to-product boundaries', 'Plan must document prototype-to-product boundaries.');
+assertIncludes(planSource, 'mp_BeneficiaryIdentityMatch', 'Plan must document identity match review.');
+assertIncludes(planSource, 'mp_BeneficiaryGroupMembership', 'Plan must document group membership modeling.');
+assertIncludes(planSource, 'mp_BeneficiaryLocationHistory', 'Plan must document location history modeling.');
+assertIncludes(planSource, 'Do not auto-merge beneficiary records from fuzzy matching alone', 'Plan must reject silent fuzzy-match merging.');
 assertIncludes(planSource, 'Open questions before environment write', 'Plan must record pre-write open questions.');
 assertIncludes(planSource, 'Do not run `dataverse-schema-deploy.py`', 'Plan must preserve the deployment approval gate.');
 
