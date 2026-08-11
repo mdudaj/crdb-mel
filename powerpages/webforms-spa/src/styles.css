@@ -1366,6 +1366,7 @@ body {
   min-height: 86px;
   padding: var(--mt-space-4);
   border: 1px solid var(--mt-color-border);
+  border-left: 6px solid var(--mt-color-brand);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface-muted);
 }

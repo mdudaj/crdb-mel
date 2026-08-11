@@ -54,13 +54,14 @@ for (const forbiddenSelector of ['.form-card::before', '.data-card::before']) {
   }
 }
 
-if (!stylesSource.includes('.metric-card--accent') || !/\.metric-card--accent\s*\{[\s\S]*?border-left\s*:\s*6px\s+solid\s+var\(--mt-color-brand\)/.test(stylesSource)) {
-  throw new Error('Metric cards must keep the shared metric-card accent rail.');
+if (!/\.metric-card\s*\{[\s\S]*?border-left\s*:\s*6px\s+solid\s+var\(--mt-color-brand\)/.test(stylesSource)) {
+  throw new Error('All shared metric cards must keep the metric accent rail.');
 }
 
-const metricAccentCount = (assignedFormsSource.match(/class="metric-card metric-card--accent"/g) || []).length;
-if (metricAccentCount < 4) {
-  throw new Error(`Expected metric-card accent rails on route metric strips; found ${metricAccentCount}.`);
+for (const expectedMetricSection of ['class="access-metric-strip"', 'class="summary-grid"', 'class="route-status-strip"']) {
+  if (!assignedFormsSource.includes(expectedMetricSection)) {
+    throw new Error(`Missing expected metric section ${expectedMetricSection}.`);
+  }
 }
 
 console.log('Route card accent scope validation passed.');
