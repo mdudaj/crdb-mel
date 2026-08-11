@@ -46,12 +46,12 @@ assertIncludes("position: 'top'", 'Disbursement Trend point labels must be posit
 assertIncludes('hideOverlap: true', 'Disbursement Trend must keep labelLayout.hideOverlap enabled.');
 assertIncludes('right: 24', 'Disbursement Trend right gutter must reserve room for the final point label.');
 
-if (!dashboardCardSource.includes('.dashboard-card::before') || !dashboardCardSource.includes('--dashboard-card-accent')) {
-  throw new Error('DashboardCard must keep the reusable left accent rail and accent token.');
+if (dashboardCardSource.includes('.dashboard-card::before') || dashboardCardSource.includes('--dashboard-card-accent')) {
+  throw new Error('DashboardCard must not render the metric accent rail; dashboard rails belong only on KPI summary cards.');
 }
 
 if (!kpiCardSource.includes('.kpi-card::before') || !kpiCardSource.includes('--kpi-card-accent')) {
-  throw new Error('KpiCard must keep the reusable left accent rail and accent token.');
+  throw new Error('KpiCard must keep the reusable left accent rail and accent token for dashboard metric cards.');
 }
 
 if (/axisLabel:\s*{[\s\S]*formatter:\s*['"`]{value}B['"`]/.test(source)) {

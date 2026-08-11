@@ -70,7 +70,7 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
 
 <template>
   <section class="beneficiaries-page" aria-labelledby="beneficiaries-title">
-    <SurfaceCard as="section" accent="green" class="beneficiaries-hero">
+    <SurfaceCard as="section" class="beneficiaries-hero">
       <div>
         <p class="beneficiaries-eyebrow">Beneficiary registry</p>
         <h1 id="beneficiaries-title">Beneficiaries</h1>
@@ -84,14 +84,14 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
     </SurfaceCard>
 
     <section class="beneficiaries-summary" aria-label="Beneficiary summary">
-      <SurfaceCard v-for="metric in summaryMetrics" :key="metric.label" as="article" accent="green" class="beneficiary-metric">
+      <SurfaceCard v-for="metric in summaryMetrics" :key="metric.label" as="article" accent="green" accented class="beneficiary-metric">
         <span>{{ metric.label }}</span>
         <strong>{{ metric.value }}</strong>
         <small>{{ metric.detail }}</small>
       </SurfaceCard>
     </section>
 
-    <SurfaceCard as="section" accent="green" class="beneficiary-list" aria-labelledby="beneficiary-list-title">
+    <SurfaceCard as="section" class="beneficiary-list" aria-labelledby="beneficiary-list-title">
       <header class="beneficiary-list__header">
         <div>
           <p class="beneficiaries-eyebrow">Material list surface</p>

@@ -32,7 +32,9 @@ assertIncludes(shellSource, "return 'beneficiaries';", 'Hash route parsing must 
 
 assertIncludes(viewSource, 'role="search"', 'Beneficiaries filters must expose a search landmark.');
 assertIncludes(viewSource, "import SurfaceCard from '../components/ui/SurfaceCard.vue';", 'Beneficiaries page must use the shared SurfaceCard abstraction.');
-assertIncludes(viewSource, '<SurfaceCard as="section" accent="green" class="beneficiaries-hero">', 'Beneficiaries hero must use an accented SurfaceCard.');
+assertIncludes(viewSource, '<SurfaceCard as="section" class="beneficiaries-hero">', 'Beneficiaries hero must use a plain SurfaceCard without the metric accent rail.');
+assertIncludes(viewSource, 'as="article" accent="green" accented class="beneficiary-metric"', 'Beneficiary summary metrics must opt into the metric accent rail.');
+assertIncludes(viewSource, '<SurfaceCard as="section" class="beneficiary-list"', 'Beneficiary list surface must use a plain SurfaceCard without the metric accent rail.');
 assertIncludes(viewSource, 'class="beneficiary-metric"', 'Beneficiary summary metrics must use shared card styling.');
 assertIncludes(viewSource, 'class="beneficiary-list"', 'Beneficiary list surface must use shared card styling.');
 assertIncludes(viewSource, 'Search beneficiaries', 'Search control must have a visible label.');
@@ -50,8 +52,12 @@ assertPattern(dataSource, /export const beneficiaryRecords: BeneficiaryRecord\[]
 
 const surfaceCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/ui/SurfaceCard.vue');
 const surfaceCardSource = readFileSync(surfaceCardPath, 'utf8');
-assertIncludes(surfaceCardSource, '.surface-card::before', 'Shared SurfaceCard must keep the reusable left accent rail.');
+assertIncludes(surfaceCardSource, 'accented?: boolean;', 'Shared SurfaceCard must make the accent rail opt-in.');
+assertIncludes(surfaceCardSource, '.surface-card--accented::before', 'Shared SurfaceCard must render the rail only when accented is true.');
 assertIncludes(surfaceCardSource, '--surface-card-accent', 'Shared SurfaceCard must expose an accent token.');
+if (surfaceCardSource.includes('.surface-card::before')) {
+  throw new Error('Shared SurfaceCard must not shade every card; use .surface-card--accented::before only.');
+}
 
 if (/official CRDB Bank or Green Climate Fund statistics/.test(dataSource)) {
   throw new Error('Official-statistics disclaimer belongs in UI/documentation, not inside prototype data values.');

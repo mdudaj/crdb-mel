@@ -317,14 +317,14 @@ function iconFor(metric: KpiMetric) {
     </section>
 
     <section class="analytics-grid" aria-label="TACATDP analytics">
-      <DashboardCard :span="3" accent="green" title="Loan Portfolio by Type">
+      <DashboardCard :span="3" title="Loan Portfolio by Type">
         <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
         <template #footer>
           <a href="#reporting">View full report →</a>
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="5" accent="blue">
+      <DashboardCard :span="5">
         <template #header>
           <div class="card-heading-row">
             <h2 id="disbursement-trend-title">Disbursement Trend (TZS)</h2>
@@ -334,7 +334,7 @@ function iconFor(metric: KpiMetric) {
         <DashboardChart class="chart chart--line" :option="disbursementTrendOption" autoresize />
       </DashboardCard>
 
-      <DashboardCard :span="4" :row-span="2" accent="green">
+      <DashboardCard :span="4" :row-span="2">
         <template #header>
           <div class="card-heading-row">
             <h2 id="regional-map-title">Loans by Region</h2>
@@ -359,14 +359,14 @@ function iconFor(metric: KpiMetric) {
         </div>
       </DashboardCard>
 
-      <DashboardCard :span="4" accent="green" title="Technologies Financed">
+      <DashboardCard :span="4" title="Technologies Financed">
         <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize />
         <template #footer>
           <a href="#reporting">View full breakdown →</a>
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="4" accent="amber" title="Loan Performance">
+      <DashboardCard :span="4" title="Loan Performance">
         <DashboardChart class="chart chart--donut" :option="loanPerformanceOption" autoresize />
         <template #footer>
           <a href="#reporting">View portfolio quality →</a>
@@ -375,7 +375,7 @@ function iconFor(metric: KpiMetric) {
     </section>
 
     <section class="insights-grid" aria-label="TACATDP monitoring insights">
-      <DashboardCard :span="8" accent="green" title="Climate Resilience Outcomes">
+      <DashboardCard :span="8" title="Climate Resilience Outcomes">
         <div class="outcome-grid">
           <section class="outcome-metric" :title="climateOutcomes[0].definition">
             <span class="outcome-metric__icon outcome-metric__icon--blue" aria-hidden="true">
@@ -412,7 +412,7 @@ function iconFor(metric: KpiMetric) {
         </div>
       </DashboardCard>
 
-      <DashboardCard :span="4" accent="green" title="Training &amp; Capacity Building">
+      <DashboardCard :span="4" title="Training &amp; Capacity Building">
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
@@ -430,7 +430,7 @@ function iconFor(metric: KpiMetric) {
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="6" accent="blue" title="Recent Data Submissions">
+      <DashboardCard :span="6" title="Recent Data Submissions">
         <div class="submission-list">
           <section v-for="submission in recentSubmissions" :key="submission.region">
             <div>
@@ -448,7 +448,7 @@ function iconFor(metric: KpiMetric) {
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="6" variant="goal" accent="green" title="Program Impact Goal">
+      <DashboardCard :span="6" variant="goal" title="Program Impact Goal">
         <template #background>
           <img class="goal-illustration" :src="programImpactFarmer" alt="">
         </template>

@@ -2,14 +2,23 @@
 withDefaults(defineProps<{
   as?: 'article' | 'section' | 'div';
   accent?: 'green' | 'blue' | 'amber' | 'purple' | 'red' | 'neutral';
+  accented?: boolean;
 }>(), {
   as: 'section',
   accent: 'green',
+  accented: false,
 });
 </script>
 
 <template>
-  <component :is="as" class="surface-card" :class="`surface-card--${accent}`">
+  <component
+    :is="as"
+    class="surface-card"
+    :class="[
+      accented ? 'surface-card--accented' : '',
+      accented ? `surface-card--${accent}` : '',
+    ]"
+  >
     <slot />
   </component>
 </template>
@@ -25,7 +34,7 @@ withDefaults(defineProps<{
   box-shadow: 0 8px 18px rgba(6, 78, 59, 0.06);
 }
 
-.surface-card::before {
+.surface-card--accented::before {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
