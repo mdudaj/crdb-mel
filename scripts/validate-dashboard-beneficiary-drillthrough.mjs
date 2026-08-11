@@ -26,6 +26,9 @@ function assertPattern(source, pattern, message) {
 }
 
 assertIncludes(shellSource, ".split('?')[0].split('/')[0]", 'Shell route parser must strip beneficiary query strings before resolving the active route.');
+assertIncludes(shellSource, 'function openBeneficiaries(options: { preserveHash?: boolean } = {})', 'Shell direct Beneficiaries navigation must accept an explicit hash-preservation option.');
+assertIncludes(shellSource, "window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/beneficiaries`)", 'Shell direct Beneficiaries navigation must clear stale dashboard drill-through query state.');
+assertIncludes(shellSource, 'openBeneficiaries({ preserveHash: true })', 'Hash-routed Beneficiaries navigation must preserve dashboard drill-through query state.');
 
 assertIncludes(dashboardSource, 'function openBeneficiaries(filters: Record<string, string>)', 'Dashboard must use a single drill-through helper.');
 assertIncludes(dashboardSource, "new URLSearchParams({ source: 'dashboard', ...filters })", 'Dashboard drill-through must preserve source metadata in the URL.');

@@ -1146,11 +1146,14 @@ function backToProjects() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openBeneficiaries() {
+function openBeneficiaries(options: { preserveHash?: boolean } = {}) {
   postSubmitMessage.value = '';
   accessRouteDenied.value = false;
   activeView.value = 'beneficiaries';
   mobileNavOpen.value = false;
+  if (!options.preserveHash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/beneficiaries`);
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1239,7 +1242,7 @@ async function applyRouteIntent(intent: RouteIntent | null) {
     return;
   }
   if (intent === 'beneficiaries') {
-    openBeneficiaries();
+    openBeneficiaries({ preserveHash: true });
     return;
   }
   if (intent === 'dashboard') {
@@ -2399,7 +2402,7 @@ onUnmounted(() => {
             :class="{ 'managed-nav-item--active': activeView === 'beneficiaries' }"
             type="button"
             aria-label="Beneficiaries"
-            @click="openBeneficiaries"
+            @click="openBeneficiaries()"
           >
             <Users class="managed-nav-item__icon" aria-hidden="true" />
             <span>Beneficiaries</span>
