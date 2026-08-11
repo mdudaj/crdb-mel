@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Eye, Filter, Search, SlidersHorizontal, Users, X } from '@lucide/vue';
 import SurfaceCard from '../components/ui/SurfaceCard.vue';
 import { beneficiaryRecords, type BeneficiaryRecord } from '../prototype/beneficiaries';
@@ -7,10 +7,26 @@ import { beneficiaryRecords, type BeneficiaryRecord } from '../prototype/benefic
 const searchTerm = ref('');
 const activeRegion = ref('All regions');
 const activeVerification = ref('All statuses');
+const activeBorrowerStatus = ref('All borrower statuses');
+const activeTraining = ref('All training states');
+const activeTechnology = ref('All technologies');
+const activeSubmissionStatus = ref('All submission states');
+const drillthroughSource = ref('');
 const selectedBeneficiaryId = ref('');
+const suppressHashSync = ref(false);
 
 const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryRecords.map((record) => record.region))).sort()]);
 const verificationStatuses = ['All statuses', 'Verified', 'Under review', 'Incomplete'];
+const borrowerStatuses = ['All borrower statuses', 'Active borrower', 'Training only', 'Pending verification'];
+const trainingStates = ['All training states', 'Trained', 'Not yet trained'];
+const submissionStatuses = ['All submission states', 'Submitted', 'Under review', 'Returned', 'Awaiting submission'];
+const technologies = computed(() => [
+  'All technologies',
+  ...Array.from(new Set(beneficiaryRecords.flatMap((record) => [
+    record.technology,
+    ...record.technologiesFinanced.map((technology) => technology.name),
+  ]))).sort(),
+]);
 const beneficiaryDataverseTargets = [
   'mp_TrackedEntity',
   'mp_BeneficiaryProfile',
@@ -21,6 +37,24 @@ const beneficiaryDataverseTargets = [
   'mp_BeneficiaryOutcomeSnapshot',
   'mp_BeneficiarySubmissionLink',
 ];
+
+function normaliseFilterValue(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function setIfAllowed(target: typeof activeRegion, value: string | null, allowedValues: string[], fallback: string) {
+  target.value = value && allowedValues.includes(value) ? value : fallback;
+}
+
+function technologyMatches(record: BeneficiaryRecord, technologyFilter: string) {
+  if (technologyFilter === 'All technologies') return true;
+  const requested = normaliseFilterValue(technologyFilter);
+  const candidates = [
+    record.technology,
+    ...record.technologiesFinanced.map((technology) => technology.name),
+  ].map(normaliseFilterValue);
+  return candidates.some((candidate) => candidate.includes(requested) || requested.includes(candidate));
+}
 
 const filteredBeneficiaries = computed(() => {
   const search = searchTerm.value.trim().toLowerCase();
@@ -43,7 +77,12 @@ const filteredBeneficiaries = computed(() => {
     ].some((value) => value.toLowerCase().includes(search));
     const matchesRegion = activeRegion.value === 'All regions' || record.region === activeRegion.value;
     const matchesVerification = activeVerification.value === 'All statuses' || record.verificationStatus === activeVerification.value;
-    return matchesSearch && matchesRegion && matchesVerification;
+    const matchesBorrowerStatus = activeBorrowerStatus.value === 'All borrower statuses' || record.borrowerStatus === activeBorrowerStatus.value;
+    const matchesTraining = activeTraining.value === 'All training states'
+      || (activeTraining.value === 'Trained' ? record.trained : !record.trained);
+    const matchesTechnology = technologyMatches(record, activeTechnology.value);
+    const matchesSubmission = activeSubmissionStatus.value === 'All submission states' || record.latestSubmission.status === activeSubmissionStatus.value;
+    return matchesSearch && matchesRegion && matchesVerification && matchesBorrowerStatus && matchesTraining && matchesTechnology && matchesSubmission;
   });
 });
 
@@ -65,20 +104,74 @@ const summaryMetrics = computed(() => {
 
 const activeFilters = computed(() => [
   activeRegion.value !== 'All regions' ? { key: 'region', label: `Region: ${activeRegion.value}` } : null,
-  activeVerification.value !== 'All statuses' ? { key: 'status', label: `Status: ${activeVerification.value}` } : null,
+  activeVerification.value !== 'All statuses' ? { key: 'verification', label: `Verification: ${activeVerification.value}` } : null,
+  activeBorrowerStatus.value !== 'All borrower statuses' ? { key: 'borrowerStatus', label: `Borrower: ${activeBorrowerStatus.value}` } : null,
+  activeTraining.value !== 'All training states' ? { key: 'trained', label: `Training: ${activeTraining.value}` } : null,
+  activeTechnology.value !== 'All technologies' ? { key: 'technology', label: `Technology: ${activeTechnology.value}` } : null,
+  activeSubmissionStatus.value !== 'All submission states' ? { key: 'submissionStatus', label: `Submission: ${activeSubmissionStatus.value}` } : null,
   searchTerm.value.trim() ? { key: 'search', label: `Search: ${searchTerm.value.trim()}` } : null,
 ].filter((filter): filter is { key: string; label: string } => Boolean(filter)));
 
+function syncBeneficiaryHashFilters() {
+  if (suppressHashSync.value || window.location.hash.split('?')[0].replace(/^#\/?/, '') !== 'beneficiaries') return;
+
+  const params = new URLSearchParams();
+  if (activeRegion.value !== 'All regions') params.set('region', activeRegion.value);
+  if (activeVerification.value !== 'All statuses') params.set('verification', activeVerification.value);
+  if (activeBorrowerStatus.value !== 'All borrower statuses') params.set('borrowerStatus', activeBorrowerStatus.value);
+  if (activeTraining.value !== 'All training states') params.set('trained', activeTraining.value === 'Trained' ? 'true' : 'false');
+  if (activeTechnology.value !== 'All technologies') params.set('technology', activeTechnology.value);
+  if (activeSubmissionStatus.value !== 'All submission states') params.set('submissionStatus', activeSubmissionStatus.value);
+  if (drillthroughSource.value) params.set('source', drillthroughSource.value);
+
+  const query = params.toString();
+  const nextHash = `#/beneficiaries${query ? `?${query}` : ''}`;
+  if (window.location.hash !== nextHash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+  }
+}
+
+function readBeneficiaryHashFilters() {
+  if (window.location.hash.split('?')[0].replace(/^#\/?/, '') !== 'beneficiaries') return;
+
+  suppressHashSync.value = true;
+  const query = window.location.hash.split('?')[1] ?? '';
+  const params = new URLSearchParams(query);
+  setIfAllowed(activeRegion, params.get('region'), regions.value, 'All regions');
+  setIfAllowed(activeVerification, params.get('verification'), verificationStatuses, 'All statuses');
+  setIfAllowed(activeBorrowerStatus, params.get('borrowerStatus'), borrowerStatuses, 'All borrower statuses');
+  setIfAllowed(activeTechnology, params.get('technology'), technologies.value, 'All technologies');
+  setIfAllowed(activeSubmissionStatus, params.get('submissionStatus'), submissionStatuses, 'All submission states');
+  activeTraining.value = params.get('trained') === 'true'
+    ? 'Trained'
+    : params.get('trained') === 'false'
+      ? 'Not yet trained'
+      : 'All training states';
+  drillthroughSource.value = params.get('source') === 'dashboard' ? 'dashboard' : '';
+  suppressHashSync.value = false;
+}
+
 function clearFilter(key: string) {
   if (key === 'region') activeRegion.value = 'All regions';
-  if (key === 'status') activeVerification.value = 'All statuses';
+  if (key === 'verification') activeVerification.value = 'All statuses';
+  if (key === 'borrowerStatus') activeBorrowerStatus.value = 'All borrower statuses';
+  if (key === 'trained') activeTraining.value = 'All training states';
+  if (key === 'technology') activeTechnology.value = 'All technologies';
+  if (key === 'submissionStatus') activeSubmissionStatus.value = 'All submission states';
   if (key === 'search') searchTerm.value = '';
+  if (key !== 'search') syncBeneficiaryHashFilters();
 }
 
 function clearAllFilters() {
   searchTerm.value = '';
   activeRegion.value = 'All regions';
   activeVerification.value = 'All statuses';
+  activeBorrowerStatus.value = 'All borrower statuses';
+  activeTraining.value = 'All training states';
+  activeTechnology.value = 'All technologies';
+  activeSubmissionStatus.value = 'All submission states';
+  drillthroughSource.value = '';
+  syncBeneficiaryHashFilters();
 }
 
 function openBeneficiary(record: BeneficiaryRecord) {
@@ -94,6 +187,17 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
   if (status === 'Under review') return 'warning';
   return 'error';
 }
+
+watch([activeRegion, activeVerification, activeBorrowerStatus, activeTraining, activeTechnology, activeSubmissionStatus], syncBeneficiaryHashFilters);
+
+onMounted(() => {
+  readBeneficiaryHashFilters();
+  window.addEventListener('hashchange', readBeneficiaryHashFilters);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('hashchange', readBeneficiaryHashFilters);
+});
 </script>
 
 <template>
@@ -128,6 +232,10 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
         <span class="beneficiary-list__count">{{ filteredBeneficiaries.length }} shown</span>
       </header>
 
+      <div v-if="drillthroughSource === 'dashboard'" class="beneficiary-drillthrough-context" role="status">
+        Dashboard drill-through · Filters are preserved in the URL for review and sharing.
+      </div>
+
       <form class="beneficiary-toolbar" role="search" aria-label="Search and filter beneficiary records" @submit.prevent>
         <label class="beneficiary-search">
           <span>Search beneficiaries</span>
@@ -148,6 +256,27 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
           <span>Verification</span>
           <select v-model="activeVerification">
             <option v-for="status in verificationStatuses" :key="status" :value="status">{{ status }}</option>
+          </select>
+        </label>
+
+        <label class="beneficiary-filter">
+          <span>Borrower status</span>
+          <select v-model="activeBorrowerStatus">
+            <option v-for="status in borrowerStatuses" :key="status" :value="status">{{ status }}</option>
+          </select>
+        </label>
+
+        <label class="beneficiary-filter">
+          <span>Training</span>
+          <select v-model="activeTraining">
+            <option v-for="state in trainingStates" :key="state" :value="state">{{ state }}</option>
+          </select>
+        </label>
+
+        <label class="beneficiary-filter">
+          <span>Technology</span>
+          <select v-model="activeTechnology">
+            <option v-for="technology in technologies" :key="technology" :value="technology">{{ technology }}</option>
           </select>
         </label>
 
@@ -575,9 +704,19 @@ function statusTone(status: BeneficiaryRecord['verificationStatus']) {
   font-weight: 800;
 }
 
+.beneficiary-drillthrough-context {
+  padding: 10px 12px;
+  border: 1px solid #B7D6BF;
+  border-radius: 12px;
+  background: #EAF7EE;
+  color: var(--m3-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .beneficiary-toolbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(160px, 0.28fr) minmax(170px, 0.28fr) auto;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(4, minmax(145px, 0.5fr)) auto;
   gap: 12px;
   align-items: end;
 }

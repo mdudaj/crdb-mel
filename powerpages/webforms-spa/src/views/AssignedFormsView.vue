@@ -1208,7 +1208,7 @@ function setSystemActivitySection(section: SystemActivitySection) {
 }
 
 function routeIntentFromHash(): RouteIntent | null {
-  const route = window.location.hash.replace(/^#\/?/, '').split('/')[0].trim().toLowerCase();
+  const route = window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
   if (route === 'system-activity' || route === 'activity') {
     return 'system-activity';
   }

@@ -95,6 +95,11 @@ const DashboardChart = defineAsyncComponent(async () => {
 const selectedRegion = regionalMetrics.find((region) => region.name === 'Morogoro') ?? regionalMetrics[0];
 const regionData = regionalMetrics.map((region) => ({ name: region.name, value: region.disbursed }));
 
+function openBeneficiaries(filters: Record<string, string>) {
+  const params = new URLSearchParams({ source: 'dashboard', ...filters });
+  window.location.hash = `#/beneficiaries?${params.toString()}`;
+}
+
 function chartParam(params: unknown): { name: string; value: number; percent: number } {
   const candidate = Array.isArray(params) ? params[0] : params;
   if (candidate && typeof candidate === 'object') {
@@ -281,6 +286,24 @@ function iconFor(metric: KpiMetric) {
   if (metric.icon === 'co2') return Building2;
   return Leaf;
 }
+
+function openKpiDetail(metric: KpiMetric) {
+  if (metric.id === 'active-borrowers') {
+    openBeneficiaries({ borrowerStatus: 'Active borrower' });
+  }
+  if (metric.id === 'farmers-trained') {
+    openBeneficiaries({ trained: 'true' });
+  }
+}
+
+function openTechnologyBeneficiaries(params: unknown) {
+  const itemParams = chartParam(params);
+  if (itemParams.name) openBeneficiaries({ technology: itemParams.name });
+}
+
+function regionNameFromSubmission(regionLabel: string) {
+  return regionLabel.replace(/\s+Region$/, '');
+}
 </script>
 
 <template>
@@ -313,6 +336,12 @@ function iconFor(metric: KpiMetric) {
         :change="metric.change"
         :tone="metric.tone"
         :icon="iconFor(metric)"
+        :class="{ 'kpi-card--clickable': metric.id === 'active-borrowers' || metric.id === 'farmers-trained' }"
+        :tabindex="metric.id === 'active-borrowers' || metric.id === 'farmers-trained' ? 0 : undefined"
+        :role="metric.id === 'active-borrowers' || metric.id === 'farmers-trained' ? 'button' : undefined"
+        @click="openKpiDetail(metric)"
+        @keydown.enter.prevent="openKpiDetail(metric)"
+        @keydown.space.prevent="openKpiDetail(metric)"
       />
     </section>
 
@@ -342,7 +371,7 @@ function iconFor(metric: KpiMetric) {
           </div>
         </template>
         <DashboardChart class="chart chart--map" :option="regionalMapOption" autoresize aria-label="Tanzania regional choropleth map showing prototype disbursement by region" />
-        <div class="selected-region-card">
+        <button class="selected-region-card selected-region-card--action" type="button" @click="openBeneficiaries({ region: selectedRegion.name })">
           <div>
             <span>Top Region</span>
             <strong>{{ selectedRegion.name }}</strong>
@@ -356,13 +385,13 @@ function iconFor(metric: KpiMetric) {
             <strong>{{ selectedRegion.loans.toLocaleString() }}</strong>
           </div>
           <MapPinned aria-hidden="true" />
-        </div>
+        </button>
       </DashboardCard>
 
       <DashboardCard :span="4" title="Technologies Financed">
-        <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize />
+        <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize @click="openTechnologyBeneficiaries" />
         <template #footer>
-          <a href="#reporting">View full breakdown →</a>
+          <a href="#/beneficiaries?source=dashboard">View full breakdown →</a>
         </template>
       </DashboardCard>
 
@@ -432,7 +461,13 @@ function iconFor(metric: KpiMetric) {
 
       <DashboardCard :span="6" title="Recent Data Submissions">
         <div class="submission-list">
-          <section v-for="submission in recentSubmissions" :key="submission.region">
+          <button
+            v-for="submission in recentSubmissions"
+            :key="submission.region"
+            class="submission-row"
+            type="button"
+            @click="openBeneficiaries({ region: regionNameFromSubmission(submission.region), submissionStatus: submission.status })"
+          >
             <div>
               <strong>{{ submission.region }}</strong>
               <span>{{ submission.period }}</span>
@@ -441,10 +476,10 @@ function iconFor(metric: KpiMetric) {
               <span class="status-chip">{{ submission.status }}</span>
               <small>{{ submission.time }}</small>
             </div>
-          </section>
+          </button>
         </div>
         <template #footer>
-          <a href="#records">View all submissions →</a>
+          <a href="#/beneficiaries?source=dashboard">View all submissions →</a>
         </template>
       </DashboardCard>
 
@@ -464,7 +499,7 @@ function iconFor(metric: KpiMetric) {
 .card-heading-row,
 .selected-region-card,
 .training-grid,
-.submission-list section {
+.submission-row {
   display: flex;
   align-items: center;
 }
@@ -517,6 +552,15 @@ function iconFor(metric: KpiMetric) {
   width: 44px;
   padding: 0;
   justify-content: center;
+}
+
+.kpi-card--clickable {
+  cursor: pointer;
+}
+
+.kpi-card--clickable:focus-visible {
+  outline: 3px solid rgba(21, 128, 61, 0.24);
+  outline-offset: 3px;
 }
 
 .dashboard-demo-note {
@@ -602,10 +646,25 @@ a,
 }
 
 .selected-region-card {
+  width: 100%;
   gap: var(--dash-space-4);
   padding: var(--dash-space-3);
   border: 1px solid var(--dash-border);
   border-radius: 10px;
+  background: #FFFFFF;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.selected-region-card--action {
+  cursor: pointer;
+}
+
+.selected-region-card--action:focus-visible,
+.submission-row:focus-visible {
+  outline: 3px solid rgba(21, 128, 61, 0.24);
+  outline-offset: 2px;
 }
 
 .selected-region-card div {
@@ -746,9 +805,17 @@ a,
   gap: var(--dash-space-3);
 }
 
-.submission-list section {
+.submission-row {
   justify-content: space-between;
   gap: var(--dash-space-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .submission-list div {
