@@ -1472,6 +1472,14 @@ body {
   overflow: hidden;
 }
 
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7px;
+  background: linear-gradient(180deg, var(--mt-color-brand), var(--mt-color-primary-strong));
+}
+
 .project-card--entry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

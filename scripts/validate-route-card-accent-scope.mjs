@@ -44,7 +44,11 @@ for (const selector of plainRouteCards) {
   assertNoDecorativeRail(selector);
 }
 
-for (const forbiddenSelector of ['.project-card::before', '.form-card::before', '.data-card::before']) {
+if (!stylesSource.includes('.project-card::before')) {
+  throw new Error('Project list cards should keep their left shade for now.');
+}
+
+for (const forbiddenSelector of ['.form-card::before', '.data-card::before']) {
   if (stylesSource.includes(forbiddenSelector)) {
     throw new Error(`${forbiddenSelector} must not reintroduce decorative content-card rails.`);
   }
