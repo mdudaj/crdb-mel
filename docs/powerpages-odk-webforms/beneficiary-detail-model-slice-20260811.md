@@ -43,3 +43,49 @@ npm run build:mshirika-runtime
 ```
 
 Expected result: Material/list validation passes, TypeScript compiles, and the runtime bundle builds.
+
+## Mshirika deployment
+
+Deployment completed on 2026-08-11 to:
+
+- Environment: `PowerPagesDeveloper-070926-125720`
+- Environment URL: `https://orga3cf4b37.crm4.dynamics.com/`
+- Website: `TACATDP Monitoring Tool`
+- Website ID: `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`
+- PAC user: `john.mduda@mshirikacorp.onmicrosoft.com`
+- Build marker: `beneficiary-detail-20260811-020`
+
+Pre-upload checks:
+
+```bash
+npm run test:material
+npm run build:mshirika-runtime
+python3 scripts/stage-powerpages-spa-build.py
+node scripts/verify-powerpages-spa-assets.mjs
+node --check powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool/web-files/index-qlHls_DF.mjs
+```
+
+Upload command:
+
+```bash
+pac pages upload \
+  --environment "https://orga3cf4b37.crm4.dynamics.com/" \
+  --path ./powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool \
+  --modelVersion Enhanced \
+  --forceUploadAll
+```
+
+PAC reported:
+
+```text
+Power Pages website upload succeeded in 263.72 secs.
+```
+
+Post-upload verification downloaded the site again and confirmed both Home fragments reference:
+
+```html
+<script type="module" crossorigin src="/assets/index-qlHls_DF.mjs?v=beneficiary-detail-20260811-020"></script>
+<link rel="stylesheet" crossorigin href="/assets/index-br0G_Ug1.css?v=beneficiary-detail-20260811-020">
+```
+
+The post-upload package also contained the referenced main module, stylesheet, and `program-impact-farmer-U4dPWmM1.png`; `node --check` passed for `index-qlHls_DF.mjs`.
