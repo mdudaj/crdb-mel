@@ -266,3 +266,37 @@ Post-upload verification downloaded the CRDB site again and confirmed the deploy
 ```
 
 The downloaded `index-BKbav0i7.mjs` bundle passed `node --check`.
+
+## CRDB dashboard legend layout revision
+
+On 2026-08-11, the Mshirika-reviewed dashboard legend layout refinement was deployed to CRDB.
+
+Target:
+
+- Environment: `TACATDP-CRDB-Dev`
+- Environment URL: `https://org5eb0379b.crm4.dynamics.com/`
+- Website: `TACATDP Monitoring Tool`
+- Website ID: `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`
+- PAC user: `dmuroba@CRDBBANK.CO.TZ`
+- Source branch/commit: `prototype-next-delivery` / `576805f`
+
+Build and package marker:
+
+```text
+tacatdp-dashboard-20260811-005
+```
+
+Result:
+
+```text
+Power Pages website upload succeeded in 213.90 secs.
+```
+
+Post-upload verification downloaded the CRDB site again and confirmed the deployed Home fragments reference:
+
+```text
+/assets/index-BslHF5sX.mjs?v=tacatdp-dashboard-20260811-005
+/assets/index-Ch-JYMmt.css?v=tacatdp-dashboard-20260811-005
+```
+
+The downloaded `index-BslHF5sX.mjs` bundle passed `node --check`.
