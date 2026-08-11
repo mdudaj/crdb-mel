@@ -894,6 +894,12 @@ function contactStateTone(value: AccessUserSummary['contactState']): string {
   return 'neutral';
 }
 
+function accessStatusTone(value: AccessUserSummary['accessStatus']): string {
+  if (value === 'Active') return 'success';
+  if (value === 'Needs contact check') return 'warning';
+  return 'neutral';
+}
+
 function formatSystemHealthStatus(value: SystemHealthItem['status']): string {
   if (value === 'healthy') return 'Healthy';
   if (value === 'pending') return 'Pending';
@@ -3769,128 +3775,139 @@ onUnmounted(() => {
         </nav>
 
         <section v-if="activeAccessSection === 'users'" class="access-tab-panel" role="tabpanel" aria-label="Users">
-          <section class="access-toolbar" aria-label="User access filters">
-            <div>
-              <p class="eyebrow">Users</p>
-              <h3>Portal users</h3>
-            </div>
-            <label class="filter-field">
-              <span>Role</span>
-              <select v-model="accessRoleFilter">
-                <option value="">All roles</option>
-                <option v-for="role in accessRoleOptions" :key="role" :value="role">{{ role }}</option>
-              </select>
-            </label>
-            <label class="record-search">
-              <Search class="record-search__icon" aria-hidden="true" />
-              <span class="sr-only">Search users</span>
-              <input v-model="accessSearch" type="search" autocomplete="off" placeholder="Search users" aria-label="Search users">
-            </label>
-          </section>
-
-          <section v-if="accessLoading" class="loading-panel loading-panel--inline" aria-live="polite" aria-label="Loading users">
-            <h2>Loading users</h2>
-            <p>Checking assignments and contacts</p>
-            <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          </section>
-
-          <div v-else class="responsive-table access-table" role="region" aria-label="User access table" tabindex="0">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">User</th>
-                  <th scope="col">Contact</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Projects</th>
-                  <th scope="col">Forms</th>
-                  <th scope="col">Access</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="user in filteredAccessUsers" :key="user.id">
-                  <td>
-                    <strong>{{ user.name }}</strong>
-                    <span>{{ user.email }}</span>
-                  </td>
-                  <td>
-                    <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
-                  </td>
-                  <td>{{ user.role }}</td>
-                  <td>{{ user.projectCount }}</td>
-                  <td>{{ user.formCount }}</td>
-                  <td>{{ user.accessStatus }}</td>
-                  <td>
-                    <div class="table-actions">
-                      <details class="access-row-menu">
-                        <summary aria-label="More actions">
-                          <MoreVertical class="action-icon" aria-hidden="true" />
-                          <span class="action-tooltip" role="tooltip">More actions</span>
-                        </summary>
-                        <div class="access-row-menu__items" role="menu">
-                          <button type="button" role="menuitem" @click="openAccessUser(user)">
-                            <Eye class="action-icon" aria-hidden="true" />
-                            Manage access
-                          </button>
-                          <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
-                            <Mail class="action-icon" aria-hidden="true" />
-                            Resend invitation
-                          </button>
-                        </div>
-                      </details>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <section v-if="!accessLoading" class="access-card-list" aria-label="User access cards">
-            <article v-for="user in filteredAccessUsers" :key="`card:${user.id}`" class="access-user-card">
+          <section class="access-list-surface" aria-labelledby="access-users-title">
+            <header class="access-list-header">
               <div>
-                <p class="eyebrow">User</p>
-                <h3>{{ user.name }}</h3>
-                <p>{{ user.email }}</p>
+                <p class="eyebrow">Users</p>
+                <h3 id="access-users-title">Portal users</h3>
+                <p>Review contacts, role scope, project assignments, form access, and activation state.</p>
               </div>
-              <dl class="access-card-facts">
-                <div>
-                  <dt>Contact</dt>
-                  <dd>{{ formatContactState(user.contactState) }}</dd>
-                </div>
-                <div>
-                  <dt>Role</dt>
-                  <dd>{{ user.role }}</dd>
-                </div>
-                <div>
-                  <dt>Forms</dt>
-                  <dd>{{ user.formCount }}</dd>
-                </div>
-              </dl>
-              <div class="access-card-actions">
-                <details class="access-row-menu">
-                  <summary aria-label="More actions">
-                    <MoreVertical class="action-icon" aria-hidden="true" />
-                    <span class="action-tooltip" role="tooltip">More actions</span>
-                  </summary>
-                  <div class="access-row-menu__items" role="menu">
-                    <button type="button" role="menuitem" @click="openAccessUser(user)">
-                      <Eye class="action-icon" aria-hidden="true" />
-                      Manage access
-                    </button>
-                    <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
-                      <Mail class="action-icon" aria-hidden="true" />
-                      Resend invitation
-                    </button>
-                  </div>
-                </details>
-              </div>
-            </article>
-          </section>
+              <span class="access-list-count">{{ filteredAccessUsers.length }} shown</span>
+            </header>
 
-          <section v-if="!accessLoading && !accessError && filteredAccessUsers.length === 0" class="empty-state empty-state--inline" aria-label="No users">
-            <Users class="guidance-icon" aria-hidden="true" />
-            <h2>No users match the current filters</h2>
-            <p>Clear search or role filters to review all assigned users.</p>
+            <section class="access-toolbar" aria-label="User access filters">
+              <label class="filter-field">
+                <span>Role</span>
+                <select v-model="accessRoleFilter">
+                  <option value="">All roles</option>
+                  <option v-for="role in accessRoleOptions" :key="role" :value="role">{{ role }}</option>
+                </select>
+              </label>
+              <label class="record-search">
+                <Search class="record-search__icon" aria-hidden="true" />
+                <span class="sr-only">Search users</span>
+                <input v-model="accessSearch" type="search" autocomplete="off" placeholder="Search users" aria-label="Search users">
+              </label>
+            </section>
+
+            <section v-if="accessLoading" class="loading-panel loading-panel--inline access-loading-state" aria-live="polite" aria-label="Loading users">
+              <h2>Loading users</h2>
+              <p>Checking assignments and contacts.</p>
+              <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </section>
+
+            <div v-else-if="filteredAccessUsers.length > 0" class="responsive-table access-table" role="region" aria-label="User access table" tabindex="0">
+              <table>
+                <caption class="sr-only">Portal users with contact state, role, project count, form count, access state, and row actions.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Projects</th>
+                    <th scope="col">Forms</th>
+                    <th scope="col">Access</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="user in filteredAccessUsers" :key="user.id" tabindex="0">
+                    <td>
+                      <strong>{{ user.name }}</strong>
+                      <span>{{ user.email }}</span>
+                    </td>
+                    <td>
+                      <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
+                    </td>
+                    <td>{{ user.role }}</td>
+                    <td class="access-table__number">{{ user.projectCount }}</td>
+                    <td class="access-table__number">{{ user.formCount }}</td>
+                    <td>
+                      <span class="state-chip" :class="`state-chip--${accessStatusTone(user.accessStatus)}`">{{ user.accessStatus }}</span>
+                    </td>
+                    <td>
+                      <div class="table-actions">
+                        <details class="access-row-menu">
+                          <summary aria-label="More actions">
+                            <MoreVertical class="action-icon" aria-hidden="true" />
+                            <span class="action-tooltip" role="tooltip">More actions</span>
+                          </summary>
+                          <div class="access-row-menu__items" role="menu">
+                            <button type="button" role="menuitem" @click="openAccessUser(user)">
+                              <Eye class="action-icon" aria-hidden="true" />
+                              Manage access
+                            </button>
+                            <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
+                              <Mail class="action-icon" aria-hidden="true" />
+                              Resend invitation
+                            </button>
+                          </div>
+                        </details>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <section v-if="!accessLoading && filteredAccessUsers.length > 0" class="access-card-list" aria-label="User access cards">
+              <article v-for="user in filteredAccessUsers" :key="`card:${user.id}`" class="access-user-card">
+                <header class="access-user-card__header">
+                  <div>
+                    <p class="eyebrow">User</p>
+                    <h3>{{ user.name }}</h3>
+                    <p>{{ user.email }}</p>
+                  </div>
+                  <span class="state-chip" :class="`state-chip--${accessStatusTone(user.accessStatus)}`">{{ user.accessStatus }}</span>
+                </header>
+                <dl class="access-card-facts">
+                  <div>
+                    <dt>Contact</dt>
+                    <dd>
+                      <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Role</dt>
+                    <dd>{{ user.role }}</dd>
+                  </div>
+                  <div>
+                    <dt>Projects</dt>
+                    <dd>{{ user.projectCount }}</dd>
+                  </div>
+                  <div>
+                    <dt>Forms</dt>
+                    <dd>{{ user.formCount }}</dd>
+                  </div>
+                </dl>
+                <div class="access-card-actions">
+                  <button type="button" class="icon-action icon-action--secondary" @click="openAccessUser(user)">
+                    <Eye class="action-icon" aria-hidden="true" />
+                    Manage access
+                  </button>
+                  <button type="button" class="icon-action icon-action--secondary" @click="openResendInvitationWorkflow(user)">
+                    <Mail class="action-icon" aria-hidden="true" />
+                    Resend invitation
+                  </button>
+                </div>
+              </article>
+            </section>
+
+            <section v-if="!accessLoading && !accessError && filteredAccessUsers.length === 0" class="empty-state empty-state--inline access-empty-state" aria-label="No users">
+              <Users class="guidance-icon" aria-hidden="true" />
+              <h2>No users match the current filters</h2>
+              <p>Clear search or role filters to review all assigned users.</p>
+            </section>
           </section>
         </section>
 

@@ -1952,6 +1952,51 @@ body {
   min-width: 0;
 }
 
+.access-list-surface {
+  display: grid;
+  gap: var(--mt-space-4);
+  min-width: 0;
+  padding: var(--mt-space-4);
+  border: 1px solid var(--mt-color-border);
+  border-radius: var(--mt-radius-md);
+  background: var(--mt-color-surface);
+  box-shadow: var(--mt-shadow-soft);
+}
+
+.access-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mt-space-4);
+  align-items: flex-start;
+}
+
+.access-list-header h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.access-list-header p:not(.eyebrow) {
+  max-width: 720px;
+  margin: var(--mt-space-1) 0 0;
+  color: var(--mt-color-text-muted);
+  line-height: 1.5;
+}
+
+.access-list-count {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: 999px;
+  background: var(--mt-color-primary-soft);
+  color: var(--mt-color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .action-status-badge {
   display: inline-flex;
   align-items: center;
@@ -2077,13 +2122,35 @@ body {
   align-items: end;
 }
 
+.access-list-surface .access-toolbar {
+  grid-template-columns: minmax(180px, 240px) minmax(260px, 420px);
+  justify-content: end;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .access-table table {
   min-width: 920px;
 }
 
 .access-table {
-  overflow: visible;
+  overflow: auto;
   max-height: none;
+  box-shadow: none;
+}
+
+.access-table tbody tr:hover,
+.access-table tbody tr:focus-visible {
+  background: var(--mt-color-surface-muted);
+  outline: none;
+}
+
+.access-table__number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .activation-diagnostics-table table {
@@ -3231,6 +3298,13 @@ body {
   box-shadow: var(--mt-shadow-soft);
 }
 
+.access-user-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mt-space-3);
+  align-items: flex-start;
+}
+
 .access-user-card h3,
 .access-user-card p {
   margin: 0;
@@ -3245,6 +3319,10 @@ body {
   display: grid;
   gap: var(--mt-space-2);
   margin: 0;
+}
+
+.access-card-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .access-card-facts div {
@@ -3496,6 +3574,18 @@ body {
   display: flex;
   gap: var(--mt-space-2);
   flex-wrap: wrap;
+}
+
+.access-card-actions .icon-action {
+  width: auto;
+  min-height: 38px;
+  padding-inline: var(--mt-space-3);
+}
+
+.access-empty-state,
+.access-loading-state {
+  margin: 0;
+  box-shadow: none;
 }
 
 .record-detail-panel {
@@ -4105,7 +4195,9 @@ body {
   .dashboard-grid--with-rail,
   .admin-section-header,
   .access-toolbar,
+  .access-list-header,
   .access-metric-strip,
+  .access-card-facts,
   .access-detail-list,
   .access-confirm-grid,
   .access-assignment-row dl,
@@ -4130,6 +4222,11 @@ body {
   .guidance-card {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .access-list-surface .access-toolbar {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .data-card__actions {
