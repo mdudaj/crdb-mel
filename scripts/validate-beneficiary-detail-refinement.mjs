@@ -23,6 +23,14 @@ function assertPattern(source, pattern, message) {
   }
 }
 
+function assertBefore(source, first, second, message) {
+  const firstIndex = source.indexOf(first);
+  const secondIndex = source.indexOf(second);
+  if (firstIndex === -1 || secondIndex === -1 || firstIndex > secondIndex) {
+    throw new Error(message);
+  }
+}
+
 assertIncludes(viewSource, "const hasDashboardContext = computed(() => drillthroughSource.value === 'dashboard')", 'Beneficiaries view must centralize dashboard-origin state.');
 assertIncludes(viewSource, 'const filterSummary = computed(() => activeFilters.value.map((filter) => filter.label).join', 'Beneficiaries view must summarize active filters for drill-through review.');
 assertIncludes(viewSource, 'function backToDashboard()', 'Beneficiaries view must expose a dashboard return action.');
@@ -45,6 +53,19 @@ assertIncludes(viewSource, 'aria-label="Beneficiary identity summary"', 'Benefic
 for (const heading of ['Profile', 'Record matching', 'Group/member links', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Location history']) {
   assertPattern(viewSource, new RegExp(`<h3>${heading}</h3>`), `Beneficiary detail drawer must include the ${heading} section.`);
 }
+for (const [first, second] of [
+  ['<h3>Profile</h3>', '<h3>Finance</h3>'],
+  ['<h3>Finance</h3>', '<h3>Technology</h3>'],
+  ['<h3>Technology</h3>', '<h3>Training</h3>'],
+  ['<h3>Training</h3>', '<h3>Outcomes</h3>'],
+  ['<h3>Outcomes</h3>', '<h3>Data lineage</h3>'],
+  ['<h3>Data lineage</h3>', '<h3>Record matching</h3>'],
+  ['<h3>Record matching</h3>', '<h3>Group/member links</h3>'],
+  ['<h3>Group/member links</h3>', '<h3>Location history</h3>'],
+  ['<h3>Location history</h3>', '<summary>Technical mapping</summary>'],
+]) {
+  assertBefore(viewSource, first, second, `Beneficiary detail drawer must keep ${first} before ${second}.`);
+}
 
 assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical mapping must be hidden behind a compact disclosure summary.');
 assertIncludes(viewSource, 'beneficiary-detail-section--technical[open] summary::after', 'Technical mapping disclosure must expose open/closed state text.');
@@ -60,13 +81,19 @@ if (viewSource.includes('<h3>Identity governance</h3>') || viewSource.includes('
 
 assertIncludes(viewSource, 'beneficiary-detail-list--nested', 'Programme participation must be grouped under Profile instead of isolated as a competing drawer section.');
 assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must preserve prototype data disclosure.');
-assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Data lineage must keep the future Dataverse submission relationship visible.');
-assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Record matching must expose the future Dataverse identity-match relationship.');
-assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Group/member links must expose the future Dataverse group-membership relationship.');
-assertIncludes(viewSource, 'mp_BeneficiaryLocationHistory', 'Location history must expose the future Dataverse location-history relationship.');
+const businessDetailStart = viewSource.indexOf('Demonstration detail, not official statistics');
+const technicalMappingStart = viewSource.indexOf('<summary>Technical mapping</summary>');
+const beforeTechnicalMapping = viewSource.slice(businessDetailStart, technicalMappingStart);
+if (businessDetailStart === -1 || technicalMappingStart === -1 || beforeTechnicalMapping.includes('mp_') || beforeTechnicalMapping.includes('<dt>Model target</dt>')) {
+  throw new Error('Business-facing beneficiary detail sections must not expose Dataverse table names or model-target rows.');
+}
+assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Technical mapping must keep the future Dataverse submission relationship visible.');
+assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Technical mapping must keep the future Dataverse identity-match relationship visible.');
+assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Technical mapping must keep the future Dataverse group-membership relationship visible.');
+assertIncludes(viewSource, 'mp_BeneficiaryLocationHistory', 'Technical mapping must keep the future Dataverse location-history relationship visible.');
 assertIncludes(viewSource, 'No reviewer decision recorded', 'Record matching must have a clear fallback state for records not yet reviewed.');
 assertIncludes(viewSource, 'No member linkage in prototype data', 'Group/member links must have a clear fallback state for records not yet modelled.');
-assertIncludes(viewSource, 'Production location changes are stored in mp_BeneficiaryLocationHistory', 'Location history must explain current-location versus historical evidence.');
+assertIncludes(viewSource, 'Production location changes keep the current dashboard location usable without losing historical evidence.', 'Location history must explain current-location versus historical evidence without Dataverse table names.');
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-beneficiary-detail-refinement.mjs')) {
   throw new Error('test:material must run the beneficiary detail refinement validator.');

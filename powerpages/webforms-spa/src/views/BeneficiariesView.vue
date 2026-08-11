@@ -490,50 +490,6 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Record matching">
-        <h3>Record matching</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Match state</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.matchState ?? 'Not yet reviewed' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Match signals</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.matchSignals ?? 'Awaiting identity review' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Reviewer decision</dt>
-            <dd>{{ selectedBeneficiary.identityGovernance?.reviewerDecision ?? 'No reviewer decision recorded' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Model target</dt>
-            <dd>mp_BeneficiaryIdentityMatch</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Group/member links">
-        <h3>Group/member links</h3>
-        <dl class="material-detail-list beneficiary-detail-grid">
-          <div class="material-detail-row">
-            <dt>Membership type</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membershipType ?? 'Not yet modelled' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Members linked</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membersLinked ?? 'No member linkage in prototype data' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Status</dt>
-            <dd>{{ selectedBeneficiary.groupMembership?.membershipStatus ?? 'Not modelled' }}</dd>
-          </div>
-          <div class="material-detail-row">
-            <dt>Model target</dt>
-            <dd>mp_BeneficiaryGroupMembership</dd>
-          </div>
-        </dl>
-      </section>
-
       <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
         <h3>Finance</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
@@ -627,9 +583,44 @@ onUnmounted(() => {
           </div>
         </dl>
         <p class="beneficiary-detail-secondary">
-          Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links through
-          mp_BeneficiarySubmissionLink to the source mp_Submission record.
+          Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links to the source submission record for audit and drill-through review.
         </p>
+      </section>
+
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Record matching">
+        <h3>Record matching</h3>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
+            <dt>Match state</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.matchState ?? 'Not yet reviewed' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Match signals</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.matchSignals ?? 'Awaiting identity review' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Reviewer decision</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.reviewerDecision ?? 'No reviewer decision recorded' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Group/member links">
+        <h3>Group/member links</h3>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
+            <dt>Membership type</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membershipType ?? 'Not yet modelled' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Members linked</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membersLinked ?? 'No member linkage in prototype data' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Status</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membershipStatus ?? 'Not modelled' }}</dd>
+          </div>
+        </dl>
       </section>
 
       <section class="material-detail-section beneficiary-detail-section" aria-label="Location history">
@@ -653,7 +644,7 @@ onUnmounted(() => {
           </div>
         </dl>
         <p class="beneficiary-detail-secondary">
-          Production location changes are stored in mp_BeneficiaryLocationHistory so dashboard filters can use the current location without losing historical evidence.
+          Production location changes keep the current dashboard location usable without losing historical evidence.
         </p>
       </section>
 
@@ -674,6 +665,22 @@ onUnmounted(() => {
           <div class="material-detail-row">
             <dt>Relationship notes</dt>
             <dd>{{ selectedBeneficiary.futureDataverseMapping.relationshipNotes }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Submission relationship</dt>
+            <dd>mp_BeneficiarySubmissionLink links the beneficiary to the source mp_Submission record.</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Record matching target</dt>
+            <dd>mp_BeneficiaryIdentityMatch</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Group/member target</dt>
+            <dd>mp_BeneficiaryGroupMembership</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Location-history target</dt>
+            <dd>mp_BeneficiaryLocationHistory</dd>
           </div>
         </dl>
       </details>
