@@ -42,13 +42,19 @@ assertIncludes(viewSource, 'class="material-detail-section beneficiary-detail-se
 assertIncludes(viewSource, 'class="material-detail-list beneficiary-detail-grid"', 'Beneficiary detail grids must use the shared Material detail list abstraction.');
 assertIncludes(viewSource, 'class="material-detail-row"', 'Beneficiary detail fields must use the shared Material detail row abstraction.');
 assertIncludes(viewSource, 'aria-label="Beneficiary identity summary"', 'Beneficiary detail identity tags must be labelled for assistive technology.');
-for (const heading of ['Profile', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Technical Dataverse mapping']) {
+for (const heading of ['Profile', 'Identity governance', 'Group membership', 'Finance', 'Technology', 'Training', 'Outcomes', 'Data lineage', 'Location history', 'Technical Dataverse mapping']) {
   assertPattern(viewSource, new RegExp(`<h3>${heading}</h3>`), `Beneficiary detail drawer must include the ${heading} section.`);
 }
 
 assertIncludes(viewSource, 'beneficiary-detail-list--nested', 'Programme participation must be grouped under Profile instead of isolated as a competing drawer section.');
 assertIncludes(viewSource, 'Demonstration detail, not official statistics', 'Beneficiary detail drawer must preserve prototype data disclosure.');
 assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Data lineage must keep the future Dataverse submission relationship visible.');
+assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Identity governance must expose the future Dataverse identity-match relationship.');
+assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Group membership must expose the future Dataverse group-membership relationship.');
+assertIncludes(viewSource, 'mp_BeneficiaryLocationHistory', 'Location history must expose the future Dataverse location-history relationship.');
+assertIncludes(viewSource, 'No reviewer decision recorded', 'Identity governance must have a clear fallback state for records not yet reviewed.');
+assertIncludes(viewSource, 'No member linkage in prototype data', 'Group membership must have a clear fallback state for records not yet modelled.');
+assertIncludes(viewSource, 'Production location changes are stored in mp_BeneficiaryLocationHistory', 'Location history must explain current-location versus historical evidence.');
 
 if (!packageJson.scripts?.['test:material']?.includes('validate-beneficiary-detail-refinement.mjs')) {
   throw new Error('test:material must run the beneficiary detail refinement validator.');

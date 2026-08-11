@@ -36,6 +36,9 @@ const beneficiaryDataverseTargets = [
   'mp_BeneficiaryTrainingParticipation',
   'mp_BeneficiaryOutcomeSnapshot',
   'mp_BeneficiarySubmissionLink',
+  'mp_BeneficiaryIdentityMatch',
+  'mp_BeneficiaryGroupMembership',
+  'mp_BeneficiaryLocationHistory',
 ];
 
 function normaliseFilterValue(value: string) {
@@ -487,6 +490,50 @@ onUnmounted(() => {
         </dl>
       </section>
 
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Identity governance">
+        <h3>Identity governance</h3>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
+            <dt>Match state</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.matchState ?? 'Not yet reviewed' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Match signals</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.matchSignals ?? 'Awaiting identity review' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Reviewer decision</dt>
+            <dd>{{ selectedBeneficiary.identityGovernance?.reviewerDecision ?? 'No reviewer decision recorded' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Model target</dt>
+            <dd>mp_BeneficiaryIdentityMatch</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Group membership">
+        <h3>Group membership</h3>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
+            <dt>Membership type</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membershipType ?? 'Not yet modelled' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Members linked</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membersLinked ?? 'No member linkage in prototype data' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Status</dt>
+            <dd>{{ selectedBeneficiary.groupMembership?.membershipStatus ?? 'Not modelled' }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Model target</dt>
+            <dd>mp_BeneficiaryGroupMembership</dd>
+          </div>
+        </dl>
+      </section>
+
       <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
         <h3>Finance</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
@@ -582,6 +629,31 @@ onUnmounted(() => {
         <p class="beneficiary-detail-secondary">
           Source: {{ selectedBeneficiary.latestSubmission.dataSource }}. In production this links through
           mp_BeneficiarySubmissionLink to the source mp_Submission record.
+        </p>
+      </section>
+
+      <section class="material-detail-section beneficiary-detail-section" aria-label="Location history">
+        <h3>Location history</h3>
+        <dl class="material-detail-list beneficiary-detail-grid">
+          <div class="material-detail-row">
+            <dt>Current location</dt>
+            <dd>{{ selectedBeneficiary.locationHistory?.currentLocation ?? `${selectedBeneficiary.region} · ${selectedBeneficiary.district}` }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Source</dt>
+            <dd>{{ selectedBeneficiary.locationHistory?.source ?? selectedBeneficiary.latestSubmission.dataSource }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>Effective from</dt>
+            <dd>{{ selectedBeneficiary.locationHistory?.effectiveFrom ?? selectedBeneficiary.projectParticipation.enrolmentDate }}</dd>
+          </div>
+          <div class="material-detail-row">
+            <dt>History state</dt>
+            <dd>{{ selectedBeneficiary.locationHistory?.historyState ?? 'Current profile location' }}</dd>
+          </div>
+        </dl>
+        <p class="beneficiary-detail-secondary">
+          Production location changes are stored in mp_BeneficiaryLocationHistory so dashboard filters can use the current location without losing historical evidence.
         </p>
       </section>
 

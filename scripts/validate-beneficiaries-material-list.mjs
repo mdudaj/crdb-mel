@@ -64,6 +64,9 @@ assertIncludes(viewSource, 'mp_BeneficiaryTechnologyAdoption', 'Beneficiary deta
 assertIncludes(viewSource, 'mp_BeneficiaryTrainingParticipation', 'Beneficiary detail drawer must show the training extension target.');
 assertIncludes(viewSource, 'mp_BeneficiaryOutcomeSnapshot', 'Beneficiary detail drawer must show the outcome extension target.');
 assertIncludes(viewSource, 'mp_BeneficiarySubmissionLink', 'Beneficiary detail drawer must show the submission-lineage extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryIdentityMatch', 'Beneficiary detail drawer must show the identity-match extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryGroupMembership', 'Beneficiary detail drawer must show the group-membership extension target.');
+assertIncludes(viewSource, 'mp_BeneficiaryLocationHistory', 'Beneficiary detail drawer must show the location-history extension target.');
 if (viewSource.includes('Future Dataverse mapping')) {
   throw new Error('Beneficiary detail drawer must not use stale Future Dataverse mapping wording after schema review.');
 }
@@ -82,6 +85,9 @@ assertIncludes(dataSource, 'finance:', 'Prototype beneficiary entity must includ
 assertIncludes(dataSource, 'technologiesFinanced', 'Prototype beneficiary entity must include financed technology relationships.');
 assertIncludes(dataSource, 'trainingSummary', 'Prototype beneficiary entity must include training summary data.');
 assertIncludes(dataSource, 'latestSubmission', 'Prototype beneficiary entity must include latest submission state.');
+assertIncludes(dataSource, 'identityGovernance', 'Prototype beneficiary entity must include identity governance data.');
+assertIncludes(dataSource, 'groupMembership', 'Prototype beneficiary entity must include group membership data.');
+assertIncludes(dataSource, 'locationHistory', 'Prototype beneficiary entity must include location history data.');
 assertIncludes(dataSource, 'outcomeSnapshot', 'Prototype beneficiary entity must include monitored outcome data.');
 assertIncludes(dataSource, 'futureDataverseMapping', 'Prototype beneficiary entity must include future Dataverse mapping notes.');
 

@@ -38,6 +38,22 @@ export interface BeneficiaryRecord {
     completeness: string;
     dataSource: string;
   };
+  identityGovernance?: {
+    matchState: 'Linked to tracked entity' | 'Candidate match review' | 'Create new tracked entity' | 'Needs investigation';
+    matchSignals: string;
+    reviewerDecision: string;
+  };
+  groupMembership?: {
+    membershipType: 'Individual beneficiary' | 'Group beneficiary' | 'AMCOS beneficiary' | 'SACCOS beneficiary';
+    membersLinked: string;
+    membershipStatus: 'Active' | 'Pending verification' | 'Not modelled';
+  };
+  locationHistory?: {
+    currentLocation: string;
+    source: string;
+    effectiveFrom: string;
+    historyState: 'Current profile location' | 'Correction pending' | 'Awaiting submission';
+  };
   outcomeSnapshot: {
     areaUnderImprovedPractices: string;
     yieldIncrease: string;
@@ -93,6 +109,22 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       completeness: '98%',
       dataSource: 'Power Pages prototype form',
     },
+    identityGovernance: {
+      matchState: 'Linked to tracked entity',
+      matchSignals: 'Project code, name, phone, village',
+      reviewerDecision: 'Use existing mp_TrackedEntity after review',
+    },
+    groupMembership: {
+      membershipType: 'Individual beneficiary',
+      membersLinked: 'Not applicable',
+      membershipStatus: 'Not modelled',
+    },
+    locationHistory: {
+      currentLocation: 'Morogoro · Kilosa',
+      source: 'Baseline submission',
+      effectiveFrom: 'Jan 14, 2025',
+      historyState: 'Current profile location',
+    },
     outcomeSnapshot: {
       areaUnderImprovedPractices: '3.2 ha',
       yieldIncrease: 'Estimated +24%',
@@ -146,6 +178,22 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       completeness: '95%',
       dataSource: 'Power Pages prototype form',
     },
+    identityGovernance: {
+      matchState: 'Linked to tracked entity',
+      matchSignals: 'Group name, district, programme enrolment',
+      reviewerDecision: 'Treat group as beneficiary entity',
+    },
+    groupMembership: {
+      membershipType: 'Group beneficiary',
+      membersLinked: '32 member farmers planned for later linkage',
+      membershipStatus: 'Active',
+    },
+    locationHistory: {
+      currentLocation: 'Morogoro · Mvomero',
+      source: 'Loan and monitoring submission',
+      effectiveFrom: 'Feb 03, 2025',
+      historyState: 'Current profile location',
+    },
     outcomeSnapshot: {
       areaUnderImprovedPractices: 'Group-reported 18.6 ha',
       yieldIncrease: 'Awaiting harvest report',
@@ -198,6 +246,22 @@ export const beneficiaryRecords: BeneficiaryRecord[] = [
       status: 'Under review',
       completeness: '82%',
       dataSource: 'Power Pages prototype form',
+    },
+    identityGovernance: {
+      matchState: 'Candidate match review',
+      matchSignals: 'Organization name and district match existing cooperative',
+      reviewerDecision: 'Pending MEL officer confirmation',
+    },
+    groupMembership: {
+      membershipType: 'AMCOS beneficiary',
+      membersLinked: 'Member-level records not yet imported',
+      membershipStatus: 'Pending verification',
+    },
+    locationHistory: {
+      currentLocation: 'Pwani · Bagamoyo',
+      source: 'Baseline submission',
+      effectiveFrom: 'Mar 08, 2025',
+      historyState: 'Correction pending',
     },
     outcomeSnapshot: {
       areaUnderImprovedPractices: 'Implementation not complete',

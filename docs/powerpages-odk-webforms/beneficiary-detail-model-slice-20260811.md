@@ -23,14 +23,23 @@ Each beneficiary record now carries:
 - financed technology relationships;
 - training summary;
 - latest submission status;
+- identity governance state for future match/deduplication review;
+- group membership context for individual, group, AMCOS, and SACCOS beneficiaries;
+- location history context so current dashboard geography does not overwrite audit evidence;
 - monitored outcome snapshot;
 - future Dataverse mapping notes.
 
-The future production direction is a central `mp_TrackedEntity` beneficiary identity with additive beneficiary extension tables related to submissions, loans, trainings, financed technologies, and outcome/indicator records.
+The future production direction is a central `mp_TrackedEntity` beneficiary identity with additive beneficiary extension tables related to submissions, loans, trainings, financed technologies, outcome/indicator records, identity matching, group membership, and location history.
 
 ## User experience
 
 The Beneficiaries route keeps the summary metrics and searchable list. Each desktop row and mobile card now has a clear `View details` action. The detail opens in a right-side dialog drawer with explicit demonstration-data wording so prototype values are not mistaken for official CRDB Bank or Green Climate Fund statistics.
+
+The detail drawer now includes compact governance sections for:
+
+- `Identity governance`: candidate match state, matching signals, and reviewer decision. This previews `mp_BeneficiaryIdentityMatch` without enabling automatic fuzzy-match merges.
+- `Group membership`: beneficiary type, member linkage, and membership state. This previews `mp_BeneficiaryGroupMembership` while keeping group beneficiaries valid as entities in their own right.
+- `Location history`: current location, source, effective date, and history state. This previews `mp_BeneficiaryLocationHistory` so location corrections remain auditable.
 
 ## Verification
 
@@ -40,6 +49,7 @@ Run from `powerpages/webforms-spa`:
 npm run test:material
 npm run typecheck
 npm run build:mshirika-runtime
+node ../../scripts/validate-beneficiary-entity-schema.mjs
 ```
 
 Expected result: Material/list validation passes, TypeScript compiles, and the runtime bundle builds.
