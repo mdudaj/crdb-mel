@@ -71,14 +71,29 @@ assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical ma
 assertIncludes(viewSource, 'beneficiary-detail-section--technical[open] summary::after', 'Technical mapping disclosure must expose open/closed state text.');
 assertIncludes(viewSource, 'class="beneficiary-detail-actions"', 'Beneficiary detail drawer must expose a compact action footer.');
 assertIncludes(viewSource, 'aria-label="Beneficiary detail actions"', 'Beneficiary detail action footer must be semantically labelled.');
-assertIncludes(viewSource, 'Operational actions are planned for the production workflow', 'Beneficiary detail action footer must explain that prototype actions are planned.');
+assertIncludes(viewSource, 'Operational actions are read-only in this prototype build', 'Beneficiary detail action footer must explain that prototype actions are read-only.');
+assertIncludes(viewSource, 'const beneficiaryActionNotice = ref', 'Beneficiary detail actions must expose a read-only prototype notice state.');
+assertIncludes(viewSource, 'function focusBeneficiaryDetailSection(', 'Beneficiary detail actions must use a read-only section focus handler.');
+assertIncludes(viewSource, 'function showBeneficiaryExportPlanned()', 'Export detail action must use a planned-state notice handler, not a real export.');
+assertIncludes(viewSource, 'role="status" aria-live="polite"', 'Beneficiary action notice must announce updates accessibly.');
+for (const sectionId of ['beneficiary-detail-profile', 'beneficiary-detail-finance', 'beneficiary-detail-data-lineage']) {
+  assertIncludes(viewSource, `id="${sectionId}"`, `Beneficiary detail read-only actions must target ${sectionId}.`);
+  assertIncludes(viewSource, `focusBeneficiaryDetailSection('${sectionId}'`, `Beneficiary detail action footer must include a read-only focus action for ${sectionId}.`);
+}
 for (const action of ['Open full profile', 'View submissions', 'View loan record', 'Export detail']) {
   assertIncludes(viewSource, `<span>${action}</span>`, `Beneficiary detail action footer must include the ${action} planned action.`);
 }
-assertIncludes(viewSource, '<span class="beneficiary-action-state">Planned</span>', 'Beneficiary detail action footer must visibly mark disabled actions as planned.');
-const detailActionButtonMatches = viewSource.match(/<button class="beneficiary-detail-action" type="button" disabled>/g) ?? [];
+assertIncludes(viewSource, '<span class="beneficiary-action-state">View</span>', 'Read-only beneficiary detail actions must be visibly marked as view actions.');
+assertIncludes(viewSource, '<span class="beneficiary-action-state">Planned</span>', 'Unavailable export capability must remain visibly marked as planned.');
+const detailActionButtonMatches = viewSource.match(/class="beneficiary-detail-action"/g) ?? [];
 if (detailActionButtonMatches.length !== 4) {
-  throw new Error('Beneficiary detail action footer must expose exactly four disabled prototype action buttons.');
+  throw new Error('Beneficiary detail action footer must expose exactly four prototype action buttons.');
+}
+if (viewSource.includes('class="beneficiary-detail-action" type="button" disabled')) {
+  throw new Error('Beneficiary detail action buttons must not remain disabled placeholders; use read-only handlers or a planned notice.');
+}
+if (viewSource.includes('/_api/') || viewSource.includes('downloadCsv') || viewSource.includes('saveAndDownload')) {
+  throw new Error('Beneficiary detail actions must remain read-only and must not call Dataverse Web API writes or file export helpers.');
 }
 assertBefore(viewSource, '<summary>Technical mapping</summary>', 'class="beneficiary-detail-actions"', 'Beneficiary detail action footer must sit after Technical mapping.');
 if (viewSource.includes('beneficiary-detail-section--accented') || viewSource.includes('beneficiary-detail-segment')) {

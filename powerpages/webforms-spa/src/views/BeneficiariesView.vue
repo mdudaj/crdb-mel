@@ -13,6 +13,7 @@ const activeTechnology = ref('All technologies');
 const activeSubmissionStatus = ref('All submission states');
 const drillthroughSource = ref('');
 const selectedBeneficiaryId = ref('');
+const beneficiaryActionNotice = ref('');
 const suppressHashSync = ref(false);
 
 const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryRecords.map((record) => record.region))).sort()]);
@@ -190,10 +191,28 @@ function backToDashboard() {
 
 function openBeneficiary(record: BeneficiaryRecord) {
   selectedBeneficiaryId.value = record.id;
+  beneficiaryActionNotice.value = '';
 }
 
 function closeBeneficiary() {
   selectedBeneficiaryId.value = '';
+  beneficiaryActionNotice.value = '';
+}
+
+function focusBeneficiaryDetailSection(sectionId: string, notice: string) {
+  beneficiaryActionNotice.value = notice;
+  requestAnimationFrame(() => {
+    const section = document.getElementById(sectionId);
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    section?.focus({ preventScroll: true });
+  });
+}
+
+function showBeneficiaryExportPlanned() {
+  beneficiaryActionNotice.value = 'Export detail is planned for the production workflow. No file was generated in this prototype build.';
+  requestAnimationFrame(() => {
+    document.getElementById('beneficiary-detail-actions')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
 }
 
 function statusTone(status: BeneficiaryRecord['verificationStatus']) {
@@ -446,7 +465,7 @@ onUnmounted(() => {
 
       <p class="beneficiary-detail-note">Demonstration detail, not official statistics. Values show the reviewed Dataverse-ready entity shape for prototype review.</p>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Profile">
+      <section id="beneficiary-detail-profile" class="material-detail-section beneficiary-detail-section" tabindex="-1" aria-label="Profile">
         <h3>Profile</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -490,7 +509,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Finance">
+      <section id="beneficiary-detail-finance" class="material-detail-section beneficiary-detail-section" tabindex="-1" aria-label="Finance">
         <h3>Finance</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -562,7 +581,7 @@ onUnmounted(() => {
         </dl>
       </section>
 
-      <section class="material-detail-section beneficiary-detail-section" aria-label="Data lineage">
+      <section id="beneficiary-detail-data-lineage" class="material-detail-section beneficiary-detail-section" tabindex="-1" aria-label="Data lineage">
         <h3>Data lineage</h3>
         <dl class="material-detail-list beneficiary-detail-grid">
           <div class="material-detail-row">
@@ -685,22 +704,40 @@ onUnmounted(() => {
         </dl>
       </details>
 
-      <footer class="beneficiary-detail-actions" aria-label="Beneficiary detail actions">
-        <p>Operational actions are planned for the production workflow. They are disabled in this prototype build.</p>
+      <footer id="beneficiary-detail-actions" class="beneficiary-detail-actions" aria-label="Beneficiary detail actions">
+        <p>Operational actions are read-only in this prototype build. Full workflow navigation, exports, and writes remain planned for production.</p>
+        <p v-if="beneficiaryActionNotice" class="beneficiary-action-notice" role="status" aria-live="polite">
+          {{ beneficiaryActionNotice }}
+        </p>
         <div class="beneficiary-detail-action-list">
-          <button class="beneficiary-detail-action" type="button" disabled>
+          <button
+            class="beneficiary-detail-action"
+            type="button"
+            aria-describedby="beneficiary-detail-actions"
+            @click="focusBeneficiaryDetailSection('beneficiary-detail-profile', 'Profile section is in focus. Full profile navigation is planned for production.')"
+          >
             <span>Open full profile</span>
-            <span class="beneficiary-action-state">Planned</span>
+            <span class="beneficiary-action-state">View</span>
           </button>
-          <button class="beneficiary-detail-action" type="button" disabled>
+          <button
+            class="beneficiary-detail-action"
+            type="button"
+            aria-describedby="beneficiary-detail-actions"
+            @click="focusBeneficiaryDetailSection('beneficiary-detail-data-lineage', 'Data lineage is in focus. Full submissions navigation is planned for production.')"
+          >
             <span>View submissions</span>
-            <span class="beneficiary-action-state">Planned</span>
+            <span class="beneficiary-action-state">View</span>
           </button>
-          <button class="beneficiary-detail-action" type="button" disabled>
+          <button
+            class="beneficiary-detail-action"
+            type="button"
+            aria-describedby="beneficiary-detail-actions"
+            @click="focusBeneficiaryDetailSection('beneficiary-detail-finance', 'Finance section is in focus. Full loan-record navigation is planned for production.')"
+          >
             <span>View loan record</span>
-            <span class="beneficiary-action-state">Planned</span>
+            <span class="beneficiary-action-state">View</span>
           </button>
-          <button class="beneficiary-detail-action" type="button" disabled>
+          <button class="beneficiary-detail-action" type="button" aria-describedby="beneficiary-detail-actions" @click="showBeneficiaryExportPlanned">
             <span>Export detail</span>
             <span class="beneficiary-action-state">Planned</span>
           </button>
@@ -1236,6 +1273,11 @@ onUnmounted(() => {
   background: var(--m3-surface-container);
 }
 
+.beneficiary-detail-section:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--m3-primary) 30%, transparent);
+  outline-offset: 3px;
+}
+
 .beneficiary-detail-section h3 {
   margin: 0;
   color: var(--m3-on-surface);
@@ -1299,6 +1341,14 @@ onUnmounted(() => {
   line-height: 1.4;
 }
 
+.beneficiary-action-notice {
+  padding: 9px 10px;
+  border: 1px solid #B7D6BF;
+  border-radius: 12px;
+  background: #EAF7EE;
+  color: var(--m3-primary-dark) !important;
+}
+
 .beneficiary-detail-action-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1320,12 +1370,17 @@ onUnmounted(() => {
   font-size: 0.78rem;
   font-weight: 850;
   text-align: left;
+  cursor: pointer;
 }
 
-.beneficiary-detail-action:disabled {
-  color: color-mix(in srgb, var(--m3-on-surface) 70%, #FFFFFF);
-  cursor: not-allowed;
-  opacity: 1;
+.beneficiary-detail-action:hover {
+  border-color: color-mix(in srgb, var(--m3-primary) 42%, var(--m3-outline));
+  background: color-mix(in srgb, var(--m3-surface-container-high) 78%, #FFFFFF);
+}
+
+.beneficiary-detail-action:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--m3-primary) 30%, transparent);
+  outline-offset: 2px;
 }
 
 .beneficiary-action-state {
