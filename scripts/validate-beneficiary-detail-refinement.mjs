@@ -69,6 +69,18 @@ for (const [first, second] of [
 
 assertIncludes(viewSource, '<summary>Technical mapping</summary>', 'Technical mapping must be hidden behind a compact disclosure summary.');
 assertIncludes(viewSource, 'beneficiary-detail-section--technical[open] summary::after', 'Technical mapping disclosure must expose open/closed state text.');
+assertIncludes(viewSource, 'class="beneficiary-detail-actions"', 'Beneficiary detail drawer must expose a compact action footer.');
+assertIncludes(viewSource, 'aria-label="Beneficiary detail actions"', 'Beneficiary detail action footer must be semantically labelled.');
+assertIncludes(viewSource, 'Operational actions are planned for the production workflow', 'Beneficiary detail action footer must explain that prototype actions are planned.');
+for (const action of ['Open full profile', 'View submissions', 'View loan record', 'Export detail']) {
+  assertIncludes(viewSource, `<span>${action}</span>`, `Beneficiary detail action footer must include the ${action} planned action.`);
+}
+assertIncludes(viewSource, '<span class="beneficiary-action-state">Planned</span>', 'Beneficiary detail action footer must visibly mark disabled actions as planned.');
+const detailActionButtonMatches = viewSource.match(/<button class="beneficiary-detail-action" type="button" disabled>/g) ?? [];
+if (detailActionButtonMatches.length !== 4) {
+  throw new Error('Beneficiary detail action footer must expose exactly four disabled prototype action buttons.');
+}
+assertBefore(viewSource, '<summary>Technical mapping</summary>', 'class="beneficiary-detail-actions"', 'Beneficiary detail action footer must sit after Technical mapping.');
 if (viewSource.includes('beneficiary-detail-section--accented') || viewSource.includes('beneficiary-detail-segment')) {
   throw new Error('Beneficiary detail drawer must use one visible Material section container per detail block, with no extra segment wrappers or left shade accent rails.');
 }

@@ -684,6 +684,28 @@ onUnmounted(() => {
           </div>
         </dl>
       </details>
+
+      <footer class="beneficiary-detail-actions" aria-label="Beneficiary detail actions">
+        <p>Operational actions are planned for the production workflow. They are disabled in this prototype build.</p>
+        <div class="beneficiary-detail-action-list">
+          <button class="beneficiary-detail-action" type="button" disabled>
+            <span>Open full profile</span>
+            <span class="beneficiary-action-state">Planned</span>
+          </button>
+          <button class="beneficiary-detail-action" type="button" disabled>
+            <span>View submissions</span>
+            <span class="beneficiary-action-state">Planned</span>
+          </button>
+          <button class="beneficiary-detail-action" type="button" disabled>
+            <span>View loan record</span>
+            <span class="beneficiary-action-state">Planned</span>
+          </button>
+          <button class="beneficiary-detail-action" type="button" disabled>
+            <span>Export detail</span>
+            <span class="beneficiary-action-state">Planned</span>
+          </button>
+        </div>
+      </footer>
     </aside>
   </section>
 </template>
@@ -1258,6 +1280,64 @@ onUnmounted(() => {
 .beneficiary-detail-section--technical summary:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--m3-primary) 32%, transparent);
   outline-offset: 3px;
+}
+
+.beneficiary-detail-actions {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--m3-outline) 82%, #FFFFFF);
+  border-radius: 16px;
+  background: #FFFFFF;
+}
+
+.beneficiary-detail-actions p {
+  margin: 0;
+  color: var(--m3-on-surface-variant);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.beneficiary-detail-action-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.beneficiary-detail-action {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 999px;
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.beneficiary-detail-action:disabled {
+  color: color-mix(in srgb, var(--m3-on-surface) 70%, #FFFFFF);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.beneficiary-action-state {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--m3-outline) 62%, #FFFFFF);
+  color: var(--m3-on-surface-variant);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
 }
 
 .beneficiary-detail-grid,
