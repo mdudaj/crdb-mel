@@ -7,8 +7,9 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 
-EXPECTED_XFORM_HASH = "12b955fcf42330dbfb8051cbd6d5130a6c0128d78825d7e7b899c901a17f4c28"
-XFORM_ENTRY = "PkgAssets/Content/tacatdp_impact_evaluation-20260714000200000.xml"
+EXPECTED_XFORM_HASH = "1fa53c3517f63dac748c777616c322a9be4da8b70b89e5e3a21a61d6619d8b51"
+XFORM_ENTRY = "PkgAssets/Content/tacatdp_impact_evaluation-2608130924.xml"
+BASELINE_ENTRY = "PkgAssets/Content/tacatdp-baseline-bridge-import.json"
 SOLUTION_ENTRY = "PkgAssets/TACATDP_Impact_Tracking_Prototype_0_2_3_0_managed_no_plugin.zip"
 EXPECTED_ASSIGNMENT_EMAILS = (
     "Denis.Muroba@crdbbank.co.tz",
@@ -50,8 +51,10 @@ def main() -> None:
     if not package_path.is_file():
         fail(f"package not found: {package_path}")
 
+    has_baseline_asset = False
     with zipfile.ZipFile(package_path) as package:
         names = set(package.namelist())
+        has_baseline_asset = BASELINE_ENTRY in names
         required = {
             "Tacatdp.DeploymentPackage.dll",
             "PkgAssets/ImportConfig.xml",
@@ -65,6 +68,8 @@ def main() -> None:
         xform_hash = hashlib.sha256(package.read(XFORM_ENTRY)).hexdigest()
         if xform_hash != EXPECTED_XFORM_HASH:
             fail(f"XForm hash mismatch: {xform_hash}")
+        if has_baseline_asset and len(package.read(BASELINE_ENTRY)) < 100:
+            fail("baseline bridge asset is unexpectedly small")
 
         deployment_assembly = package.read("Tacatdp.DeploymentPackage.dll")
         for email in EXPECTED_ASSIGNMENT_EMAILS:
@@ -117,7 +122,8 @@ def main() -> None:
                         f"{component_id}"
                     )
 
-    print(f"PASS: {package_path}")
+    baseline_status = "with baseline bridge asset" if has_baseline_asset else "without baseline bridge asset"
+    print(f"PASS: {package_path} ({baseline_status})")
 
 
 if __name__ == "__main__":

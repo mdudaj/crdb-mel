@@ -219,6 +219,13 @@ def validate_xml(xml_path: Path, expected_form_id: str, expected_version: str) -
     }
 
 
+def display_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path.resolve())
+
+
 def main() -> int:
     args = parse_args()
     workbook = Path(args.workbook).resolve()
@@ -239,9 +246,9 @@ def main() -> int:
     override_xform_metadata(output_xml, form_title, version)
     validation = validate_xml(output_xml, form_id, version)
     metadata = {
-        "workbook": str(workbook.relative_to(ROOT)),
-        "compiled_source_workbook": str(prepared_workbook.relative_to(ROOT)),
-        "xform_xml": str(output_xml.relative_to(ROOT)),
+        "workbook": display_path(workbook),
+        "compiled_source_workbook": display_path(prepared_workbook),
+        "xform_xml": display_path(output_xml),
         "form_title": form_title,
         "form_id": form_id,
         "version": version,

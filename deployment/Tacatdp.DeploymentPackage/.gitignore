@@ -1,4 +1,5 @@
 DeploymentAssets/Solutions/*.zip
 PkgAssets/Content/*.xml
+PkgAssets/Content/*.json
 bin/
 obj/
