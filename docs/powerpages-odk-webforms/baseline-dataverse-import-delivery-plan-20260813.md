@@ -583,6 +583,7 @@ Inventory conclusion:
 - The baseline import should reuse the existing runtime tables, not recreate them.
 - The minimal beneficiary bridge schema is not yet deployed to CRDB.
 - The next approved schema slice should be additive: deploy only the missing bridge tables and required keys/relationships, then rerun dry-run import before execution.
+- The detailed additive schema preflight is recorded in `docs/powerpages-odk-webforms/beneficiary-bridge-schema-deployment-preflight-20260813.md`.
 
 ### Verification commands run
 
