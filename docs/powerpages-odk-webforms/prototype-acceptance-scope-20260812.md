@@ -14,6 +14,7 @@ Acceptance here means the prototype is suitable for demonstration, review, and s
 - `docs/powerpages-odk-webforms/tacatdp-dashboard-echarts-slice-20260810.md`
 - `docs/powerpages-odk-webforms/beneficiary-detail-model-slice-20260811.md`
 - `docs/powerpages-odk-webforms/beneficiary-readonly-actions-mshirika-deployment-20260812.md`
+- `docs/powerpages-odk-webforms/crdb-microsoft-resources-permissions-20260813.md`
 - `docs/powerpages-odk-webforms/managed-service-ux-governance.md`
 - `docs/powerpages-odk-webforms/monitoring-tool-ux-design-system.md`
 - `schemas/dataverse/odk-central-inspired-mvp-schema.json`
@@ -33,6 +34,7 @@ The accepted prototype must demonstrate:
 6. Saved submitted-record review and reporting/export pathways.
 7. User/access-management surfaces that explain onboarding and operational access state.
 8. Explicit prototype limitations and future-product direction.
+9. A clear CRDB Microsoft resource and permission model for the scalable platform path.
 
 The accepted prototype must not imply:
 
@@ -173,6 +175,12 @@ The prototype scope is acceptable when:
 - Production role/security hardening.
 - Self-service XLSForm authoring/publishing UI.
 - Production data warehouse or Fabric/Synapse architecture.
+
+## Scalable platform governance link
+
+Before continuing beyond prototype validation, use `docs/powerpages-odk-webforms/crdb-microsoft-resources-permissions-20260813.md` to explain which CRDB Microsoft resources and permissions are required for pilot, handover, and production-scale operation.
+
+This matters because Power Pages private-site visibility, invitation redemption, Dataverse security roles, Power Pages web roles, table permissions, Web API site settings, Power Automate ownership, Power BI workspace access, DLP policies, and ALM solution ownership are separate control gates. A working prototype in one environment does not automatically prove that CRDB has the resource ownership and permissions needed to operate the scalable MEL platform.
 
 ## Next implementation gate
 
