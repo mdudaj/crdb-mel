@@ -368,7 +368,16 @@ The script must:
 
 ### Step 2 — Schema preflight
 
-Run dry-run schema plans and split results into existing runtime tables versus beneficiary/entity bridge tables:
+Run the local beneficiary bridge planner:
+
+```bash
+python3 scripts/plan-beneficiary-bridge-import.py \
+  --baseline-summary /tmp/tacatdp-baseline-import-summary.json \
+  --repo-root . \
+  --output-json /tmp/tacatdp-beneficiary-bridge-import-plan.json
+```
+
+Then run dry-run schema plans and split results into existing runtime tables versus beneficiary/entity bridge tables:
 
 ```bash
 python3 scripts/dataverse-schema-plan.py --schema-file schemas/dataverse/odk-central-inspired-mvp-schema.json
@@ -499,3 +508,110 @@ The delivery is acceptable when:
 ## Immediate next task
 
 Implement the local no-write workbook planner and schema/import dry-run scripts first. Do not run live Dataverse writes until the dry-run output and privacy decisions are approved.
+
+## Delivery evidence — beneficiary bridge preflight
+
+Date: 2026-08-13.
+
+Scope completed:
+
+- Added a no-write baseline workbook planner.
+- Added a no-write beneficiary bridge import planner.
+- Ran local schema dry-runs for the runtime schema and beneficiary extension schema.
+- Ran read-only aggregate CRDB environment inventory using `pac org fetch`.
+
+No Dataverse schema writes, table permission changes, deployment actions, or data imports were performed.
+
+### Local dry-run outputs
+
+Generated runtime files:
+
+| Runtime output | Purpose |
+|---|---|
+| `/tmp/tacatdp-baseline-import-summary.json` | Sanitized baseline workbook/XLSForm summary. |
+| `/tmp/tacatdp-beneficiary-bridge-import-plan.json` | Sanitized beneficiary bridge import plan. |
+| `/tmp/tacatdp-runtime-schema-plan.json` | Runtime schema dry-run plan. |
+| `/tmp/tacatdp-beneficiary-schema-plan.json` | Beneficiary extension schema dry-run plan. |
+
+Dry-run findings:
+
+| Finding | Result |
+|---|---:|
+| Root baseline rows planned | 965 |
+| `loan_repeat` rows observed | 1,151 |
+| Identity-match candidate rows flagged for review | 22 |
+| Local runtime tables tied to schema artifact | Yes |
+| Local beneficiary bridge tables tied to schema artifact | Yes |
+| Raw PII included in dry-run output | No |
+| Raw workbook rows included in dry-run output | No |
+| Dataverse writes performed | No |
+
+### CRDB read-only inventory
+
+Target checked:
+
+| Item | Value |
+|---|---|
+| Environment name | `TACATDP-CRDB-Dev` |
+| Environment ID | `42a3b1e6-8eea-e74a-ae11-3edc41e62d57` |
+| PAC identity | `dmuroba@CRDBBANK.CO.TZ` |
+
+Runtime table counts:
+
+| Dataverse table | Current CRDB count | Inventory result |
+|---|---:|---|
+| `mp_project` | 1 | Exists |
+| `mp_form` | 1 | Exists |
+| `mp_formversion` | 1 | Exists |
+| `mp_formassignment` | 10 | Exists |
+| `mp_formattachment` | 1 | Exists |
+| `mp_submission` | 2 | Exists |
+| `mp_submissionversion` | 2 | Exists |
+| `mp_submissionattachment` | 0 | Exists |
+
+Beneficiary bridge table inventory:
+
+| Dataverse table | Current CRDB state |
+|---|---|
+| `mp_trackedentity` | Not found in CRDB metadata. |
+| `mp_beneficiaryprofile` | Not found in CRDB metadata. |
+| `mp_beneficiarysubmissionlink` | Not found in CRDB metadata. |
+
+Inventory conclusion:
+
+- The CRDB environment already has the form runtime tables used by the current Power Pages runtime.
+- The baseline import should reuse the existing runtime tables, not recreate them.
+- The minimal beneficiary bridge schema is not yet deployed to CRDB.
+- The next approved schema slice should be additive: deploy only the missing bridge tables and required keys/relationships, then rerun dry-run import before execution.
+
+### Verification commands run
+
+```bash
+python3 scripts/plan-baseline-workbook-import.py \
+  --xlsform "/home/jmduda/Downloads/TACATDP/TACATDP_Tool.xlsx" \
+  --workbook "/home/jmduda/Downloads/TACATDP/TACATDP_Impact_Data_Tracking_for_Financed_Beneficiaries_-_all_versions_-_English_en_-_2026-08-13-06-12-18.xlsx" \
+  --summary-json /tmp/tacatdp-baseline-import-summary.json
+
+python3 scripts/plan-beneficiary-bridge-import.py \
+  --baseline-summary /tmp/tacatdp-baseline-import-summary.json \
+  --repo-root /home/jmduda/KodeX/crdb-mel \
+  --output-json /tmp/tacatdp-beneficiary-bridge-import-plan.json
+
+python3 scripts/dataverse-schema-plan.py \
+  --schema-file schemas/dataverse/odk-central-inspired-mvp-schema.json \
+  --json > /tmp/tacatdp-runtime-schema-plan.json
+
+python3 scripts/dataverse-schema-plan.py \
+  --schema-file schemas/dataverse/beneficiary-entity-extension-schema.json \
+  --json > /tmp/tacatdp-beneficiary-schema-plan.json
+
+PYTHONPYCACHEPREFIX=/tmp/tacatdp-pycache python3 -m py_compile \
+  scripts/plan-baseline-workbook-import.py \
+  scripts/plan-beneficiary-bridge-import.py
+
+node scripts/validate-beneficiary-entity-schema.mjs
+
+git diff --check
+```
+
+CRDB inventory was executed with aggregate FetchXML only. The query output was redirected to `/tmp` files and summarized without retrieving or printing beneficiary rows.
