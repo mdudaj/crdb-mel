@@ -205,7 +205,12 @@ def build_import_plan(summary: dict[str, Any], repo_root: Path) -> dict[str, Any
             },
             "mp_EntityIdentifier": {
                 "operation": "create_source_uuid_identifier_and_approved_privacy_identifiers",
+                "expected_rows_minimum": root_rows,
                 "expected_source_uuid_rows": root_rows,
+                "expected_optional_privacy_identifier_rows": {
+                    "customer_id": int(duplicate_identity.get("customer_id_non_empty", 0)),
+                    "phone": int(duplicate_identity.get("phone_non_empty", 0)),
+                },
                 "privacy_decision_required_for": ["Customer ID", "Farmer's Phone Number"],
             },
             "mp_BeneficiaryProfile": {
@@ -232,6 +237,13 @@ def build_import_plan(summary: dict[str, Any], repo_root: Path) -> dict[str, Any
                 "Farmer phone storage: plain, masked, hash-only, or excluded",
             ],
         },
+        "blocking_checks_before_live_import": [
+            "Confirm target environment has the four beneficiary bridge tables.",
+            "Confirm whether customer IDs and phone numbers may be stored, masked, hashed, or excluded.",
+            "Confirm duplicate customer/phone candidates are review-only and not auto-merged.",
+            "Confirm the import should create one tracked-entity candidate per Kobo root row before duplicate adjudication.",
+            "Confirm the baseline import remains schema/data-only and does not change Power Pages table permissions.",
+        ],
         "safety": {
             "dataverse_writes_performed": False,
             "raw_pii_included": False,
