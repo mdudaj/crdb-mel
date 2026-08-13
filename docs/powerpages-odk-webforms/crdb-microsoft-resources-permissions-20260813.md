@@ -4,15 +4,15 @@ Date: 2026-08-13
 
 ## Purpose
 
-This artifact explains which CRDB Microsoft resources and permissions are required to move from the current TACATDP prototype to a scalable Sustainable Finance MEL Platform.
+This artifact explains which CRDB Microsoft ecosystem resources and permissions are required to move from the current TACATDP prototype to a scalable Sustainable Finance MEL Platform.
 
-The current prototype proves the product direction. A scalable platform needs a governed resource, infrastructure, and permission model so CRDB can own, secure, operate, audit, and extend the system without depending on one developer profile, one temporary environment, or ad hoc permission fixes.
+The current prototype proves the product direction. A scalable platform should remain Microsoft-ecosystem-first because CRDB is already working through Microsoft identities, Power Platform, Dataverse, Power Pages, Power BI, and Power Platform ALM. The enterprise question is therefore not "which alternative stack should replace the prototype?" but "which CRDB Microsoft resources, environments, roles, policies, and ALM controls are required to make this platform scalable and supportable?"
 
 ## Why this matters
 
 The platform handles programme monitoring, beneficiary information, financing context, field evidence, submissions, audit trails, and reporting outputs. These are institutional data assets, not just UI screens.
 
-Clear CRDB Microsoft resource ownership matters because it controls:
+Clear CRDB Microsoft ecosystem ownership matters because it controls:
 
 1. **Data protection** — Dataverse records, field evidence, user identities, and reporting outputs must be protected by least-privilege roles.
 2. **Operational continuity** — the platform must not depend on one individual's laptop, PAC profile, tenant account, or developer environment.
@@ -31,13 +31,26 @@ The central design rule is:
 
 This matters because CRDB may later need to monitor sustainable finance programmes, guarantee facilities, insurance-linked products, ESG initiatives, donor-funded programmes, lending schemes, customer segments, branches, or normal bank operations. Each may have different beneficiaries, indicators, reporting frequencies, evidence rules, workflows, and stakeholders.
 
-The platform should therefore separate:
+The platform should therefore be researched and documented as a **Microsoft-ecosystem enterprise MEL workload**:
 
 ```text
-CRDB Enterprise MEL Platform
-  -> Programme / scheme / product configuration
-    -> Operational data, field observations, indicator results, evidence, reports, and learning actions
+CRDB Microsoft ecosystem
+  -> Enterprise MEL workload
+    -> Programme / scheme / product configuration
+      -> Operational data, field observations, indicator results, evidence, reports, and learning actions
 ```
+
+The working assumption for enterprise planning is:
+
+- Microsoft Entra ID for identity and SSO.
+- Power Platform environments for lifecycle separation.
+- Dataverse as the operational MEL system of record where it fits.
+- Power Pages as the authenticated portal surface unless CRDB later proves it cannot meet production needs.
+- Power Automate / Dataverse automation for workflow and integration orchestration where suitable.
+- Power BI and Microsoft Fabric for enterprise analytics, semantic models, reporting, and cross-system data integration.
+- Power Platform solutions, managed environments, DLP/data policies, and ALM for governance.
+
+Non-Microsoft infrastructure should be documented only as a risk/contingency or future architecture decision if CRDB enterprise architecture proves a Microsoft service cannot meet a specific requirement.
 
 ## Enterprise MEL architecture layers
 
@@ -59,28 +72,29 @@ CRDB Enterprise MEL Platform
 | Integration layer | Consumes selected data from authoritative systems. | Core banking, CRM, loan systems, insurance, HR, climate platforms, GIS data, external datasets. |
 | Audit and compliance | Preserves defensible lineage. | User activity, data edits, approval history, indicator lineage, report generation history. |
 
-## Enterprise infrastructure view
+## Microsoft ecosystem enterprise infrastructure view
 
-The Microsoft prototype path is a valid near-term delivery path, but the long-term enterprise system should be documented independently of a single product stack. CRDB architecture should decide the final deployment standards.
+The long-term system should be documented primarily inside the CRDB Microsoft ecosystem. Research and brainstorming should therefore focus on how to compose Power Platform, Dataverse, Power Pages, Power Automate, Power BI, Fabric, Entra ID, Azure integration services, security, and ALM into one enterprise MEL workload.
 
-Recommended enterprise infrastructure capabilities:
+Recommended Microsoft-first enterprise infrastructure capabilities:
 
-| Capability | Microsoft-first option | Enterprise/long-term option to evaluate |
+| Capability | Microsoft ecosystem resource | Enterprise MEL use |
 |---|---|---|
-| Identity and SSO | Microsoft Entra ID, Power Pages authentication, Dataverse users/contacts | CRDB enterprise IdP federation and bank-wide access governance. |
-| Portal/application UI | Power Pages hosted portal for prototype and Microsoft-managed pilot | Bank-approved web/mobile portal stack if Power Pages cannot meet scale, UX, integration, or governance needs. |
-| Form runtime | Web forms/XForms runtime hosted in the portal | Dedicated form/assessment engine supporting offline mobile, browser, versioning, GPS, media, signatures, and multilingual forms. |
-| Operational database | Dataverse for Microsoft-managed prototype and pilot | PostgreSQL/PostGIS or another CRDB-approved operational database if enterprise scale/spatial needs exceed Dataverse fit. |
-| Spatial data | Dataverse location fields and GeoJSON visualisation for prototype | PostGIS-backed spatial model for country/region/district/ward/village/farm/intervention analytics. |
-| Workflow | Power Automate / Dataverse automation | Dedicated workflow engine for configurable review, approval, data quality, and learning-action processes. |
-| Integration | Power Platform connectors / Dataverse APIs | API gateway, integration services, queues, and controlled ingestion from core banking, CRM, insurance, climate, and GIS systems. |
-| Async processing | Power Automate / plug-ins where approved | Queue and worker architecture for indicator computation, ingestion, report generation, and scheduled jobs. |
-| Object/evidence storage | Dataverse file columns or approved Microsoft storage | CRDB-approved object storage for photos, files, evidence, hashes, retention, and audit. |
-| Analytics | Power BI over Dataverse/reporting projections | Dimensional warehouse/lakehouse when data volume, history, refresh, and cross-system analytics require it. |
-| Observability | Power Platform admin center, Dataverse auditing, Power BI monitoring | Central logs, metrics, tracing, SIEM integration, alerting, and operational dashboards. |
-| ALM | Power Platform solutions, environment variables, managed imports | Bank release pipeline with CI/CD, approvals, rollback, environment promotion, and change records. |
+| Identity and SSO | Microsoft Entra ID, Entra groups, Conditional Access, MFA | Single sign-on, named users, group-based administration, private-site access, and role assignment governance. |
+| Environment strategy | Power Platform development, test/UAT, and production environments with Dataverse | Separates build, review, and production operations while keeping components in the same governed ecosystem. |
+| Portal/application UI | Power Pages, custom pages/components, possible Power Apps/model-driven admin surfaces | Authenticated user portal, MEL officer workspace, field data entry, admin configuration, access-management surfaces. |
+| Operational database | Dataverse tables, relationships, choices, alternate keys, auditing, security roles | Programme configuration, results framework, forms, submissions, beneficiary registry, indicators, workflow state, and audit. |
+| Form runtime | Power Pages-hosted web forms/XForms runtime, Dataverse-stored form definitions and versions | Configurable field data collection without hard-coding TACATDP-specific forms into the application. |
+| Workflow and automation | Power Automate, Dataverse plug-ins where approved, business process flows where useful | Assignment, onboarding, review, verification, notification, projection refresh, approval, and learning-action workflows. |
+| Integration | Dataverse APIs, Power Platform connectors, Azure API Management, Azure Logic Apps or Azure Functions where approved | Governed ingestion from core banking, CRM, insurance, climate/GIS systems, and other CRDB systems without making MEL the system of record for those domains. |
+| Evidence and documents | Dataverse file columns, SharePoint/OneDrive for Business where governed, Azure storage only if CRDB approves | Photos, files, signed documents, report outputs, evidence hashes, retention, and auditability. |
+| Analytics and warehouse | Power BI, Microsoft Fabric, OneLake, Link to Fabric, Fabric Lakehouse/Warehouse, Synapse Link for Dataverse if selected | Enterprise reporting, medallion architecture, semantic models, cross-system analytics, indicator facts, and management dashboards. |
+| Spatial and climate analytics | Dataverse location data, Power BI maps/Azure Maps where approved, Fabric geospatial processing where suitable | Region/district/ward coverage, farm/intervention locations, climate exposure overlays, and geographic performance analysis. |
+| Governance and security | Managed Environments, DLP/data policies, Dataverse security roles, Power Pages web roles/table permissions, auditing | Least privilege, connector governance, environment control, private/public site control, and data-protection enforcement. |
+| ALM and operations | Power Platform solutions, solution pipelines/deployment pipelines, environment variables, connection references, Azure DevOps/Git where approved | Repeatable delivery, approval gates, rollback, release notes, source control, and operational support. |
+| Observability and support | Power Platform admin center, Power Pages diagnostics, Dataverse auditing, Power BI/Fabric monitoring, Microsoft Purview/Sentinel if CRDB uses them | Usage, health, audit, security monitoring, data lineage, incident response, and compliance reporting. |
 
-The current repository documents the Microsoft-first path. The enterprise architecture exercise should next decide whether production remains fully Microsoft-managed or moves selected layers to CRDB-approved enterprise infrastructure.
+The enterprise architecture exercise should therefore produce a Microsoft-resource map first. Only after that should CRDB decide whether any requirement forces a non-Microsoft exception.
 
 ## Core enterprise domain model
 
@@ -146,11 +160,11 @@ The scalable product should be documented around reusable modules:
 
 This is broader than the current prototype. It should guide the future product vision and client discussion, not silently expand the current prototype scope.
 
-## External systems and data ownership
+## External systems and data ownership inside a Microsoft integration approach
 
 The MEL platform should not become CRDB's core banking system, CRM, HR system, insurance system, or climate-data platform. Those systems remain authoritative for their domains.
 
-The MEL platform should consume selected data through governed integration:
+The MEL platform should consume selected data through governed Microsoft integration services:
 
 ```text
 Core banking / loan systems
@@ -159,10 +173,10 @@ Insurance / guarantee systems
 HR / branch structures
 GIS / climate data
 Field data collection
-        -> Integration layer
-          -> MEL operational data platform
-            -> Data quality / indicator engine
-              -> Analytics, dashboards, reports, and learning actions
+        -> Microsoft-governed integration layer
+          -> Dataverse MEL operational data platform
+            -> Fabric / Power BI analytics layer
+              -> Dashboards, reports, and learning actions
 ```
 
 This reduces duplication, reconciliation problems, and unclear ownership.
@@ -211,7 +225,7 @@ The active implementation path is:
 
 The current prototype can continue as a proof-of-concept, but scalable delivery needs CRDB-owned environments, roles, identities, policies, and ALM.
 
-## Microsoft platform layers for the current delivery path
+## Microsoft platform layers for prototype, pilot, and enterprise delivery
 
 | Layer | CRDB resource | Why it is needed |
 |---|---|---|
@@ -220,7 +234,7 @@ The current prototype can continue as a proof-of-concept, but scalable delivery 
 | Dataverse | Custom tables, relationships, choices, alternate keys, security roles, teams, application users | Provides the system of record for forms, submissions, beneficiaries, indicators, audit, and reporting projections. |
 | Power Pages | CRDB-owned site records, page/web-file metadata, site visibility, authentication, web roles, page permissions, table permissions, Web API settings | Hosts the field and review portal while enforcing Power Pages security over Dataverse access. |
 | Power Automate / workflow | Environment-owned cloud flows or approved server-side processing | Processes onboarding, notifications, projection refresh, approvals, and integrations where browser-only logic is insufficient. |
-| Reporting | Power BI workspace, Dataverse connector access, report ownership, refresh credentials, future warehouse/Fabric boundary if approved | Supports management reporting and future stakeholder reporting without relying only on portal charts. |
+| Reporting | Power BI workspace, Dataverse connector access, Fabric workspace/capacity where approved, semantic model ownership, refresh credentials | Supports management reporting and future stakeholder reporting without relying only on portal charts. |
 | ALM | Power Platform solution, publisher, connection references, environment variables, managed solution import path | Makes deployments repeatable, reviewable, and recoverable. |
 | Security and compliance | DLP/data policies, connector allow/deny rules, audit settings, retention/export policy, environment backup policy | Prevents accidental data exposure and controls which systems can exchange business data. |
 
@@ -353,7 +367,7 @@ Required:
 - Approved mailbox or notification mechanism if email delivery is required.
 - Power BI workspace for reporting proof if Power BI is part of pilot acceptance.
 
-### For scalable production platform on the Microsoft path
+### For scalable production platform in the CRDB Microsoft ecosystem
 
 Required:
 
@@ -366,22 +380,22 @@ Required:
 - DLP/data policies and connector governance.
 - Monitoring, audit, backup, support, incident, and change-management ownership.
 - Reporting workspace/dataset ownership and refresh governance.
+- Fabric workspace/capacity decision if enterprise analytics, warehouse/lakehouse, OneLake, or Link to Fabric is used.
+- Data integration ownership for core banking, CRM, insurance, climate/GIS, and other source systems.
+- Certified semantic models and report ownership for CRDB/SFU reporting.
 - Data retention, export, privacy, and stakeholder-publication rules.
 
-Also required if CRDB chooses a non-Power-Pages or hybrid enterprise architecture:
+Microsoft ecosystem research still needs to confirm:
 
-- approved application hosting platform;
-- approved operational database and spatial database;
-- approved object/evidence storage;
-- approved API gateway/integration layer;
-- approved queue/worker platform;
-- approved monitoring/logging/SIEM integration;
-- approved backup, disaster recovery, and retention controls;
-- approved DevSecOps pipeline and release governance.
+- Power Pages fit for the expected portal UX, access model, and performance.
+- Dataverse fit for operational MEL records, field evidence metadata, workflow, audit, and scale.
+- Fabric/Power BI fit for warehouse, lakehouse, semantic model, indicator facts, and cross-system reporting.
+- Power Automate/Dataverse automation fit for verification, notification, projection refresh, and approval workflows.
+- Whether any Azure service is needed inside the Microsoft estate for API management, integration, secrets, storage, monitoring, or scheduled processing.
 
 ## Permission checklist before continuing scalable work
 
-Before moving beyond prototype UI refinement, confirm:
+Before moving beyond prototype UI refinement, confirm the Microsoft ecosystem owners:
 
 - [ ] Which CRDB environment is the future source of truth: development, UAT, or production.
 - [ ] Which CRDB user or group owns the Power Pages site.
@@ -394,21 +408,25 @@ Before moving beyond prototype UI refinement, confirm:
 - [ ] Which Dataverse roles are assigned to platform admins, MEL officers, collectors, reviewers, and reporting viewers.
 - [ ] Whether DLP/data policies allow the required connectors.
 - [ ] Whether any production deployment requires managed solution import rather than direct PAC page upload.
+- [ ] Whether Microsoft Fabric/Power BI workspaces and capacities are available for enterprise MEL analytics.
+- [ ] Whether Azure integration services are approved for connecting non-Dataverse CRDB systems.
 
 ## Recommended architecture position
 
-Use the current TACATDP prototype to prove workflow and stakeholder value, but document the scalable product as CRDB-owned resources:
+Use the current TACATDP prototype to prove workflow and stakeholder value, but document the scalable product as CRDB-owned Microsoft ecosystem resources:
 
 ```text
 CRDB Microsoft Entra tenant
-  -> Enterprise MEL platform governance
-    -> Programme configuration and results framework
-    -> Indicator registry and indicator engine
-    -> Beneficiary/party and intervention registries
-    -> Field data collection and verification workflow
-    -> Operational database and evidence storage
-    -> Integration layer and analytics warehouse
-    -> Dashboards, reporting templates, learning actions
+  -> Power Platform environment strategy
+    -> Dataverse enterprise MEL operational model
+      -> Programme configuration and results framework
+      -> Indicator registry and indicator engine
+      -> Beneficiary/party and intervention registries
+      -> Field data collection and verification workflow
+      -> Audit, access, workflow, and evidence metadata
+    -> Power Pages / Power Apps user experiences
+    -> Power Automate / Dataverse automation
+    -> Fabric / Power BI analytics, warehouse, semantic models, reports
     -> ALM, DLP, audit, support, and release governance
 ```
 
@@ -430,6 +448,12 @@ This keeps TACATDP as the proof-of-concept project while positioning the Sustain
 - Power Pages solutions: <https://learn.microsoft.com/en-us/power-pages/configure/power-pages-solutions>
 - Power Platform ALM overview: <https://learn.microsoft.com/en-us/power-platform/alm/overview-alm>
 - Organize Power Platform solutions: <https://learn.microsoft.com/en-us/power-platform/alm/organize-solutions>
+- Power Platform Well-Architected: <https://learn.microsoft.com/ga-ie/power-platform/well-architected/>
+- Dataverse and Microsoft Fabric medallion architecture: <https://learn.microsoft.com/en-us/power-platform/architecture/reference-architectures/enterprise-data-fabric-dataverse>
+- Link Dataverse to Microsoft Fabric: <https://learn.microsoft.com/en-us/power-apps/maker/data-platform/fabric-link-to-data-platform>
+- Azure Synapse Link for Dataverse: <https://learn.microsoft.com/en-us/power-apps/maker/data-platform/azure-synapse-link-synapse>
+- Microsoft Fabric storage options: <https://learn.microsoft.com/en-us/fabric/fundamentals/store-data>
+- Microsoft Fabric lakehouse and warehouse decision guide: <https://learn.microsoft.com/en-us/fabric/fundamentals/decision-guide-lakehouse-warehouse>
 - GCF results-based management: <https://www.greenclimate.fund/portfolio/results-based-management>
 - GCF Integrated Results Management Framework: <https://www.greenclimate.fund/document/integrated-results-management-framework>
 - Tanzania Personal Data Protection Act, 2022: <https://oagmis.oag.go.tz/portal/acts/237>
