@@ -1,150 +1,126 @@
-# CRDB development environment sharing map
+# CRDB development environment admin checklist
 
 Date: 2026-08-13
 
 ## Purpose
 
-This document lists the minimum CRDB Microsoft resources and permissions required to create a development environment where the delivery team can build the Sustainable Finance MEL Platform and the Sustainable Finance Unit can review it continuously.
+This is a short checklist for CRDB administrators to enable the Microsoft resources and permissions needed for the delivery team to continue building the Sustainable Finance MEL Platform and for the Sustainable Finance Unit to review it continuously.
 
-This is a development-environment request only. It does not request production go-live, production data access, or production deployment.
+This checklist is for the **development environment only**. It does not request production deployment or production data access.
 
-## Immediate outcome needed
+## Current environment reference
 
-CRDB should provide one governed development environment that allows:
+The current working preview environment we have been using successfully is:
 
-- the delivery team to import/build the Power Platform solution;
-- the Power Pages prototype to run against Dataverse in the same environment;
-- SFU reviewers to sign in and review the portal without repeated access blockers;
-- development changes to be validated before later UAT or production handover;
-- access, table permissions, form assignments, submissions, dashboards, and reports to be tested with named users.
-
-## Development environment baseline
-
-| Required item | Recommended value for development review |
+| Item | Current working value |
 |---|---|
-| Environment type | Power Platform development or sandbox environment with Dataverse |
-| Environment owner | Named CRDB Power Platform/platform owner |
-| Security boundary | Microsoft Entra security group for approved makers, testers, SFU reviewers, and admins |
-| Application host | CRDB-owned Power Pages site in the same Dataverse environment |
-| Operational data store | Dataverse |
-| Development sharing model | Named users/groups only; private site access if the site is private |
-| Deployment model | Solution-based development with documented environment variables and connection references |
-| Review users | Named SFU reviewers with site visibility, Power Pages identity, web role, and Dataverse/table-permission path |
+| Tenant/context | Mshirika development tenant |
+| Power Platform environment | `PowerPagesDeveloper-070926-125720` |
+| Environment URL | `https://orga3cf4b37.crm4.dynamics.com/` |
+| Power Pages site | `TACATDP Monitoring Tool` |
+| Website ID | `fccc0cc6-7f5e-4885-aeb8-2272e68130a3` |
+| Working PAC profile | `tacatdp-mshirika` |
 
-## Key capability, resource, use, and permission map
+The CRDB development environment recorded for the target setup is:
 
-| App capability | Microsoft ecosystem resource | Enterprise MEL use | Permissions to enable for development sharing |
+| Item | CRDB development target |
+|---|---|
+| Tenant/context | CRDB Microsoft tenant |
+| Power Platform environment | `TACATDP-CRDB-Dev` |
+| Environment URL | `https://org5eb0379b.crm4.dynamics.com/` |
+| Working PAC profile name | `tacatdp-crdb` |
+
+The immediate request is to make the CRDB development environment work like the current Mshirika review environment: buildable by the delivery team and continuously reviewable by SFU users.
+
+## Admin checklist
+
+| App capability | Microsoft ecosystem resource | Enterprise MEL use | Permissions/resources to enable |
 |---|---|---|---|
-| Development workspace | Power Platform development or sandbox environment with Dataverse | Gives the delivery team a CRDB-owned place to build, import, test, and share the MEL prototype without relying on personal/developer trial environments. | Power Platform Administrator or Dynamics 365 Administrator creates environment; assign environment security group; assign Dataverse System Administrator to named platform owner; assign Environment Maker/System Customizer to approved makers if schema and solution changes are allowed. |
-| Environment access control | Microsoft Entra security group linked to the environment | Controls who can enter the development environment and access its apps, flows, Dataverse resources, and maker tools. | Entra admin creates/maintains group; Power Platform admin assigns group to environment; add delivery users, SFU reviewers, and admin/support users explicitly. |
-| Solution delivery | Power Platform solution, publisher, environment variables, connection references | Allows repeatable delivery of Dataverse tables, Power Pages components, flows, and configuration between development, UAT, and later production. | Dataverse System Administrator or System Customizer for solution build; release owner can import/export solutions; connection owners can authorize required development connections. |
-| Portal hosting | Power Pages site in the same development environment | Hosts the SFU MEL portal for dashboard review, field-form review, data submission, saved records, beneficiary review, and access testing. | Power Pages site owner/admin; environment Dataverse role sufficient to manage site; ability to configure site visibility, authentication, web roles, page permissions, table permissions, and Web API site settings. |
-| Continuous SFU review access | Power Pages site visibility and Microsoft sign-in | Allows SFU reviewers to open the development portal repeatedly without the “successful sign-in but no access” blocker. | If private, grant site visibility access to named SFU Microsoft users; configure approved Microsoft identity provider path; create/link Power Pages Contact/external identity through invitation or approved identity flow; do not rely only on successful Microsoft sign-in. |
-| Portal role-based access | Power Pages web roles, page permissions, and table permissions | Controls what SFU reviewers, MEL officers, data collectors, reviewers, and administrators can see or do in the portal. | Create development web roles such as `SFU MEL Reviewer`, `SFU MEL Officer`, `SFU Data Collector`, and `SFU Platform Admin`; assign contacts/users to roles; configure page permissions; configure table permissions with least privilege for each portal function. |
-| Dataverse operational model | Dataverse tables, relationships, choices, alternate keys, audit settings | Stores programme configuration, forms, assignments, submissions, submission versions, beneficiaries, indicators, dashboard projections, and access audit records. | Dataverse System Administrator/System Customizer for schema work; custom least-privilege roles for SFU reviewers and testers; enable auditing for relevant tables if review/audit evidence is required. |
-| Browser-to-Dataverse access | Power Pages Web API `/_api` site settings | Allows the hosted portal to read and write Dataverse data using Power Pages authentication, web roles, table permissions, and CSRF protection. | Power Pages admin/System Administrator enables Web API table and field site settings only for required development tables/fields; configure table permissions first; verify authenticated `/_api` read/write with named users. |
-| Field data collection | Power Pages-hosted web forms/XForms runtime and Dataverse form/submission tables | Allows reviewers to test baseline data collection, assignment-based form access, draft/submit behavior, saved records, and submission review paths. | Portal reviewer/collector web role; read access to project/form/form-version/assignment records; create access for submissions/submission versions where applicable; append/append-to permissions for lookup associations; no anonymous submission access. |
-| Beneficiary and monitored entity review | Dataverse beneficiary/party/intervention tables and portal routes | Allows SFU to review beneficiary identity, programme participation, intervention context, and monitoring records as the model matures. | Development Dataverse roles for read/review; Power Pages table permissions for portal read paths; write/edit only for approved development admin roles; keep schema writes limited to approved makers. |
-| Dashboard and KPI review | Power Pages portal dashboard, Dataverse reporting projection tables, ECharts prototype visuals | Allows SFU to continuously review operational KPIs, TACATDP prototype visuals, regional map, submissions, and MEL readiness. | Power Pages read permissions to reporting/projection tables; Dataverse read roles for reviewers; explicit label that prototype figures are demonstration data unless sourced from approved records. |
-| Reporting proof | Power BI workspace or development reporting workspace, Dataverse connector, optional Fabric path | Allows SFU and BI/reporting owners to review whether portal dashboards and future reports align with CRDB reporting expectations. | Power BI workspace Admin/Member for report authors; Viewer for SFU consumers; Dataverse read access for reporting identity; refresh credential owned by CRDB, not a personal developer profile. |
-| Workflow automation | Power Automate flows, Dataverse triggers/actions, connection references | Supports invitations, assignments, notifications, review state changes, projection refresh, and access audit flows during development. | Flow owner or service account approved by CRDB; environment permissions to create/edit flows; Dataverse role with least privilege for tables/actions used by the flow; connection references documented. |
-| Notification and invitation testing | Power Automate, Dataverse invitation records, approved mailbox/connector where used | Allows SFU reviewers and test users to receive access/invitation notifications without ad hoc personal sender dependencies. | Approved development mailbox or connector owner; flow connection owner; Power Pages invitation/contact permissions if invitations are used; record invitation state and external identity after redemption. |
-| Evidence and attachments | Dataverse file columns, notes, SharePoint/OneDrive for Business, or approved Azure storage inside CRDB tenant | Allows development testing of photos, files, signed forms, generated reports, and evidence metadata. | Dataverse file/table permissions for metadata; storage owner permissions if SharePoint/OneDrive/Azure storage is used; restrict evidence access to named reviewer/admin roles; do not expose sensitive evidence anonymously. |
-| Integration proof | Dataverse APIs, approved Power Platform connectors, Azure API Management/Logic Apps/Functions inside CRDB Microsoft tenant if needed | Allows development validation of future integration paths to CRDB systems or external datasets without placing credentials in the portal. | Integration owner approval; connector allowed by DLP policy; service identity or named connection owner; no secrets in browser code or committed source. |
-| DLP and connector governance | Power Platform data policies | Ensures development apps and flows use approved connectors and do not mix business data with unapproved services. | Power Platform Administrator reviews/sets DLP policy; required connectors placed in appropriate data group; blocked connectors documented before flow/app build. |
-| Development diagnostics | Power Platform admin center, Power Pages diagnostics, Dataverse audit, browser/runtime smoke checks | Helps diagnose access blockers, missing table permissions, stale site cache, failed submissions, and API errors during continuous SFU review. | Platform admin/support owner can inspect environment health, Power Pages site state, Dataverse audit, and relevant flow runs; browser smoke checks are run after every permission or site-setting change. |
-| Backup and recovery expectation | Power Platform environment backup/restore and solution export | Allows the team to recover from development mistakes and preserve reviewable releases. | Power Platform admin owns backup/restore policy; release owner exports solution versions; development data retention expectations are documented. |
-| Sharing gate | Named CRDB/SFU user list, Entra group, Power Pages site visibility, web roles, Dataverse roles, and smoke-test evidence | Defines when the development environment is ready for SFU review. | Share only after named users can sign in, pass private-site visibility if applicable, hold correct web roles/table permissions, and complete dashboard/read, form assignment/read, submission/create, saved-record/read checks. |
+| Development workspace | Power Platform environment with Dataverse | Gives the delivery team one CRDB-owned place to build and test the MEL solution. | Confirm `TACATDP-CRDB-Dev` exists, has Dataverse, has enough capacity, and is accessible to named delivery/admin users. Assign Environment Maker/System Customizer where build work is expected. |
+| Environment administration | Dataverse environment roles | Allows schema, solution import/export, Power Pages configuration, and troubleshooting. | Assign Dataverse `System Administrator` to the named CRDB platform owner/admin. Assign `System Customizer` or equivalent to approved delivery makers if they are expected to configure solution components. |
+| Solution delivery | Power Platform solution, publisher, environment variables, connection references | Allows repeatable delivery instead of manual one-off edits. | Allow approved makers/admins to import/export unmanaged development solutions and configure development environment variables/connection references. |
+| Portal hosting | Power Pages site in the same environment | Hosts the SFU review portal, dashboard, forms, saved records, beneficiary review, and access screens. | Create or confirm the CRDB development Power Pages site connected to `TACATDP-CRDB-Dev`. Give the delivery/site admin permission to update site pages, web files, site settings, and security configuration. |
+| SFU reviewer access | Power Pages site visibility and Microsoft sign-in | Allows SFU users to open the development portal repeatedly without access-denied loops. | If the site is private, grant named SFU reviewers site visibility access first. Confirm the Microsoft sign-in path for those users. Successful Microsoft sign-in alone is not enough. |
+| Portal user identity | Power Pages Contact and external identity | Links Microsoft sign-in to a portal user record. | Ensure each SFU reviewer/tester has a Contact and external identity after invitation/sign-in. Verify invitation redemption state where invitations are used. |
+| Portal roles | Power Pages web roles | Controls whether reviewers, collectors, and admins can see the expected portal routes. | Assign required web roles, at minimum `Authenticated Users` plus project-specific roles such as reviewer/collector/admin as needed. |
+| Page access | Power Pages page permissions | Controls which portal pages are visible to each reviewer role. | Enable page permissions for the review routes: dashboard, collect/form, saved records, beneficiaries, reporting, and user/access pages as required for review. |
+| Dataverse table access from portal | Power Pages table permissions | Allows portal pages to read/write Dataverse records through Power Pages security. | Configure table permissions for required MEL tables. Minimum review path needs read access to project/form/form-version/assignment/reporting data. Submit path needs create access for submissions/submission versions and required append/append-to permissions. |
+| Browser API access | Power Pages Web API `/_api` site settings | Allows the portal SPA to call Dataverse safely through Power Pages authentication. | Enable Web API site settings only for required development tables and fields. Verify browser `/_api` read/write after table permissions are saved. |
+| Form collection | Dataverse form, assignment, submission, and submission-version tables | Allows baseline form testing and saved-record review. | Seed or allow creation of one project, one active form version, and active assignments for named reviewers/testers. Enable create/read permissions needed for submission testing. |
+| Dashboard review | Portal dashboard and Dataverse reporting/prototype data | Allows SFU to review KPIs and visuals while prototype data is still demonstrative. | Enable reviewer read access to dashboard/reporting projection tables or demo data source used by the portal. Keep prototype figures labelled as demonstration data. |
+| Beneficiary review | Dataverse beneficiary/party/intervention tables and portal routes | Allows SFU to review the beneficiary model and details as we refine the prototype. | Enable read access for reviewer roles. Enable write/edit only for approved admin/test roles if needed. |
+| Access management testing | Contacts, web roles, assignments, access audit tables | Allows us to test the user onboarding and assignment flow that caused repeated access blockers. | Allow admin/reviewer path to inspect Contact, external identity, web role, assignment, and access-audit status. Enable create/update only for approved admin or automation owner. |
+| Workflow/notifications | Power Automate, Dataverse connections, approved mailbox if used | Supports invitations, assignment notifications, review actions, and projection refresh where needed. | Assign a CRDB-owned flow owner or service account. Approve required development connectors and mailbox/notification path. Do not depend on a personal mailbox. |
+| Connector governance | Power Platform DLP/data policies | Prevents development flows/apps from using blocked or unapproved connectors. | Confirm Dataverse, Power Pages, Power Automate, Power BI/Fabric, SharePoint/OneDrive, and any approved Azure connectors are allowed in the development policy. |
+| Reporting proof | Power BI workspace or development reporting workspace | Allows SFU/BI users to review reporting direction if needed before production. | If Power BI review is required now, create/assign a development workspace and grant report authors Member/Admin and SFU reviewers Viewer access. |
+| Evidence files | Dataverse file columns, notes, or approved Microsoft storage | Allows testing photos/files/evidence without unmanaged storage. | Confirm the approved development storage path and permissions. Keep sensitive evidence restricted to named roles. |
+| Troubleshooting | Power Platform admin center, Power Pages diagnostics, Dataverse audit, flow run history | Allows quick diagnosis when sign-in, table permission, upload, or flow issues occur. | Name a CRDB admin/support contact who can inspect environment health, Power Pages settings, Dataverse roles, table permissions, and flow runs during review. |
 
-## Minimum permissions to request now
+## Minimum users/groups to enable
 
-### For CRDB administrators
-
-- Power Platform Administrator or Dynamics 365 Administrator to create/manage the development environment.
-- Ability to create a Dataverse-backed development/sandbox environment.
-- Ability to assign a Microsoft Entra security group to the environment.
-- Ability to assign Dataverse System Administrator to the named CRDB platform owner.
-- Ability to create/manage the Power Pages site in the same environment.
-- Ability to configure Power Pages site visibility, authentication, web roles, page permissions, table permissions, and Web API site settings.
-- Ability to review or set development DLP/data policies for required connectors.
-
-### For delivery team makers
-
-- Environment Maker where app/flow creation is expected.
-- System Customizer or approved maker role where solution/schema work is expected.
-- Power Pages maker/admin access for the development site, if the team is expected to update the portal source.
-- Permission to import/export unmanaged development solution artifacts.
-- Access to development connection references required for Dataverse, Power Pages, Power Automate, and reporting proof.
-
-### For SFU reviewers
-
-- Microsoft Entra account or approved identity path.
-- Environment access through the agreed security group where required.
-- Power Pages private-site visibility access if the site is private.
-- Power Pages Contact/external identity after invitation or approved sign-in flow.
-- Power Pages web role for reviewer access.
-- Dataverse/table-permission path that allows portal reads for dashboards, assignments, saved records, and reporting views.
-- No maker/admin permissions unless a reviewer is explicitly acting as a platform admin.
-
-## Development sharing readiness checklist
-
-| Check | Required before sharing with SFU? |
+| Group/user type | Needed access |
 |---|---|
-| Development environment exists in CRDB Microsoft tenant | Yes |
-| Environment has Dataverse | Yes |
-| Environment owner and support contact are named | Yes |
-| Security group controls environment access | Yes |
-| Delivery team maker/admin permissions are assigned | Yes |
-| Power Pages site exists in the same environment | Yes |
-| Site visibility decision is recorded | Yes |
-| Named SFU reviewers have private-site visibility access if needed | Yes |
-| Authentication path is configured and tested | Yes |
-| Power Pages contacts/external identities are created/verified for reviewers | Yes |
-| Web roles are assigned to reviewer contacts/users | Yes |
-| Page permissions are configured | Yes |
-| Table permissions are configured for required tables | Yes |
-| Power Pages Web API site settings are enabled only for required tables/fields | Yes |
-| Browser `/_api` read test passes for reviewer role | Yes |
-| Browser submission/create test passes for collector/tester role where applicable | Yes |
-| Saved-record read test passes | Yes |
-| Dashboard/report read path works | Yes |
-| DLP/data policy allows required development connectors | Yes |
-| Flow owners/connections are documented if flows are used | Yes |
-| No client secrets or bearer tokens are stored in portal code | Yes |
-| Development support/escalation owner is named | Yes |
+| CRDB platform owner/admin | Environment admin, Dataverse System Administrator, Power Pages admin/site owner. |
+| Delivery maker/admin | Environment Maker/System Customizer as approved, Power Pages update access, solution import/export access. |
+| SFU reviewer | Power Pages site visibility if private, Microsoft sign-in, Contact/external identity, reviewer web role, read table permissions. |
+| Test collector | Same as SFU reviewer plus assignment access and create permission for submissions/submission versions. |
+| Flow/service owner | Approved flow owner or service identity with least-privilege Dataverse permissions and connector ownership. |
 
-## What CRDB can share back to the delivery team
+## Quick readiness check before sharing the portal link
 
-To unblock delivery and continuous SFU review, CRDB can provide:
+- [ ] CRDB development environment `TACATDP-CRDB-Dev` is accessible.
+- [ ] Dataverse is enabled in that environment.
+- [ ] CRDB platform owner/admin has Dataverse `System Administrator`.
+- [ ] Delivery maker has required maker/customizer access.
+- [ ] Power Pages site exists in the same environment.
+- [ ] Site visibility is confirmed.
+- [ ] Named SFU reviewers have site visibility access if private.
+- [ ] SFU reviewers can sign in with Microsoft.
+- [ ] SFU reviewers have Contact/external identity records.
+- [ ] SFU reviewers have the required web role.
+- [ ] Required page permissions are enabled.
+- [ ] Required table permissions are enabled.
+- [ ] Required Power Pages Web API site settings are enabled.
+- [ ] Browser `/_api` read test passes for an SFU reviewer.
+- [ ] Form assignment/read path works.
+- [ ] Submission create path works for a test collector.
+- [ ] Saved-record read path works.
+- [ ] Dashboard/reporting read path works.
+- [ ] Flow/notification owner is confirmed if invitations or notifications are used.
+- [ ] DLP policy allows the required Microsoft connectors.
 
-1. Development environment display name and environment URL.
-2. Power Pages site name, website ID, and public/private visibility state.
-3. Names/emails of platform owners, site admins, Dataverse admins, and SFU reviewers.
-4. Confirmation of which account/group should be used for maker access.
-5. Confirmation of whether the site will remain private during review.
-6. Confirmation that required SFU reviewers have site visibility access if private.
-7. Confirmation of allowed connectors under the development DLP policy.
-8. Confirmation of whether Power BI/Fabric proof is required in this development phase.
+## What to send back to the delivery team
 
-Do not share secrets, passwords, API keys, connection strings, or private key material in this document or chat.
+CRDB admins can share the following non-secret details:
+
+- environment display name and URL;
+- Power Pages site name and website ID;
+- site visibility state: private or public;
+- named platform owner/admin;
+- named delivery maker/admin users;
+- named SFU reviewers/testers;
+- confirmation of reviewer site visibility access;
+- confirmation of web roles/table permissions/Web API settings;
+- DLP connector confirmation;
+- Power BI workspace details if reporting review is needed now.
+
+Do not send passwords, client secrets, API keys, connection strings, bearer tokens, private keys, or `.env` contents.
 
 ## Non-goals
 
-This document does not request:
+This checklist does not request:
 
-- production environment access;
 - production deployment;
-- production data migration;
-- production DLP policy change;
-- broad tenant administrator access for all makers;
-- anonymous Dataverse table access;
+- production data access;
+- broad tenant admin rights for all makers;
+- anonymous Dataverse access;
 - bypassing Power Pages table permissions;
-- storing client secrets in browser code.
+- secrets in browser code or repository files.
 
-## Official Microsoft references checked
+## Microsoft references
 
-- Create and manage Power Platform environments: <https://learn.microsoft.com/en-us/power-platform/admin/create-environment>
-- Dataverse role-based security roles: <https://learn.microsoft.com/en-us/power-platform/admin/database-security>
-- Power Pages security overview: <https://learn.microsoft.com/en-us/power-pages/security/power-pages-security>
+- Power Platform environments: <https://learn.microsoft.com/en-us/power-platform/admin/create-environment>
+- Dataverse security roles: <https://learn.microsoft.com/en-us/power-platform/admin/database-security>
+- Power Pages security: <https://learn.microsoft.com/en-us/power-pages/security/power-pages-security>
 - Power Pages table permissions: <https://learn.microsoft.com/en-us/power-pages/security/assign-table-permissions>
-- Manage Power Platform data policies: <https://learn.microsoft.com/en-us/power-platform/admin/prevent-data-loss>
+- Power Platform data policies: <https://learn.microsoft.com/en-us/power-platform/admin/prevent-data-loss>
