@@ -6,7 +6,25 @@ Date: 2026-08-13
 
 This artifact explains which CRDB Microsoft ecosystem resources and permissions are required to move from the current TACATDP prototype to a scalable Sustainable Finance MEL Platform.
 
-The current prototype proves the product direction. A scalable platform should remain Microsoft-ecosystem-first because CRDB is already working through Microsoft identities, Power Platform, Dataverse, Power Pages, Power BI, and Power Platform ALM. The enterprise question is therefore not "which alternative stack should replace the prototype?" but "which CRDB Microsoft resources, environments, roles, policies, and ALM controls are required to make this platform scalable and supportable?"
+The current prototype proves the product direction. The scalable platform must leverage CRDB's Microsoft tenant infrastructure because CRDB policy requires the enterprise MEL platform to remain within the approved Microsoft ecosystem for identity, governance, integration, security, operations, and support. The enterprise question is therefore: which CRDB Microsoft resources, environments, roles, policies, and ALM controls are required to make this platform scalable and supportable?
+
+## Up-front CRDB Microsoft tenant asks
+
+Before the platform moves from prototype review to pilot or enterprise delivery, CRDB needs to identify the owners and grant paths for the following Microsoft resources:
+
+| Area | Required CRDB Microsoft resource or decision | Why it is needed |
+|---|---|---|
+| Tenant ownership | Named Microsoft Entra tenant owner, Power Platform administrator, and environment owner | Prevents delivery from depending on a developer laptop, personal PAC profile, or unmanaged preview environment. |
+| Environments | CRDB-owned development, test/UAT, and production Power Platform environments with Dataverse | Keeps development, review, and production data separated while supporting governed release management. |
+| Identity and access | Microsoft Entra groups, Conditional Access/MFA policy, Power Pages site visibility access, portal contacts, external identities, web roles, and Dataverse security roles | Allows controlled access for MEL officers, reviewers, field collectors, administrators, reporting users, and external stakeholders where approved. |
+| Application surface | CRDB-owned Power Pages site and approved Power Apps/admin surfaces in the intended environment | Hosts authenticated portal, field collection, review, and administration experiences under CRDB governance. |
+| Dataverse | Dataverse database, solution publisher, custom tables, relationships, choices, auditing, security roles, teams, and application users | Provides the operational MEL record store for programme configuration, beneficiaries, forms, submissions, indicators, workflow, evidence metadata, and audit. |
+| Web API and portal security | Power Pages Web API site settings, table permissions, page permissions, and CSRF-enabled browser access | Allows the portal to read and write Dataverse records safely through Power Pages security instead of unmanaged credentials. |
+| Workflow and automation | Power Automate/cloud-flow ownership, connection references, service identities/application users, and approved notification mailbox or communication path | Supports assignments, invitations, verification, approvals, reporting projections, notifications, and integration workflows without personal accounts. |
+| Integration | Approved Power Platform connectors, Dataverse APIs, Azure API Management, Logic Apps, Functions, or other Azure integration services inside the CRDB Microsoft tenant | Connects the MEL platform to CRDB systems and external datasets through governed Microsoft integration paths. |
+| Reporting and analytics | Power BI workspace, semantic model ownership, refresh credentials, Fabric workspace/capacity decision, OneLake/Lakehouse/Warehouse path where approved | Supports management reporting, indicator facts, cross-system analysis, and future stakeholder reporting beyond portal demonstration charts. |
+| Evidence and storage | Dataverse file columns, governed SharePoint/OneDrive for Business location, or approved Azure storage inside the Microsoft tenant | Stores photos, files, signatures, generated reports, and evidence metadata with retention and audit controls. |
+| Governance and ALM | Managed Environments, DLP/data policies, solution pipelines/deployment pipelines, environment variables, connection references, release owner, rollback process, and audit monitoring | Makes delivery repeatable, reviewable, supportable, and compliant with CRDB operating controls. |
 
 ## Why this matters
 
@@ -45,12 +63,12 @@ The working assumption for enterprise planning is:
 - Microsoft Entra ID for identity and SSO.
 - Power Platform environments for lifecycle separation.
 - Dataverse as the operational MEL system of record where it fits.
-- Power Pages as the authenticated portal surface unless CRDB later proves it cannot meet production needs.
+- Power Pages as the authenticated portal surface for the current prototype and pilot path; any future UI change must remain inside CRDB's approved Microsoft ecosystem.
 - Power Automate / Dataverse automation for workflow and integration orchestration where suitable.
 - Power BI and Microsoft Fabric for enterprise analytics, semantic models, reporting, and cross-system data integration.
 - Power Platform solutions, managed environments, DLP/data policies, and ALM for governance.
 
-Non-Microsoft infrastructure should be documented only as a risk/contingency or future architecture decision if CRDB enterprise architecture proves a Microsoft service cannot meet a specific requirement.
+The approved platform boundary is the CRDB Microsoft tenant and approved Microsoft services. Research, planning, and implementation should stay inside that boundary.
 
 ## Enterprise MEL architecture layers
 
@@ -94,7 +112,7 @@ Recommended Microsoft-first enterprise infrastructure capabilities:
 | ALM and operations | Power Platform solutions, solution pipelines/deployment pipelines, environment variables, connection references, Azure DevOps/Git where approved | Repeatable delivery, approval gates, rollback, release notes, source control, and operational support. |
 | Observability and support | Power Platform admin center, Power Pages diagnostics, Dataverse auditing, Power BI/Fabric monitoring, Microsoft Purview/Sentinel if CRDB uses them | Usage, health, audit, security monitoring, data lineage, incident response, and compliance reporting. |
 
-The enterprise architecture exercise should therefore produce a Microsoft-resource map first. Only after that should CRDB decide whether any requirement forces a non-Microsoft exception.
+The enterprise architecture exercise should therefore produce a Microsoft-resource and permission map up front so CRDB can confirm ownership, access, integration paths, and support responsibilities before the platform moves beyond prototype delivery.
 
 ## Core enterprise domain model
 
@@ -331,7 +349,7 @@ Why this matters:
 - Portal charts are useful for prototype review, but scalable MEL reporting needs governed datasets, refresh ownership, and audience permissions.
 - Power BI embedding or warehouse integration should be treated as a future product decision, not an assumption in the prototype.
 
-## Minimum CRDB Microsoft resource request
+## Minimum CRDB Microsoft resource request by delivery stage
 
 ### For prototype review
 
@@ -347,7 +365,7 @@ Required:
 Not required:
 
 - Production environment.
-- Production DLP exception.
+- Production DLP policy change.
 - Power BI embedding.
 - Full beneficiary master-data deployment.
 
@@ -391,7 +409,7 @@ Microsoft ecosystem research still needs to confirm:
 - Dataverse fit for operational MEL records, field evidence metadata, workflow, audit, and scale.
 - Fabric/Power BI fit for warehouse, lakehouse, semantic model, indicator facts, and cross-system reporting.
 - Power Automate/Dataverse automation fit for verification, notification, projection refresh, and approval workflows.
-- Whether any Azure service is needed inside the Microsoft estate for API management, integration, secrets, storage, monitoring, or scheduled processing.
+- Which approved Azure services inside the CRDB Microsoft tenant are needed for API management, integration, secrets, storage, monitoring, or scheduled processing.
 
 ## Permission checklist before continuing scalable work
 
