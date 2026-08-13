@@ -30,7 +30,7 @@ The accepted prototype must demonstrate:
 2. A CRDB-branded application shell with route separation.
 3. A TACATDP dashboard using demonstration data and ECharts visualisation.
 4. A beneficiary registry and detail model that previews the future monitored-entity model.
-5. A Power Pages/ODK Web Forms data-collection path backed by Dataverse.
+5. A Power Pages-hosted web forms/XForms data-collection path backed by Dataverse.
 6. Saved submitted-record review and reporting/export pathways.
 7. User/access-management surfaces that explain onboarding and operational access state.
 8. Explicit prototype limitations and future-product direction.
@@ -112,8 +112,8 @@ The accepted prototype must not imply:
 
 ### D. Collection and submission workflow
 
-- [x] Power Pages ODK Web Forms path exists.
-- [x] Full revised TACATDP XLSForm was compiled and seeded through Dataverse file-backed XForm storage.
+- [x] Power Pages-hosted web forms/XForms path exists.
+- [x] Full revised TACATDP form definition was compiled and seeded through Dataverse file-backed XForm storage.
 - [x] Submission header/version write path is implemented through Power Pages `/_api`.
 - [x] Attachment metadata row persistence is implemented.
 - [x] Direct browser binary upload failure is documented and does not block metadata submission.
@@ -173,7 +173,7 @@ The prototype scope is acceptable when:
 - Production-grade binary attachment storage.
 - Power BI embedded dashboards.
 - Production role/security hardening.
-- Self-service XLSForm authoring/publishing UI.
+- Self-service form-definition authoring/publishing UI.
 - Production data warehouse or Fabric/Synapse architecture.
 
 ## Scalable platform governance link
