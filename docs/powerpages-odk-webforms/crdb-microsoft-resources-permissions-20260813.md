@@ -112,7 +112,7 @@ Recommended Microsoft-first enterprise infrastructure capabilities:
 | ALM and operations | Power Platform solutions, solution pipelines/deployment pipelines, environment variables, connection references, Azure DevOps/Git where approved | Repeatable delivery, approval gates, rollback, release notes, source control, and operational support. |
 | Observability and support | Power Platform admin center, Power Pages diagnostics, Dataverse auditing, Power BI/Fabric monitoring, Microsoft Purview/Sentinel if CRDB uses them | Usage, health, audit, security monitoring, data lineage, incident response, and compliance reporting. |
 
-The enterprise architecture exercise should therefore produce a Microsoft-resource and permission map up front so CRDB can confirm ownership, access, integration paths, and support responsibilities before the platform moves beyond prototype delivery.
+The enterprise architecture exercise should therefore produce a Microsoft-resource and permission map up front so CRDB can confirm ownership, access, integration paths, and support responsibilities before the platform moves beyond prototype delivery. A standalone administrator-facing version is available in `crdb-microsoft-environment-permission-map-20260813.md`.
 
 ## Microsoft resource and permission map for environment setup
 
