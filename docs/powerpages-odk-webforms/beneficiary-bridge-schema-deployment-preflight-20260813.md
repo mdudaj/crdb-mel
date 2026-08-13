@@ -207,3 +207,9 @@ After review, either:
 
 1. approve additive schema deployment to CRDB development for the four-table bridge slice; or
 2. revise the schema contract before any environment write.
+
+## Deployment attempt
+
+The first approved deployment attempt is recorded in `docs/powerpages-odk-webforms/beneficiary-bridge-schema-deployment-attempt-20260813.md`.
+
+The attempt was blocked before any Dataverse write because the CRDB Azure CLI profile was not logged in and the device-code login did not complete. PAC remained authenticated for read-only inventory, but the metadata writer requires a Dataverse Web API access token.
