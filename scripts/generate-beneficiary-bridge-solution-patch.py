@@ -80,7 +80,7 @@ RELATIONSHIPS = [
 CHOICES = {
     "mp_entitytype": ["Beneficiary", "Farmer", "Farmer group", "AMCOS", "SACCOS", "Organization", "Facility", "Other"],
     "mp_status": ["Active", "Inactive", "Merged"],
-    "mp_identifiertype": ["Source record", "Customer name", "Phone", "National ID", "Loan reference", "Other"],
+    "mp_identifiertype": ["Source record", "Customer name", "Phone", "National ID", "Loan reference", "Other", "Customer ID"],
     "mp_beneficiarycategory": ["Individual farmer", "Farmer group", "AMCOS", "SACCOS", "Cooperative", "Institution", "Other"],
     "mp_verificationstatus": ["Under review", "Verified", "Incomplete", "Returned", "Inactive"],
     "mp_relationshiptype": ["Baseline submission", "Follow-up submission", "Correction", "Imported record"],

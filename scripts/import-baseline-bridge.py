@@ -33,6 +33,7 @@ CHOICE = {
     "identifier_source_record": 100000000,
     "identifier_phone": 100000002,
     "identifier_other": 100000005,
+    "identifier_customer_id": 100000006,
     "identifier_status_active": 100000000,
     "beneficiary_category_individual_farmer": 100000000,
     "beneficiary_verification_under_review": 100000000,
@@ -135,10 +136,9 @@ def row_payload_summary(row: dict[int, str], headers: list[str], row_number: int
         },
         {
             "type": "customer_id",
-            "choice_label": "Other",
+            "choice_label": "Customer ID",
             "present": bool(customer_id),
             "fingerprint": fingerprint(customer_id),
-            "schema_note": "Current choice set lacks Customer ID; dry-run maps this identifier to Other.",
         },
         {
             "type": "phone",
@@ -323,9 +323,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "policy": "review_only_no_auto_merge",
             "groups": duplicate_groups,
         },
-        "schema_followups": [
-            "Add a dedicated Customer ID option to mp_EntityIdentifier.mp_identifiertype; current dry-run maps Customer ID to Other.",
-        ],
+        "schema_followups": [],
         "sample_payload_shapes": sample_shapes,
         "validation": {
             "missing_required_headers": missing_headers,

@@ -82,17 +82,11 @@ entities during import.
 This means the provisional tracked-entity count is 965, while the final resolved
 beneficiary count may be lower after review.
 
-## Schema follow-up
+## Schema follow-up resolved
 
-`mp_EntityIdentifier.mp_identifiertype` currently lacks a dedicated `Customer ID`
-choice. The dry-run maps Customer ID identifiers to `Other`.
-
-Before live import, either:
-
-1. add a `Customer ID` choice to `mp_identifiertype`; or
-2. explicitly accept `Other` as the Customer ID identifier type for this import.
-
-The preferred fix is to add the dedicated choice before importing data.
+`mp_EntityIdentifier.mp_identifiertype` must include a dedicated `Customer ID`
+choice before live import. The importer expects Customer ID identifiers to use
+that type rather than the generic `Other` value.
 
 ## Safety controls
 
@@ -103,5 +97,5 @@ The preferred fix is to add the dedicated choice before importing data.
 
 ## Next slice
 
-Resolve the `Customer ID` identifier-type choice before live import, then enable
-the importer execution path for Mshirika.
+Enable the importer execution path and run the live Mshirika import after the
+updated schema package is imported and verified.
