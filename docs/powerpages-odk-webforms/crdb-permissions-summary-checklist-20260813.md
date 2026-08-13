@@ -28,7 +28,7 @@ Purpose: simple administrator checklist for enabling smooth development, review,
 | Power Pages contact | Enabled | Contact record for Denis is active. |
 | Power Pages web role | Enabled | Denis has `Platform Administrator Web Role`. |
 | TACATDP assignment | Enabled | Denis has an active form assignment record. |
-| Azure CLI | Not verified locally | `az` is not installed in this shell, so Azure CLI tenant permission could not be checked. |
+| Azure CLI | Installed, login not verified | `az --version` returns Azure CLI `2.89.1`; `az account show` returns `Please run 'az login' to setup account.` |
 | Git/GitHub access | Not verified from tenant | Repository access and CI/CD permissions are outside PAC/Dataverse and must be confirmed separately. |
 
 ## Permissions to enable or confirm
@@ -47,9 +47,10 @@ Purpose: simple administrator checklist for enabling smooth development, review,
   - Provide a CRDB-owned deployment account, service principal, or approved application user.
   - Avoid depending only on personal device-code sessions because Conditional Access and token expiry can interrupt deployments.
 
-- [ ] **Azure CLI availability**
-  - Install and allow Azure CLI on the development/deployment workstation or runner if Azure checks or Azure-backed automation are required.
-  - Current local finding: `az` is not available in this shell.
+- [ ] **Azure CLI tenant login**
+  - Azure CLI is now installed locally.
+  - Confirm Denis or the agreed CRDB development identity can sign in with `az login` and access the required CRDB tenant/subscription scope if Azure checks or Azure-backed automation are required.
+  - Current local finding: `az account show` reports no Azure account is logged in.
 
 - [ ] **PAC CLI / Power Platform access**
   - Keep Denis and the deployment identity able to authenticate to `TACATDP-CRDB-Dev`.
