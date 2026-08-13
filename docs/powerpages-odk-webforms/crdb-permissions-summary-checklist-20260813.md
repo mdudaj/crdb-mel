@@ -1,98 +1,105 @@
-# CRDB permissions summary checklist
+# CRDB environment permissions checklist
 
 Date: 2026-08-13
 
-## Current access status
+Purpose: simple administrator checklist for enabling smooth development, review, and deployment for the CRDB MEL prototype environment.
 
-| Item | Status |
+## Current environment
+
+| Item | Current value |
 |---|---|
-| CRDB environment | `TACATDP-CRDB-Dev` |
+| Environment | `TACATDP-CRDB-Dev` |
 | Environment URL | `https://org5eb0379b.crm4.dynamics.com/` |
 | PAC profile | `tacatdp-crdb` |
-| PAC user | `dmuroba@CRDBBANK.CO.TZ` |
+| Current PAC user | `dmuroba@CRDBBANK.CO.TZ` |
+| Current user display name | Denis Muroba |
 | Power Pages site | `TACATDP Monitoring Tool` |
 | Website ID | `fccc0cc6-7f5e-4885-aeb8-2272e68130a3` |
-| Verification | `pac pages list` now succeeds after Denis device-code login |
 
-Note: PAC authentication succeeded, then PAC crashed once during connection validation with `System.ArgumentOutOfRangeException`, but the profile was saved and subsequent `pac pages list` succeeded.
+## Current verified access for Denis
+
+| Capability | Status | Evidence |
+|---|---|---|
+| PAC authentication | Enabled | `pac auth who` returns Denis in `TACATDP-CRDB-Dev`. |
+| Power Pages site visibility | Enabled | `pac pages list` returns `TACATDP Monitoring Tool`. |
+| Solution visibility | Enabled | `pac solution list` returns CRDB environment solutions including `tacatdp_prototype` and `TACATDPMonitoringTool`. |
+| Dataverse user account | Enabled | Dataverse `systemuser` record is active for `dmuroba@CRDBBANK.CO.TZ`. |
+| Dataverse roles | Enabled | Denis has `Basic User` and `System Administrator`. |
+| Power Pages contact | Enabled | Contact record for Denis is active. |
+| Power Pages web role | Enabled | Denis has `Platform Administrator Web Role`. |
+| TACATDP assignment | Enabled | Denis has an active form assignment record. |
+| Azure CLI | Not verified locally | `az` is not installed in this shell, so Azure CLI tenant permission could not be checked. |
+| Git/GitHub access | Not verified from tenant | Repository access and CI/CD permissions are outside PAC/Dataverse and must be confirmed separately. |
 
 ## Permissions to enable or confirm
 
-- [ ] **Azure CLI access**
-  - Allow Denis/deployment user to sign in to the CRDB tenant from Azure CLI where needed.
-  - Needed for environment/session checks and future automation support.
+- [ ] **Git/GitHub access**
+  - Grant Denis, Hailo, or the agreed CRDB development identity access to the repository: `https://github.com/mdudaj/crdb-mel.git`.
+  - Allow pull, push, branch creation, and pull request review for approved developers.
+  - If CRDB policy disallows this GitHub location, move or mirror the repository under a CRDB-approved GitHub organization or Azure DevOps project.
 
-- [ ] **PAC CLI access**
-  - Keep `dmuroba@CRDBBANK.CO.TZ` or another approved deployment user able to authenticate to `TACATDP-CRDB-Dev`.
-  - Needed for `pac auth who`, `pac pages list`, Power Pages download/upload, and deployment checks.
+- [ ] **Continuous deployment permission**
+  - Approve the deployment route: GitHub Actions, Azure DevOps, or Power Platform pipelines.
+  - Allow the selected runner to use PAC CLI or Power Platform Build Tools.
+  - Allow repository/environment secrets or secure variables for deployment configuration.
 
 - [ ] **Stable deployment identity**
-  - Provide a CRDB-approved service principal, application user, or dedicated deployment account for development deployments.
-  - Needed because personal/device-code login is affected by Conditional Access token expiry.
+  - Provide a CRDB-owned deployment account, service principal, or approved application user.
+  - Avoid depending only on personal device-code sessions because Conditional Access and token expiry can interrupt deployments.
 
-- [ ] **Dataverse environment role**
-  - Assign `System Administrator` to the named CRDB platform owner/admin.
-  - Assign `System Customizer` or maker permission to approved delivery makers if they are expected to configure solutions.
+- [ ] **Azure CLI availability**
+  - Install and allow Azure CLI on the development/deployment workstation or runner if Azure checks or Azure-backed automation are required.
+  - Current local finding: `az` is not available in this shell.
 
-- [ ] **Power Pages site admin**
-  - Give the approved site admin permission to manage the CRDB development Power Pages site.
-  - Needed for site upload, cache purge/restart, site settings, site visibility, web roles, page permissions, table permissions, and Web API settings.
+- [ ] **PAC CLI / Power Platform access**
+  - Keep Denis and the deployment identity able to authenticate to `TACATDP-CRDB-Dev`.
+  - Required for Power Pages listing, upload/download, solution checks, and deployment diagnostics.
 
-- [ ] **Power Pages site visibility**
-  - If the site is private, grant visibility access to Denis, Hailo, SFU reviewers, and delivery testers.
-  - Needed to avoid “sign-in successful but no access” before app roles are evaluated.
+- [ ] **Power Pages site administration**
+  - Keep Denis or the CRDB platform owner as Power Pages site admin.
+  - Required for uploads, cache purge/restart, site settings, page permissions, web roles, table permissions, and Web API settings.
 
-- [ ] **Power Pages Contact and external identity**
-  - Confirm Denis and Hailo have Contact records and external identity records after sign-in.
-  - Needed because Microsoft sign-in alone does not grant portal access.
+- [ ] **Power Pages reviewer access**
+  - Confirm Hailo and SFU reviewers can sign in to the portal and view the prototype.
+  - Ensure each reviewer has the required Contact record, web role, page permissions, and active assignment where applicable.
 
-- [ ] **Power Pages web roles**
-  - Assign Denis and Hailo to `Platform Administrator` or the agreed admin/reviewer role.
-  - Needed for admin routes such as User & Access and full prototype review.
-
-- [ ] **Power Pages page permissions**
-  - Enable page access for dashboard, projects/forms, saved records, beneficiaries, reporting, and user/access routes.
-  - Needed for SFU and admin review.
-
-- [ ] **Power Pages table permissions**
-  - Enable required table permissions for project, form, form version, assignment, submission, reporting, beneficiary, contact/access, and audit tables.
-  - Needed for portal data reads/writes.
-
-- [ ] **Power Pages Web API settings**
-  - Enable Web API site settings for only the required development tables and fields.
-  - Needed because the SPA uses Power Pages `/_api`.
-
-- [ ] **Hailo active assignment**
-  - Confirm Hailo has an active TACATDP form assignment.
-  - Needed because a prior CRDB issue showed Hailo had role access but could not see projects/forms due to assignment lifecycle.
+- [ ] **Power Pages table permissions and Web API settings**
+  - Confirm table permissions and Web API site settings are enabled for the prototype tables used by the SPA.
+  - Required for forms, submissions, beneficiaries, users/access, projects, reports, and dashboard data.
 
 - [ ] **Shared sender mailbox**
-  - Approve/configure a CRDB shared mailbox, for example `noreply@crdbbank.co.tz`.
-  - Requires Global Administrator, Exchange Administrator, or Delegated Mailbox Approver.
-  - Needed for invitations and assignment notifications.
+  - Approve and configure a CRDB mailbox for system messages, for example `noreply@crdbbank.co.tz`.
+  - Requires the appropriate Exchange/Microsoft 365 administrator approval.
+  - Required for invitations, assignment notifications, and workflow messages.
 
-- [ ] **Power Automate owner/connections**
-  - Assign a CRDB-owned flow owner or service account for onboarding, invitations, notifications, and access workflows.
-  - Needed to avoid flows depending on personal user tokens.
+- [ ] **Power Automate ownership and connections**
+  - Assign flows to a CRDB-owned owner or service account.
+  - Avoid personal user tokens for onboarding, notifications, assignment, and access workflows.
 
 - [ ] **DLP connector allowance**
-  - Confirm required development connectors are allowed: Dataverse, Power Pages, Power Automate, Power BI/Fabric, SharePoint/OneDrive, GitHub or Azure DevOps if used, and approved Azure services.
-  - Needed so app, flow, reporting, and CI/CD work are not blocked by policy.
-
-- [ ] **GitHub repository access**
-  - Grant approved CRDB users or deployment identity access to `https://github.com/mdudaj/crdb-mel.git`, or move/fork under a CRDB-approved organization.
-  - Needed for code review and continuous deployment.
-
-- [ ] **GitHub Actions / CI-CD permission**
-  - Allow workflow setup and repository secrets/variables if GitHub Actions will deploy to CRDB development.
-  - Alternative: confirm Azure DevOps or Power Platform pipelines instead.
-
-- [ ] **Power BI/Fabric workspace access**
-  - If SFU needs reporting review now, create or assign a development Power BI/Fabric workspace and viewer access.
+  - Confirm the environment policy allows the connectors needed for development:
+    - Dataverse
+    - Power Pages
+    - Power Automate
+    - Power BI/Fabric, if reporting review is required
+    - SharePoint/OneDrive, if document or export storage is required
+    - GitHub or Azure DevOps, depending on the approved CI/CD route
 
 - [ ] **Managed Power Pages component cleanup authority**
-  - Confirm who can manage/repair managed duplicate Power Pages web-file components.
-  - Needed because CRDB has managed duplicate web files that should not be deleted ad hoc.
+  - Confirm who is allowed to repair or clean managed duplicate Power Pages web-file components.
+  - Do not delete managed components ad hoc.
+
+## Minimum admin action list
+
+For immediate smooth development and SFU review, enable or confirm these first:
+
+1. Git/GitHub or Azure DevOps access for the approved development identity.
+2. CI/CD runner permission and secure variables/secrets storage.
+3. Stable deployment identity for PAC/Power Platform deployments.
+4. Hailo and SFU reviewer portal access.
+5. Shared sender mailbox for invitations and notifications.
+6. Power Automate service ownership.
+7. DLP allowance for the selected Microsoft development and deployment path.
 
 ## Do not share
 
