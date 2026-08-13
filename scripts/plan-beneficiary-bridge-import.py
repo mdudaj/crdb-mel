@@ -204,14 +204,17 @@ def build_import_plan(summary: dict[str, Any], repo_root: Path) -> dict[str, Any
                 "note": "Final count may be lower after approved duplicate review.",
             },
             "mp_EntityIdentifier": {
-                "operation": "create_source_uuid_identifier_and_approved_privacy_identifiers",
-                "expected_rows_minimum": root_rows,
+                "operation": "create_source_uuid_customer_id_and_phone_identifiers",
+                "expected_rows_minimum": root_rows
+                + int(duplicate_identity.get("customer_id_non_empty", 0))
+                + int(duplicate_identity.get("phone_non_empty", 0)),
                 "expected_source_uuid_rows": root_rows,
-                "expected_optional_privacy_identifier_rows": {
+                "expected_approved_identifier_rows": {
                     "customer_id": int(duplicate_identity.get("customer_id_non_empty", 0)),
                     "phone": int(duplicate_identity.get("phone_non_empty", 0)),
                 },
-                "privacy_decision_required_for": ["Customer ID", "Farmer's Phone Number"],
+                "approved_identifier_fields": ["Customer ID", "Farmer's Phone Number"],
+                "note": "Approved for CRDB-controlled environment import. Do not print raw values in logs/reports.",
             },
             "mp_BeneficiaryProfile": {
                 "operation": "create_or_update_imported_profile_projection",
@@ -232,14 +235,11 @@ def build_import_plan(summary: dict[str, Any], repo_root: Path) -> dict[str, Any
         "privacy_findings": {
             "privacy_sensitive_columns_detected": kobo.get("privacy_sensitive_columns_detected", {}),
             "duplicate_identity_candidates": duplicate_identity,
-            "decision_required": [
-                "Customer ID storage: plain, masked, hash-only, or excluded",
-                "Farmer phone storage: plain, masked, hash-only, or excluded",
-            ],
+            "approved_identifier_storage": ["Customer ID", "Farmer's Phone Number"],
+            "remaining_decision": "Duplicate customer/phone candidates must be queued for review, not auto-merged.",
         },
         "blocking_checks_before_live_import": [
             "Confirm target environment has the four beneficiary bridge tables.",
-            "Confirm whether customer IDs and phone numbers may be stored, masked, hashed, or excluded.",
             "Confirm duplicate customer/phone candidates are review-only and not auto-merged.",
             "Confirm the import should create one tracked-entity candidate per Kobo root row before duplicate adjudication.",
             "Confirm the baseline import remains schema/data-only and does not change Power Pages table permissions.",

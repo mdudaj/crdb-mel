@@ -58,9 +58,9 @@ customer IDs, and row payloads.
 | `mp_FormVersion` | Confirm or seed XLSForm version `2608130924`. | 1 |
 | `mp_Submission` | Create or match by Kobo instance/source ID. | 965 |
 | `mp_SubmissionVersion` | Store normalized baseline payload. | 965 |
-| `mp_TrackedEntity` | Create or match one candidate beneficiary identity per root row before duplicate adjudication. | up to 965 |
-| `mp_EntityIdentifier` | Create source UUID identifier rows; customer ID and phone identifiers require privacy decision. | at least 965 |
-| `mp_BeneficiaryProfile` | Create/update current beneficiary profile projection. | up to 965 |
+| `mp_TrackedEntity` | Create one provisional beneficiary identity candidate per root row before duplicate adjudication. Final resolved beneficiary count may be lower after review. | up to 965 |
+| `mp_EntityIdentifier` | Create approved source UUID, Customer ID, and Farmer Phone Number identifier rows. Raw values must not be printed in logs/reports. | at least 2,886 |
+| `mp_BeneficiaryProfile` | Create/update current beneficiary profile projection for provisional/resolved beneficiary identities. | up to 965 |
 | `mp_BeneficiarySubmissionLink` | Create lineage link from beneficiary candidate to submission. | 965 |
 | `mp_BeneficiaryIdentityMatch` | Optional review records for duplicate identity candidates. | 22 |
 
@@ -77,14 +77,18 @@ The previous schema deployment verified the four bridge tables in Mshirika:
 
 Count `0` is expected because schema was deployed before baseline data import.
 
-## Privacy and governance decisions before live import
+## Identity governance before live import
 
-The live import must not proceed until these are confirmed:
+Customer ID and Farmer Phone Number are approved identifiers for this
+CRDB-controlled MEL environment. The platform is hosted in the CRDB/Microsoft
+environment for that reason.
 
-1. Customer ID storage mode: plain, masked, hash-only, or excluded.
-2. Farmer phone storage mode: plain, masked, hash-only, or excluded.
+The live import must still preserve these controls:
+
+1. Customer ID and Farmer Phone Number may be stored as identifiers in Dataverse.
+2. Raw Customer ID and Farmer Phone Number values must not be printed in terminal logs, JSON summaries, markdown reports, commits, or handoff artifacts.
 3. Duplicate customer/phone candidates remain review-only and are not auto-merged.
-4. One tracked-entity candidate per Kobo root row is acceptable before duplicate adjudication.
+4. One provisional tracked-entity candidate per Kobo root row is acceptable before duplicate adjudication.
 5. The baseline import remains schema/data-only and does not change Power Pages table permissions.
 
 ## Commands run
@@ -107,7 +111,7 @@ Build the live baseline import command in no-automerge mode:
 
 - upsert `mp_Submission` and `mp_SubmissionVersion`;
 - create one `mp_TrackedEntity` candidate per root row;
-- create source UUID `mp_EntityIdentifier` rows;
+- create source UUID, Customer ID, and Farmer Phone Number `mp_EntityIdentifier` rows;
 - create `mp_BeneficiaryProfile` projection rows;
 - create `mp_BeneficiarySubmissionLink` lineage rows;
-- keep customer ID and phone identifiers disabled until the privacy storage mode is confirmed.
+- queue duplicate customer/phone candidates for review without auto-merging them.
