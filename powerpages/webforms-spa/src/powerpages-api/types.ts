@@ -66,6 +66,13 @@ export interface BaselineBridgeImportResult {
   messages: string[];
 }
 
+export interface BaselineImportDiagnosticStep {
+  name: string;
+  operation: string;
+  status: 'passed' | 'failed';
+  detail: string;
+}
+
 export interface FormAssignmentRow {
   mp_formassignmentid: string;
   mp_assignmentkey: string;

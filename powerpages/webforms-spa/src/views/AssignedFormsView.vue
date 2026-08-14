@@ -40,6 +40,7 @@ import type {
   AccessWriteCommand,
   AccessWritePreview,
   BaselineBridgeImportAsset,
+  BaselineImportDiagnosticStep,
   BaselineBridgeImportMode,
   BaselineBridgeImportProgress,
   BaselineBridgeImportResult,
@@ -230,6 +231,9 @@ const baselineImportError = ref('');
 const baselineImportMessage = ref('');
 const baselineImportProgress = ref<BaselineBridgeImportProgress | null>(null);
 const baselineImportResult = ref<BaselineBridgeImportResult | null>(null);
+const baselineDiagnosticRunning = ref(false);
+const baselineDiagnosticResults = ref<BaselineImportDiagnosticStep[]>([]);
+const baselineDiagnosticError = ref('');
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -1325,6 +1329,19 @@ async function runBaselineImport(limit?: number) {
     baselineImportError.value = sanitizeBaselineImportError(caught);
   } finally {
     baselineImportRunning.value = false;
+  }
+}
+
+async function runBaselineTrackedEntityDiagnostics() {
+  baselineDiagnosticRunning.value = true;
+  baselineDiagnosticError.value = '';
+  baselineDiagnosticResults.value = [];
+  try {
+    baselineDiagnosticResults.value = await api.runBaselineTrackedEntityDiagnostics('TACATDP');
+  } catch (caught) {
+    baselineDiagnosticError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineDiagnosticRunning.value = false;
   }
 }
 
@@ -3945,6 +3962,41 @@ onUnmounted(() => {
               <Database class="action-icon" aria-hidden="true" />
               Run full import
             </button>
+          </div>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-diagnostics-title">
+          <div>
+            <p class="eyebrow">Diagnostics</p>
+            <h2 id="baseline-import-diagnostics-title">Tracked entity Web API checks</h2>
+            <p>Use this only when the import fails at mp_TrackedEntity. It checks project lookup, tracked-entity reads, FetchXML, and two synthetic create variants.</p>
+          </div>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineDiagnosticRunning || baselineImportRunning" @click="runBaselineTrackedEntityDiagnostics">
+              <Activity class="action-icon" aria-hidden="true" />
+              Run tracked-entity diagnostics
+            </button>
+          </div>
+          <p v-if="baselineDiagnosticError" class="status-banner status-banner--error" aria-live="polite">{{ baselineDiagnosticError }}</p>
+          <div v-if="baselineDiagnosticResults.length" class="responsive-table material-table" role="region" aria-label="Tracked entity diagnostics" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Check</th>
+                  <th scope="col">Operation</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="step in baselineDiagnosticResults" :key="`${step.name}-${step.operation}`">
+                  <td>{{ step.name }}</td>
+                  <td><code>{{ step.operation }}</code></td>
+                  <td><span class="state-chip" :class="step.status === 'passed' ? 'state-chip--success' : 'state-chip--error'">{{ step.status }}</span></td>
+                  <td>{{ step.detail }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 

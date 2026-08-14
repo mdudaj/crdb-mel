@@ -2,6 +2,7 @@ import type {
   AccessAuthorizationDecision,
   AccessAuditPreviewPayload,
   BaselineBridgeImportAsset,
+  BaselineImportDiagnosticStep,
   BaselineBridgeImportOptions,
   BaselineBridgeImportResult,
   AccessWriteAction,
@@ -451,6 +452,93 @@ export class PowerPagesApiClient {
     });
     result.messages.push(`${mode === 'append' ? 'Appended' : 'Replaced matching'} ${result.rowsProcessed} rows through Power Pages Web API.`);
     return result;
+  }
+
+  async runBaselineTrackedEntityDiagnostics(projectCode = 'TACATDP'): Promise<BaselineImportDiagnosticStep[]> {
+    const steps: BaselineImportDiagnosticStep[] = [];
+    const run = async (name: string, operation: string, action: () => Promise<string>): Promise<void> => {
+      try {
+        const detail = await action();
+        steps.push({ name, operation, status: 'passed', detail });
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : 'Unknown diagnostic failure.';
+        steps.push({ name, operation, status: 'failed', detail: this.sanitizeBaselineImportDiagnostic(message) });
+      }
+    };
+
+    let projectId = '';
+    await run('Project lookup', 'GET /_api/mp_projects', async () => {
+      projectId = await this.requireProjectId(projectCode);
+      return `Resolved project ${projectCode} to ${projectId}.`;
+    });
+
+    await run('Tracked entity read without id', 'GET /_api/mp_trackedentities?$select=mp_entitykey', async () => {
+      const result = await this.get<DataverseCollection<{ mp_entitykey?: string }>>(
+        '/_api/mp_trackedentities?$select=mp_entitykey&$top=1',
+      );
+      return `Read succeeded; returned ${result.value.length} row(s).`;
+    });
+
+    await run('Tracked entity read with id', 'GET /_api/mp_trackedentities?$select=mp_trackedentityid,mp_entitykey', async () => {
+      const result = await this.get<DataverseCollection<{ mp_trackedentityid?: string }>>(
+        '/_api/mp_trackedentities?$select=mp_trackedentityid,mp_entitykey&$top=1',
+      );
+      return `Read with primary id succeeded; returned ${result.value.length} row(s).`;
+    });
+
+    await run('Tracked entity FetchXML lookup', 'GET /_api/mp_trackedentities?fetchXml=...', async () => {
+      const result = await this.findOneByFetchXml<{ mp_trackedentityid?: string }>(
+        '/_api/mp_trackedentities',
+        'mp_trackedentity',
+        ['mp_trackedentityid', 'mp_entitykey'],
+        [['mp_entitytype', 'eq', TRACKED_ENTITY_TYPE_BENEFICIARY]],
+      );
+      return `FetchXML lookup succeeded; matched ${result?.mp_trackedentityid ? 'one row' : 'no rows'}.`;
+    });
+
+    if (!projectId) {
+      steps.push({
+        name: 'Tracked entity create with generated navigation name',
+        operation: 'POST /_api/mp_trackedentities',
+        status: 'failed',
+        detail: 'Skipped because project lookup failed.',
+      });
+      steps.push({
+        name: 'Tracked entity create with lookup-column navigation name',
+        operation: 'POST /_api/mp_trackedentities',
+        status: 'failed',
+        detail: 'Skipped because project lookup failed.',
+      });
+      return steps;
+    }
+
+    const timestamp = Date.now();
+    const createBasePayload = {
+      mp_entitytype: TRACKED_ENTITY_TYPE_BENEFICIARY,
+      mp_status: TRACKED_ENTITY_STATUS_ACTIVE,
+    };
+
+    await run('Tracked entity create with generated navigation name', 'POST /_api/mp_trackedentities using mp_Project@odata.bind', async () => {
+      const id = await this.createRecord('/_api/mp_trackedentities', {
+        ...createBasePayload,
+        mp_entitykey: `diagnostic:generated:${timestamp}`,
+        mp_displayname: 'Diagnostic tracked entity generated bind',
+        'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+      });
+      return `Create succeeded with generated navigation property; id ${id}.`;
+    });
+
+    await run('Tracked entity create with lookup-column navigation name', 'POST /_api/mp_trackedentities using mp_project@odata.bind', async () => {
+      const id = await this.createRecord('/_api/mp_trackedentities', {
+        ...createBasePayload,
+        mp_entitykey: `diagnostic:lookup:${timestamp}`,
+        mp_displayname: 'Diagnostic tracked entity lookup-column bind',
+        'mp_project@odata.bind': `/mp_projects(${projectId})`,
+      });
+      return `Create succeeded with lookup-column navigation property; id ${id}.`;
+    });
+
+    return steps;
   }
 
   async seedLatestTacatdpXForm(xml: string): Promise<string> {
