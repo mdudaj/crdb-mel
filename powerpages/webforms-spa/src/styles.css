@@ -53,19 +53,96 @@
 }
 
 .baseline-import-file-picker {
+  position: relative;
   display: grid;
-  gap: var(--mt-space-2);
-  color: var(--mt-color-text-muted);
-  font-size: 0.88rem;
-}
-
-.baseline-import-file-picker input {
-  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mt-space-3);
+  align-items: center;
+  min-height: 72px;
   padding: var(--mt-space-3);
   border: 1px solid var(--mt-color-border);
   border-radius: var(--mt-radius-md);
   background: var(--mt-color-surface);
+  box-shadow: var(--mt-shadow-card);
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.baseline-import-file-picker:hover,
+.baseline-import-file-picker:focus-within {
+  border-color: var(--mt-color-primary);
+  background: var(--mt-color-primary-soft);
+  box-shadow: var(--mt-focus-ring);
+}
+
+.baseline-import-file-picker input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.baseline-import-file-picker--disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.baseline-import-file-picker--disabled input {
+  cursor: not-allowed;
+}
+
+.baseline-import-file-picker__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--mt-color-primary-soft);
+  color: var(--mt-color-primary-strong);
+}
+
+.baseline-import-file-picker__body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.baseline-import-file-picker__body strong {
   color: var(--mt-color-text);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.baseline-import-file-picker__body small {
+  color: var(--mt-color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.baseline-import-file-picker__action,
+.baseline-import-selected-file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: 999px;
+  background: var(--mt-color-surface-muted);
+  color: var(--mt-color-primary-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.baseline-import-selected-file {
+  justify-self: end;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .baseline-import-actions {
