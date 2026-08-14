@@ -480,13 +480,15 @@ export class PowerPagesApiClient {
       mp_webformsenabled: true,
       mp_lifecyclestatus: FORM_VERSION_LIFECYCLE_PUBLISHED,
       mp_publishedat: new Date().toISOString(),
-      'mp_Form@odata.bind': `/mp_forms(${form.mp_formid})`,
     };
     if (existing?.mp_formversionid) {
       await this.send(`/_api/mp_formversions(${encodeURIComponent(existing.mp_formversionid)})`, { method: 'PATCH', body: payload });
       return existing.mp_formversionid;
     }
-    return this.createRecord('/_api/mp_formversions', payload);
+    return this.createRecord('/_api/mp_formversions', {
+      ...payload,
+      'mp_Form@odata.bind': `/mp_forms(${form.mp_formid})`,
+    });
   }
 
   async getNotificationDeliverySetting(): Promise<NotificationDeliverySetting> {
