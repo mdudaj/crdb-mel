@@ -2272,10 +2272,15 @@ export class PowerPagesApiClient {
     let existing: { mp_trackedentityid: string } | null = null;
     let lookupFailure: string | null = null;
     try {
-      existing = await this.findOne<{ mp_trackedentityid: string }>(
+      existing = await this.findOneByFetchXml<{ mp_trackedentityid: string }>(
         '/_api/mp_trackedentities',
-        'mp_trackedentityid,mp_entitykey',
-        `mp_entitytype eq ${TRACKED_ENTITY_TYPE_BENEFICIARY} and mp_entitykey eq '${this.escapeODataString(row.sourceKey)}'`,
+        'mp_trackedentity',
+        ['mp_trackedentityid', 'mp_entitykey'],
+        [
+          ['mp_project', 'eq', projectId],
+          ['mp_entitytype', 'eq', TRACKED_ENTITY_TYPE_BENEFICIARY],
+          ['mp_entitykey', 'eq', row.sourceKey],
+        ],
       );
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unknown lookup error.';
@@ -2287,7 +2292,7 @@ export class PowerPagesApiClient {
       mp_entitykey: row.sourceKey,
       mp_displayname: row.customerName || `Beneficiary ${row.rowNumber}`,
       mp_status: TRACKED_ENTITY_STATUS_ACTIVE,
-      'mp_project@odata.bind': `/mp_projects(${projectId})`,
+      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
     };
     try {
       if (existing?.mp_trackedentityid) {
@@ -2386,6 +2391,33 @@ export class PowerPagesApiClient {
       `${entitySetPath}?$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}&$top=1`,
     );
     return result.value[0] ?? null;
+  }
+
+  private async findOneByFetchXml<T>(
+    entitySetPath: string,
+    entityLogicalName: string,
+    attributes: string[],
+    conditions: Array<[string, string, string | number]>,
+  ): Promise<T | null> {
+    const attributeXml = attributes.map((attribute) => `<attribute name="${this.escapeXmlAttribute(attribute)}" />`).join('');
+    const conditionXml = conditions
+      .map(([attribute, operator, value]) => (
+        `<condition attribute="${this.escapeXmlAttribute(attribute)}" operator="${this.escapeXmlAttribute(operator)}" value="${this.escapeXmlAttribute(String(value))}" />`
+      ))
+      .join('');
+    const fetchXml = `<fetch top="1"><entity name="${this.escapeXmlAttribute(entityLogicalName)}">${attributeXml}<filter>${conditionXml}</filter></entity></fetch>`;
+    const result = await this.get<DataverseCollection<T>>(
+      `${entitySetPath}?fetchXml=${encodeURIComponent(fetchXml)}`,
+    );
+    return result.value[0] ?? null;
+  }
+
+  private escapeXmlAttribute(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   private bumpImportCount(result: BaselineBridgeImportResult, key: string): void {
