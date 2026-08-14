@@ -3122,13 +3122,19 @@ onUnmounted(() => {
 
       <section class="project-form-workspace" aria-label="Project data workspace">
         <article class="project-command-card" aria-label="Selected project">
-          <button class="collect-action" type="button" :disabled="!primaryAssignment" aria-label="Collect" @click="openRunner(primaryAssignment)">
-            <NotepadText class="action-icon" aria-hidden="true" />
-            Collect
-          </button>
           <div class="project-command-card__copy">
             <h2>{{ selectedProject?.name }}</h2>
             <p>{{ online ? 'Online' : 'Offline' }} · {{ selectedProjectAssignments.length }} form{{ selectedProjectAssignments.length === 1 ? '' : 's' }} · {{ savedCount }} submitted</p>
+          </div>
+          <div class="project-command-card__actions" aria-label="Project actions">
+            <button class="collect-action" type="button" :disabled="!primaryAssignment" aria-label="Collect" @click="openRunner(primaryAssignment)">
+              <NotepadText class="action-icon" aria-hidden="true" />
+              Collect
+            </button>
+            <button v-if="canManageAccess" class="collect-action collect-action--secondary" type="button" aria-label="Import baseline" @click="openBaselineImport">
+              <Database class="action-icon" aria-hidden="true" />
+              Import baseline
+            </button>
           </div>
         </article>
 
@@ -3837,7 +3843,7 @@ onUnmounted(() => {
         <header class="admin-section-header admin-section-header--compact">
           <div>
             <p class="eyebrow">TACATDP baseline import</p>
-            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. The JSON file stays local and is not deployed as a web file.</p>
+            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. Imports append to the existing project dataset by upserting matching baseline records; the JSON file stays local and is not deployed as a web file.</p>
           </div>
           <div class="access-authorization-card" role="status" aria-label="Baseline import authorisation">
             <span>Authorised role</span>
@@ -3897,7 +3903,7 @@ onUnmounted(() => {
           <div>
             <p class="eyebrow">Step 3</p>
             <h2 id="baseline-import-run-title">Run controlled import</h2>
-            <p>Run the 5-row smoke test first. If it succeeds, run the full import. Re-running is idempotent: existing rows are updated rather than duplicated.</p>
+            <p>Run the 5-row smoke test first. If it succeeds, run the full import. The import appends new baseline records and updates matching existing rows instead of replacing the project dataset.</p>
           </div>
           <div class="baseline-import-actions">
             <button class="icon-action icon-action--secondary" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport(5)">

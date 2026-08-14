@@ -2017,9 +2017,16 @@ body {
   line-height: 1.45;
 }
 
-.collect-action {
+.project-command-card__actions {
   grid-column: 2;
   grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mt-space-2);
+}
+
+.collect-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2035,10 +2042,22 @@ body {
   cursor: pointer;
 }
 
+.collect-action--secondary {
+  border-color: var(--mt-color-border);
+  background: var(--mt-color-surface);
+  color: var(--mt-color-primary-strong);
+}
+
 .collect-action:hover,
 .collect-action:focus-visible {
   box-shadow: var(--mt-focus-ring);
   outline: none;
+}
+
+.collect-action--secondary:hover,
+.collect-action--secondary:focus-visible {
+  border-color: var(--mt-color-primary);
+  background: var(--mt-color-primary-soft);
 }
 
 .collect-action:disabled {
@@ -4583,6 +4602,7 @@ body {
   .active-assignment-panel,
   .active-assignment-actions,
   .project-command-card,
+  .project-command-card__actions,
   .project-list-header,
   .project-card__header,
   .reporting-list-header,
