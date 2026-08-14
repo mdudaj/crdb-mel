@@ -1,0 +1,4 @@
+id: d195e28e-2383-5235-b0d5-a024a54d303e
+name: Webapi/mp_beneficiarysubmissionlink/fields
+source: 0
+value: mp_linkkey,mp_trackedentity,mp_submission,mp_relationshiptype,mp_completeness,mp_reviewstatus

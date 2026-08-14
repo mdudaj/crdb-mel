@@ -39,6 +39,9 @@ import type {
   AccessUserSummary,
   AccessWriteCommand,
   AccessWritePreview,
+  BaselineBridgeImportAsset,
+  BaselineBridgeImportProgress,
+  BaselineBridgeImportResult,
   ExportSettingRow,
   FormAssignmentSummary,
   MailboxReadinessStatus,
@@ -53,11 +56,11 @@ import type {
 } from '../powerpages-api/types';
 import { measureAsync } from '../performance';
 
-type AppView = 'dashboard' | 'workspace' | 'projects' | 'beneficiaries' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
+type AppView = 'dashboard' | 'workspace' | 'projects' | 'beneficiaries' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'baseline-import' | 'roadmap';
 type FormSection = 'summary' | 'data' | 'exports' | 'powerbi';
 type AccessSection = 'users' | 'add' | 'roles' | 'activity' | 'configuration';
 type AccessChangeAction = 'email' | 'role' | 'suspend' | 'reactivate';
-type RouteIntent = 'dashboard' | 'projects' | 'beneficiaries' | 'reporting' | 'access' | 'system-activity';
+type RouteIntent = 'dashboard' | 'projects' | 'beneficiaries' | 'reporting' | 'access' | 'system-activity' | 'baseline-import';
 type SystemActivitySection = 'health' | 'events' | 'onboarding' | 'submissions' | 'integrations';
 
 interface AccessActivityEvent {
@@ -213,6 +216,18 @@ const notificationSaving = ref(false);
 const notificationMessage = ref('');
 const notificationError = ref('');
 const activeSystemActivitySection = ref<SystemActivitySection>('health');
+const baselineImportAsset = ref<BaselineBridgeImportAsset | null>(null);
+const baselineXFormFileName = ref('');
+const baselineXFormLoading = ref(false);
+const baselineXFormMessage = ref('');
+const baselineXFormError = ref('');
+const baselineImportFileName = ref('');
+const baselineImportLoading = ref(false);
+const baselineImportRunning = ref(false);
+const baselineImportError = ref('');
+const baselineImportMessage = ref('');
+const baselineImportProgress = ref<BaselineBridgeImportProgress | null>(null);
+const baselineImportResult = ref<BaselineBridgeImportResult | null>(null);
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -644,6 +659,7 @@ const shellPageTitle = computed(() => {
   if (activeView.value === 'beneficiaries') return 'Beneficiaries';
   if (activeView.value === 'access') return 'User & Access';
   if (activeView.value === 'system-activity') return 'System Activity';
+  if (activeView.value === 'baseline-import') return 'Baseline Import';
   if (activeView.value === 'reporting') return 'Reporting';
   if (activeView.value === 'roadmap') return selectedRoadmapModule.value;
   if (activeView.value === 'runner') return selectedAssignment.value?.formName || 'Form';
@@ -651,7 +667,7 @@ const shellPageTitle = computed(() => {
   return 'Projects';
 });
 const shellPageEyebrow = computed(() => {
-  if (activeView.value === 'access' || activeView.value === 'system-activity') return 'Administration';
+  if (activeView.value === 'access' || activeView.value === 'system-activity' || activeView.value === 'baseline-import') return 'Administration';
   if (activeView.value === 'reporting' || activeView.value === 'roadmap' || activeView.value === 'beneficiaries') return 'MEL platform';
   if (activeView.value === 'records') return 'Project';
   if (activeView.value === 'runner') return runnerTitle.value;
@@ -1212,6 +1228,14 @@ async function openSystemActivity() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function openBaselineImport() {
+  accessRouteDenied.value = !canManageAccess.value;
+  activeView.value = 'baseline-import';
+  mobileNavOpen.value = false;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/baseline-import`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function openRoadmapModule(moduleName: string) {
   selectedRoadmapModule.value = moduleName;
   activeView.value = 'roadmap';
@@ -1223,10 +1247,100 @@ function setSystemActivitySection(section: SystemActivitySection) {
   activeSystemActivitySection.value = section;
 }
 
+async function handleBaselineXFormFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  baselineXFormFileName.value = file?.name ?? '';
+  baselineXFormMessage.value = '';
+  baselineXFormError.value = '';
+  if (!file) {
+    return;
+  }
+
+  baselineXFormLoading.value = true;
+  try {
+    const formVersionId = await api.seedLatestTacatdpXForm(await file.text());
+    baselineXFormMessage.value = `Form version 2608130924 is ready in Dataverse (${formVersionId}).`;
+  } catch (caught) {
+    baselineXFormError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineXFormLoading.value = false;
+  }
+}
+
+async function handleBaselineImportFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportResult.value = null;
+  baselineImportProgress.value = null;
+  baselineImportAsset.value = null;
+  baselineImportFileName.value = file?.name ?? '';
+  if (!file) {
+    return;
+  }
+
+  baselineImportLoading.value = true;
+  try {
+    const parsed = JSON.parse(await file.text()) as BaselineBridgeImportAsset;
+    const validation = await api.importBaselineBridgeAsset(parsed, { dryRun: true });
+    baselineImportAsset.value = parsed;
+    baselineImportResult.value = validation;
+    baselineImportMessage.value = `Validated ${validation.totalRows.toLocaleString()} baseline rows.`;
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineImportLoading.value = false;
+  }
+}
+
+async function runBaselineImport(limit?: number) {
+  if (!baselineImportAsset.value) {
+    baselineImportError.value = 'Select the generated baseline bridge JSON file first.';
+    return;
+  }
+  baselineImportRunning.value = true;
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportProgress.value = {
+    processedRows: 0,
+    totalRows: Math.min(limit ?? baselineImportAsset.value.rows.length, baselineImportAsset.value.rows.length),
+    message: 'Starting baseline import',
+  };
+  try {
+    const result = await api.importBaselineBridgeAsset(baselineImportAsset.value, {
+      limit,
+      onProgress(progress) {
+        baselineImportProgress.value = progress;
+      },
+    });
+    baselineImportResult.value = result;
+    baselineImportMessage.value = `Imported ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} through Power Pages Web API.`;
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineImportRunning.value = false;
+  }
+}
+
+function sanitizeBaselineImportError(caught: unknown): string {
+  const message = caught instanceof Error ? caught.message : 'Baseline import failed.';
+  return message
+    .replace(/mp_identifiervalue eq '[^']*'/g, "mp_identifiervalue eq '<redacted>'")
+    .replace(/mp_instanceid eq '[^']*'/g, "mp_instanceid eq '<redacted>'")
+    .replace(/mp_entitykey eq '[^']*'/g, "mp_entitykey eq '<redacted>'")
+    .replace(/mp_linkkey eq '[^']*'/g, "mp_linkkey eq '<redacted>'")
+    .slice(0, 900);
+}
+
 function routeIntentFromHash(): RouteIntent | null {
   const route = window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
   if (route === 'system-activity' || route === 'activity') {
     return 'system-activity';
+  }
+  if (route === 'baseline-import') {
+    return 'baseline-import';
   }
   if (route === 'beneficiaries') {
     return 'beneficiaries';
@@ -1240,6 +1354,10 @@ function routeIntentFromHash(): RouteIntent | null {
 async function applyRouteIntent(intent: RouteIntent | null) {
   if (intent === 'system-activity') {
     await openSystemActivity();
+    return;
+  }
+  if (intent === 'baseline-import') {
+    openBaselineImport();
     return;
   }
   if (intent === 'access') {
@@ -2512,6 +2630,18 @@ onUnmounted(() => {
           <button
             v-if="canManageAccess"
             class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'baseline-import' }"
+            type="button"
+            aria-label="Baseline Import"
+            @click="openBaselineImport"
+          >
+            <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Baseline Import</span>
+            <span class="action-tooltip" role="tooltip">Baseline Import</span>
+          </button>
+          <button
+            v-if="canManageAccess"
+            class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'access' }"
             type="button"
             aria-label="User and Access"
@@ -3692,6 +3822,134 @@ onUnmounted(() => {
               </div>
             </article>
           </section>
+        </section>
+      </section>
+    </template>
+
+    <template v-else-if="activeView === 'baseline-import'">
+      <section v-if="!canManageAccess" class="empty-state" aria-label="Baseline Import denied">
+        <ShieldCheck class="guidance-icon" aria-hidden="true" />
+        <h2>You do not have access to Baseline Import</h2>
+        <p>This temporary import route is available only to users with an approved Platform Administrator web role.</p>
+      </section>
+
+      <section v-else class="baseline-import-workspace" aria-label="Baseline Import workspace">
+        <header class="admin-section-header admin-section-header--compact">
+          <div>
+            <p class="eyebrow">TACATDP baseline import</p>
+            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. The JSON file stays local and is not deployed as a web file.</p>
+          </div>
+          <div class="access-authorization-card" role="status" aria-label="Baseline import authorisation">
+            <span>Authorised role</span>
+            <strong>{{ matchedAccessRoleLabel }}</strong>
+            <small>Power Pages Web API</small>
+          </div>
+        </header>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-xform-file-title">
+          <div>
+            <p class="eyebrow">Step 1</p>
+            <h2 id="baseline-xform-file-title">Seed latest form version</h2>
+            <p>Select the compiled XForm XML for version 2608130924. This prepares the Dataverse form-version row that baseline submissions reference.</p>
+          </div>
+          <label class="baseline-import-file-picker">
+            <span>Compiled XForm XML</span>
+            <input type="file" accept="application/xml,text/xml,.xml" :disabled="baselineXFormLoading || baselineImportRunning" @change="handleBaselineXFormFileChange" />
+          </label>
+          <p v-if="baselineXFormFileName" class="workflow-helper">Selected: {{ baselineXFormFileName }}</p>
+          <p v-if="baselineXFormMessage" class="status-banner status-banner--success" aria-live="polite">{{ baselineXFormMessage }}</p>
+          <p v-if="baselineXFormError" class="status-banner status-banner--error" aria-live="polite">{{ baselineXFormError }}</p>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-file-title">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2 id="baseline-import-file-title">Select generated import asset</h2>
+            <p>Use the local file generated by `scripts/import-baseline-bridge.py --mode package-asset`. Do not upload the source Kobo workbook here.</p>
+          </div>
+          <label class="baseline-import-file-picker">
+            <span>Baseline bridge JSON</span>
+            <input type="file" accept="application/json,.json" :disabled="baselineImportLoading || baselineImportRunning" @change="handleBaselineImportFileChange" />
+          </label>
+          <p v-if="baselineImportFileName" class="workflow-helper">Selected: {{ baselineImportFileName }}</p>
+        </section>
+
+        <section class="access-metric-strip" aria-label="Baseline import summary">
+          <article class="metric-card metric-card--accent">
+            <span class="metric-value">{{ baselineImportAsset?.rows.length?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Rows in file</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.customerIdIdentifiers?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Customer IDs</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.phoneIdentifiers?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Phones</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.duplicateReviewGroups?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Review groups</span>
+          </article>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-run-title">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2 id="baseline-import-run-title">Run controlled import</h2>
+            <p>Run the 5-row smoke test first. If it succeeds, run the full import. Re-running is idempotent: existing rows are updated rather than duplicated.</p>
+          </div>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport(5)">
+              <Check class="action-icon" aria-hidden="true" />
+              Run 5-row smoke
+            </button>
+            <button class="icon-action" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport()">
+              <Database class="action-icon" aria-hidden="true" />
+              Run full import
+            </button>
+          </div>
+        </section>
+
+        <section v-if="baselineImportProgress" class="material-surface baseline-import-progress" aria-live="polite">
+          <strong>{{ baselineImportProgress.message }}</strong>
+          <progress :value="baselineImportProgress.processedRows" :max="baselineImportProgress.totalRows"></progress>
+          <span>{{ baselineImportProgress.processedRows.toLocaleString() }} / {{ baselineImportProgress.totalRows.toLocaleString() }}</span>
+        </section>
+
+        <section v-if="baselineImportMessage" class="status-banner status-banner--success" aria-live="polite">
+          {{ baselineImportMessage }}
+        </section>
+        <section v-if="baselineImportError" class="status-banner status-banner--error" aria-live="polite">
+          {{ baselineImportError }}
+        </section>
+
+        <section v-if="baselineImportResult" class="material-surface baseline-import-result" aria-labelledby="baseline-import-result-title">
+          <h2 id="baseline-import-result-title">Import result</h2>
+          <dl>
+            <div>
+              <dt>Status</dt>
+              <dd>{{ baselineImportResult.status }}</dd>
+            </div>
+            <div>
+              <dt>Rows processed</dt>
+              <dd>{{ baselineImportResult.rowsProcessed.toLocaleString() }}</dd>
+            </div>
+            <div>
+              <dt>Total rows</dt>
+              <dd>{{ baselineImportResult.totalRows.toLocaleString() }}</dd>
+            </div>
+            <div>
+              <dt>Duplicate review</dt>
+              <dd>{{ baselineImportResult.duplicateReviewGroups.toLocaleString() }} groups / {{ baselineImportResult.duplicateReviewRows.toLocaleString() }} rows</dd>
+            </div>
+          </dl>
+          <div class="baseline-import-counts" aria-label="Rows written by Dataverse table">
+            <article v-for="(count, table) in baselineImportResult.counts" :key="table">
+              <strong>{{ count.toLocaleString() }}</strong>
+              <span>{{ table }}</span>
+            </article>
+          </div>
         </section>
       </section>
     </template>

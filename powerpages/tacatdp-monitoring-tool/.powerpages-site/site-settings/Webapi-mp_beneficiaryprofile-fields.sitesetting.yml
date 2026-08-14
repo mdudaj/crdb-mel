@@ -1,0 +1,4 @@
+id: 67a065d4-f3b4-5cf8-9c0a-7c7721f52b87
+name: Webapi/mp_beneficiaryprofile/fields
+source: 0
+value: mp_name,mp_trackedentity,mp_project,mp_beneficiarycategory,mp_region,mp_district,mp_verificationstatus,mp_datasource,mp_lastupdatedat

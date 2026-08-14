@@ -3,6 +3,65 @@ export interface DataverseCollection<T> {
   '@odata.count'?: number;
 }
 
+export interface BaselineBridgeImportAsset {
+  assetType: 'tacatdp-baseline-bridge-import';
+  projectCode: string;
+  formId: string;
+  formVersion: string;
+  counts?: {
+    rows?: number;
+    sourceUuidIdentifiers?: number;
+    customerIdIdentifiers?: number;
+    phoneIdentifiers?: number;
+    duplicateReviewGroups?: number;
+    duplicateReviewRows?: number;
+  };
+  duplicatePolicy?: string;
+  rows: BaselineBridgeImportRow[];
+}
+
+export interface BaselineBridgeImportRow {
+  rowNumber: number;
+  uuid?: string;
+  customerId?: string;
+  customerName?: string;
+  phone?: string;
+  region?: string;
+  district?: string;
+  startedAt?: string | null;
+  submittedAt?: string | null;
+  sourceKey: string;
+  instanceId: string;
+  versionKey: string;
+  linkKey: string;
+  submissionJson: string;
+  xformXml: string;
+}
+
+export interface BaselineBridgeImportOptions {
+  limit?: number;
+  dryRun?: boolean;
+  onProgress?: (progress: BaselineBridgeImportProgress) => void;
+}
+
+export interface BaselineBridgeImportProgress {
+  processedRows: number;
+  totalRows: number;
+  currentRowNumber?: number;
+  message: string;
+}
+
+export interface BaselineBridgeImportResult {
+  status: 'validated' | 'executed';
+  rowsProcessed: number;
+  totalRows: number;
+  limit?: number;
+  counts: Record<string, number>;
+  duplicateReviewGroups: number;
+  duplicateReviewRows: number;
+  messages: string[];
+}
+
 export interface FormAssignmentRow {
   mp_formassignmentid: string;
   mp_assignmentkey: string;

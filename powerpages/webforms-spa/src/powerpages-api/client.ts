@@ -1,6 +1,9 @@
 import type {
   AccessAuthorizationDecision,
   AccessAuditPreviewPayload,
+  BaselineBridgeImportAsset,
+  BaselineBridgeImportOptions,
+  BaselineBridgeImportResult,
   AccessWriteAction,
   AccessWriteCommand,
   AccessWritePreview,
@@ -57,6 +60,17 @@ const XFORM_FILE_MARKER_PREFIX = 'dataverse-file:';
 const XFORM_CACHE_PREFIX = 'tacatdp.xformXml.v1';
 const SUBMISSION_LIFECYCLE_SUBMITTED = 100000001;
 const SUBMISSION_REVIEW_RECEIVED = 100000000;
+const FORM_VERSION_LIFECYCLE_PUBLISHED = 100000001;
+const TRACKED_ENTITY_TYPE_BENEFICIARY = 100000000;
+const TRACKED_ENTITY_STATUS_ACTIVE = 100000000;
+const IDENTIFIER_SOURCE_RECORD = 100000000;
+const IDENTIFIER_PHONE = 100000002;
+const IDENTIFIER_CUSTOMER_ID = 100000006;
+const IDENTIFIER_STATUS_ACTIVE = 100000000;
+const BENEFICIARY_CATEGORY_INDIVIDUAL_FARMER = 100000000;
+const BENEFICIARY_VERIFICATION_UNDER_REVIEW = 100000000;
+const SUBMISSION_LINK_RELATIONSHIP_BASELINE = 100000000;
+const SUBMISSION_LINK_REVIEW_UNDER_REVIEW = 100000000;
 const EXPORT_FORMAT_CSV = 100000000;
 const EXPORT_SCOPE_CURRENT_FILTERS = 100000000;
 const ACCESS_ADMIN_POWERPAGES_ROLES = ['Administrators', 'Platform Administrator'];
@@ -347,6 +361,127 @@ export class PowerPagesApiClient {
         'Request status is updated to Completed or Failed with a business-readable result',
       ],
     };
+  }
+
+  async importBaselineBridgeAsset(
+    asset: BaselineBridgeImportAsset,
+    options: BaselineBridgeImportOptions = {},
+  ): Promise<BaselineBridgeImportResult> {
+    if (!this.isCurrentUserAccessAdmin()) {
+      throw new Error('Baseline import requires the Platform Administrator web role.');
+    }
+    if (asset.assetType !== 'tacatdp-baseline-bridge-import') {
+      throw new Error('Selected file is not a TACATDP baseline bridge import asset.');
+    }
+    if (asset.projectCode !== 'TACATDP') {
+      throw new Error(`Unsupported project code: ${asset.projectCode || '<empty>'}.`);
+    }
+    if (asset.formId !== 'tacatdp_impact_evaluation') {
+      throw new Error(`Unsupported form id: ${asset.formId || '<empty>'}.`);
+    }
+    if (asset.formVersion !== '2608130924') {
+      throw new Error(`Unsupported form version: ${asset.formVersion || '<empty>'}. Expected 2608130924.`);
+    }
+    if (!Array.isArray(asset.rows) || asset.rows.length === 0) {
+      throw new Error('Baseline import asset has no rows.');
+    }
+
+    const rows = asset.rows.slice(0, options.limit ?? asset.rows.length);
+    const result: BaselineBridgeImportResult = {
+      status: options.dryRun ? 'validated' : 'executed',
+      rowsProcessed: 0,
+      totalRows: asset.rows.length,
+      limit: options.limit,
+      counts: {},
+      duplicateReviewGroups: asset.counts?.duplicateReviewGroups ?? 0,
+      duplicateReviewRows: asset.counts?.duplicateReviewRows ?? 0,
+      messages: [],
+    };
+    result.messages.push(`Asset validated: ${asset.rows.length} rows, version ${asset.formVersion}.`);
+    if (options.dryRun) {
+      return result;
+    }
+
+    const projectId = await this.requireProjectId(asset.projectCode);
+    const formVersionId = await this.requireFormVersionId(asset.formVersion);
+    const now = new Date().toISOString();
+
+    for (const row of rows) {
+      const rowNumber = Number(row.rowNumber || result.rowsProcessed + 1);
+      options.onProgress?.({
+        processedRows: result.rowsProcessed,
+        totalRows: rows.length,
+        currentRowNumber: rowNumber,
+        message: `Importing row ${rowNumber}`,
+      });
+
+      const submissionId = await this.upsertSubmissionForBaseline(row, formVersionId, now);
+      this.bumpImportCount(result, 'mp_Submission');
+      await this.upsertSubmissionVersionForBaseline(row, submissionId, now);
+      this.bumpImportCount(result, 'mp_SubmissionVersion');
+      const trackedEntityId = await this.upsertTrackedEntityForBaseline(row, projectId);
+      this.bumpImportCount(result, 'mp_TrackedEntity');
+      const identifierCount = await this.upsertIdentifiersForBaseline(row, trackedEntityId);
+      result.counts.mp_EntityIdentifier = (result.counts.mp_EntityIdentifier ?? 0) + identifierCount;
+      await this.upsertBeneficiaryProfileForBaseline(row, trackedEntityId, projectId, now);
+      this.bumpImportCount(result, 'mp_BeneficiaryProfile');
+      await this.upsertBeneficiarySubmissionLinkForBaseline(row, trackedEntityId, submissionId);
+      this.bumpImportCount(result, 'mp_BeneficiarySubmissionLink');
+      result.rowsProcessed += 1;
+
+      if (result.rowsProcessed % 50 === 0) {
+        options.onProgress?.({
+          processedRows: result.rowsProcessed,
+          totalRows: rows.length,
+          currentRowNumber: rowNumber,
+          message: `Imported ${result.rowsProcessed} of ${rows.length} rows`,
+        });
+      }
+    }
+
+    options.onProgress?.({
+      processedRows: result.rowsProcessed,
+      totalRows: rows.length,
+      message: `Imported ${result.rowsProcessed} rows`,
+    });
+    result.messages.push(`Imported ${result.rowsProcessed} rows through Power Pages Web API.`);
+    return result;
+  }
+
+  async seedLatestTacatdpXForm(xml: string): Promise<string> {
+    if (!this.isCurrentUserAccessAdmin()) {
+      throw new Error('XForm seed requires the Platform Administrator web role.');
+    }
+    if (!xml.includes('id="tacatdp_impact_evaluation"') || !xml.includes('version="2608130924"')) {
+      throw new Error('Selected XML does not match TACATDP form id tacatdp_impact_evaluation and version 2608130924.');
+    }
+    const form = await this.findOne<{ mp_formid: string }>(
+      '/_api/mp_forms',
+      'mp_formid,mp_xmlformid',
+      "mp_xmlformid eq 'tacatdp_impact_evaluation'",
+    );
+    if (!form?.mp_formid) {
+      throw new Error('TACATDP form row was not found. Seed mp_form before seeding the latest form version.');
+    }
+    const existing = await this.findOne<{ mp_formversionid: string }>(
+      '/_api/mp_formversions',
+      'mp_formversionid,mp_version',
+      "mp_version eq '2608130924'",
+    );
+    const payload = {
+      mp_version: '2608130924',
+      mp_hash: 'xlsform-2608130924-browser-seed',
+      mp_xformxml: xml,
+      mp_webformsenabled: true,
+      mp_lifecyclestatus: FORM_VERSION_LIFECYCLE_PUBLISHED,
+      mp_publishedat: new Date().toISOString(),
+      'mp_Form@odata.bind': `/mp_forms(${form.mp_formid})`,
+    };
+    if (existing?.mp_formversionid) {
+      await this.send(`/_api/mp_formversions(${encodeURIComponent(existing.mp_formversionid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_formversionid;
+    }
+    return this.createRecord('/_api/mp_formversions', payload);
   }
 
   async getNotificationDeliverySetting(): Promise<NotificationDeliverySetting> {
@@ -2052,6 +2187,181 @@ export class PowerPagesApiClient {
     );
 
     return submissions.value[0] ?? null;
+  }
+
+  private async requireProjectId(projectCode: string): Promise<string> {
+    const result = await this.get<DataverseCollection<{ mp_projectid: string }>>(
+      `/_api/mp_projects?$select=mp_projectid,mp_projectcode&$filter=mp_projectcode eq '${this.escapeODataString(projectCode)}'&$top=1`,
+    );
+    const projectId = result.value[0]?.mp_projectid;
+    if (!projectId) {
+      throw new Error(`Project ${projectCode} was not found in Dataverse.`);
+    }
+    return projectId;
+  }
+
+  private async requireFormVersionId(version: string): Promise<string> {
+    const result = await this.get<DataverseCollection<{ mp_formversionid: string }>>(
+      `/_api/mp_formversions?$select=mp_formversionid,mp_version&$filter=mp_version eq '${this.escapeODataString(version)}'&$top=1`,
+    );
+    const formVersionId = result.value[0]?.mp_formversionid;
+    if (!formVersionId) {
+      throw new Error(`Form version ${version} was not found in Dataverse. Seed the latest XLSForm version before importing baseline rows.`);
+    }
+    return formVersionId;
+  }
+
+  private async upsertSubmissionForBaseline(row: BaselineBridgeImportAsset['rows'][number], formVersionId: string, now: string): Promise<string> {
+    const existing = await this.findSubmissionByInstanceId(row.instanceId);
+    const payload: Record<string, unknown> = {
+      mp_instanceid: row.instanceId,
+      mp_lifecyclestatus: SUBMISSION_LIFECYCLE_SUBMITTED,
+      mp_reviewstate: SUBMISSION_REVIEW_RECEIVED,
+      mp_startedat: row.startedAt || undefined,
+      mp_submittedat: row.submittedAt || now,
+      mp_updatedat: now,
+      'mp_FormVersion@odata.bind': `/mp_formversions(${formVersionId})`,
+    };
+    if (existing?.mp_submissionid) {
+      await this.send(`/_api/mp_submissions(${encodeURIComponent(existing.mp_submissionid)})`, { method: 'PATCH', body: this.omitUndefined(payload) });
+      return existing.mp_submissionid;
+    }
+    return this.createRecord('/_api/mp_submissions', this.omitUndefined(payload));
+  }
+
+  private async upsertSubmissionVersionForBaseline(row: BaselineBridgeImportAsset['rows'][number], submissionId: string, now: string): Promise<string> {
+    const existing = await this.findOne<{ mp_submissionversionid: string }>(
+      '/_api/mp_submissionversions',
+      'mp_submissionversionid,mp_versionkey',
+      `mp_versionkey eq '${this.escapeODataString(row.versionKey)}'`,
+    );
+    const payload = {
+      mp_versionkey: row.versionKey,
+      mp_instanceid: row.instanceId,
+      mp_versionnumber: 1,
+      mp_current: true,
+      mp_createdat: now,
+      mp_xformsubmissionxml: row.xformXml,
+      mp_submissionjson: row.submissionJson,
+      'mp_Submission@odata.bind': `/mp_submissions(${submissionId})`,
+    };
+    if (existing?.mp_submissionversionid) {
+      await this.send(`/_api/mp_submissionversions(${encodeURIComponent(existing.mp_submissionversionid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_submissionversionid;
+    }
+    return this.createRecord('/_api/mp_submissionversions', payload);
+  }
+
+  private async upsertTrackedEntityForBaseline(row: BaselineBridgeImportAsset['rows'][number], projectId: string): Promise<string> {
+    const existing = await this.findOne<{ mp_trackedentityid: string }>(
+      '/_api/mp_trackedentities',
+      'mp_trackedentityid,mp_entitykey',
+      `_mp_project_value eq ${projectId} and mp_entitytype eq ${TRACKED_ENTITY_TYPE_BENEFICIARY} and mp_entitykey eq '${this.escapeODataString(row.sourceKey)}'`,
+    );
+    const payload = {
+      mp_entitytype: TRACKED_ENTITY_TYPE_BENEFICIARY,
+      mp_entitykey: row.sourceKey,
+      mp_displayname: row.customerName || `Beneficiary ${row.rowNumber}`,
+      mp_status: TRACKED_ENTITY_STATUS_ACTIVE,
+      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+    };
+    if (existing?.mp_trackedentityid) {
+      await this.send(`/_api/mp_trackedentities(${encodeURIComponent(existing.mp_trackedentityid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_trackedentityid;
+    }
+    return this.createRecord('/_api/mp_trackedentities', payload);
+  }
+
+  private async upsertIdentifiersForBaseline(row: BaselineBridgeImportAsset['rows'][number], trackedEntityId: string): Promise<number> {
+    const identifiers: Array<[number, string | undefined]> = [
+      [IDENTIFIER_SOURCE_RECORD, row.uuid],
+      [IDENTIFIER_CUSTOMER_ID, row.customerId],
+      [IDENTIFIER_PHONE, row.phone],
+    ];
+    let count = 0;
+    for (const [identifierType, identifierValue] of identifiers) {
+      if (!identifierValue) {
+        continue;
+      }
+      const existing = await this.findOne<{ mp_entityidentifierid: string }>(
+        '/_api/mp_entityidentifiers',
+        'mp_entityidentifierid,mp_identifiertype',
+        `_mp_trackedentity_value eq ${trackedEntityId} and mp_identifiertype eq ${identifierType} and mp_identifiervalue eq '${this.escapeODataString(identifierValue)}'`,
+      );
+      const payload = {
+        mp_identifiertype: identifierType,
+        mp_identifiervalue: identifierValue,
+        mp_status: IDENTIFIER_STATUS_ACTIVE,
+        'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+      };
+      if (existing?.mp_entityidentifierid) {
+        await this.send(`/_api/mp_entityidentifiers(${encodeURIComponent(existing.mp_entityidentifierid)})`, { method: 'PATCH', body: payload });
+      } else {
+        await this.createRecord('/_api/mp_entityidentifiers', payload);
+      }
+      count += 1;
+    }
+    return count;
+  }
+
+  private async upsertBeneficiaryProfileForBaseline(row: BaselineBridgeImportAsset['rows'][number], trackedEntityId: string, projectId: string, now: string): Promise<string> {
+    const existing = await this.findOne<{ mp_beneficiaryprofileid: string }>(
+      '/_api/mp_beneficiaryprofiles',
+      'mp_beneficiaryprofileid',
+      `_mp_trackedentity_value eq ${trackedEntityId}`,
+    );
+    const payload = this.omitUndefined({
+      mp_name: row.customerName || `Beneficiary ${row.rowNumber}`,
+      mp_beneficiarycategory: BENEFICIARY_CATEGORY_INDIVIDUAL_FARMER,
+      mp_region: row.region || undefined,
+      mp_district: row.district || undefined,
+      mp_verificationstatus: BENEFICIARY_VERIFICATION_UNDER_REVIEW,
+      mp_datasource: 'Kobo baseline import',
+      mp_lastupdatedat: now,
+      'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+    });
+    if (existing?.mp_beneficiaryprofileid) {
+      await this.send(`/_api/mp_beneficiaryprofiles(${encodeURIComponent(existing.mp_beneficiaryprofileid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_beneficiaryprofileid;
+    }
+    return this.createRecord('/_api/mp_beneficiaryprofiles', payload);
+  }
+
+  private async upsertBeneficiarySubmissionLinkForBaseline(row: BaselineBridgeImportAsset['rows'][number], trackedEntityId: string, submissionId: string): Promise<string> {
+    const existing = await this.findOne<{ mp_beneficiarysubmissionlinkid: string }>(
+      '/_api/mp_beneficiarysubmissionlinks',
+      'mp_beneficiarysubmissionlinkid,mp_linkkey',
+      `mp_linkkey eq '${this.escapeODataString(row.linkKey)}'`,
+    );
+    const payload = {
+      mp_linkkey: row.linkKey,
+      mp_relationshiptype: SUBMISSION_LINK_RELATIONSHIP_BASELINE,
+      mp_completeness: 100,
+      mp_reviewstatus: SUBMISSION_LINK_REVIEW_UNDER_REVIEW,
+      'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+      'mp_Submission@odata.bind': `/mp_submissions(${submissionId})`,
+    };
+    if (existing?.mp_beneficiarysubmissionlinkid) {
+      await this.send(`/_api/mp_beneficiarysubmissionlinks(${encodeURIComponent(existing.mp_beneficiarysubmissionlinkid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_beneficiarysubmissionlinkid;
+    }
+    return this.createRecord('/_api/mp_beneficiarysubmissionlinks', payload);
+  }
+
+  private async findOne<T>(entitySetPath: string, select: string, filter: string): Promise<T | null> {
+    const result = await this.get<DataverseCollection<T>>(
+      `${entitySetPath}?$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}&$top=1`,
+    );
+    return result.value[0] ?? null;
+  }
+
+  private bumpImportCount(result: BaselineBridgeImportResult, key: string): void {
+    result.counts[key] = (result.counts[key] ?? 0) + 1;
+  }
+
+  private omitUndefined(payload: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined));
   }
 
   private async nextSubmissionVersionNumber(instanceId: string): Promise<number> {
