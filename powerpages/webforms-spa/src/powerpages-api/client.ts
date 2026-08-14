@@ -420,17 +420,17 @@ export class PowerPagesApiClient {
         message: `Importing row ${rowNumber}`,
       });
 
-      const submissionId = await this.upsertSubmissionForBaseline(row, formVersionId, now);
+      const submissionId = await this.runBaselineImportStep(rowNumber, 'mp_Submission upsert', () => this.upsertSubmissionForBaseline(row, formVersionId, now));
       this.bumpImportCount(result, 'mp_Submission');
-      await this.upsertSubmissionVersionForBaseline(row, submissionId, now, mode);
+      await this.runBaselineImportStep(rowNumber, 'mp_SubmissionVersion upsert', () => this.upsertSubmissionVersionForBaseline(row, submissionId, now, mode));
       this.bumpImportCount(result, 'mp_SubmissionVersion');
-      const trackedEntityId = await this.upsertTrackedEntityForBaseline(row, projectId);
+      const trackedEntityId = await this.runBaselineImportStep(rowNumber, 'mp_TrackedEntity upsert', () => this.upsertTrackedEntityForBaseline(row, projectId));
       this.bumpImportCount(result, 'mp_TrackedEntity');
-      const identifierCount = await this.upsertIdentifiersForBaseline(row, trackedEntityId);
+      const identifierCount = await this.runBaselineImportStep(rowNumber, 'mp_EntityIdentifier upsert', () => this.upsertIdentifiersForBaseline(row, trackedEntityId));
       result.counts.mp_EntityIdentifier = (result.counts.mp_EntityIdentifier ?? 0) + identifierCount;
-      await this.upsertBeneficiaryProfileForBaseline(row, trackedEntityId, projectId, now);
+      await this.runBaselineImportStep(rowNumber, 'mp_BeneficiaryProfile upsert', () => this.upsertBeneficiaryProfileForBaseline(row, trackedEntityId, projectId, now));
       this.bumpImportCount(result, 'mp_BeneficiaryProfile');
-      await this.upsertBeneficiarySubmissionLinkForBaseline(row, trackedEntityId, submissionId);
+      await this.runBaselineImportStep(rowNumber, 'mp_BeneficiarySubmissionLink upsert', () => this.upsertBeneficiarySubmissionLinkForBaseline(row, trackedEntityId, submissionId));
       this.bumpImportCount(result, 'mp_BeneficiarySubmissionLink');
       result.rowsProcessed += 1;
 
@@ -2374,6 +2374,26 @@ export class PowerPagesApiClient {
 
   private bumpImportCount(result: BaselineBridgeImportResult, key: string): void {
     result.counts[key] = (result.counts[key] ?? 0) + 1;
+  }
+
+  private async runBaselineImportStep<T>(rowNumber: number, step: string, action: () => Promise<T>): Promise<T> {
+    try {
+      return await action();
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Unknown Dataverse Web API error.';
+      throw new Error(`Baseline import failed at row ${rowNumber} during ${step}: ${this.sanitizeBaselineImportDiagnostic(message)}`);
+    }
+  }
+
+  private sanitizeBaselineImportDiagnostic(message: string): string {
+    return message
+      .replace(/mp_identifiervalue eq '[^']*'/g, "mp_identifiervalue eq '<redacted>'")
+      .replace(/mp_instanceid eq '[^']*'/g, "mp_instanceid eq '<redacted>'")
+      .replace(/mp_entitykey eq '[^']*'/g, "mp_entitykey eq '<redacted>'")
+      .replace(/mp_linkkey eq '[^']*'/g, "mp_linkkey eq '<redacted>'")
+      .replace(/kobo:[0-9a-f-]{36}/gi, 'kobo:<redacted>')
+      .replace(/uuid:[0-9a-f-]{36}/gi, 'uuid:<redacted>')
+      .slice(0, 700);
   }
 
   private omitUndefined(payload: Record<string, unknown>): Record<string, unknown> {
