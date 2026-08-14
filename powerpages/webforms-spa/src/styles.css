@@ -75,6 +75,54 @@
   flex-wrap: wrap;
 }
 
+.baseline-import-mode {
+  display: grid;
+  gap: var(--mt-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.baseline-import-mode legend {
+  margin-bottom: var(--mt-space-1);
+  color: var(--mt-color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.baseline-import-mode label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 var(--mt-space-2);
+  align-items: start;
+  padding: var(--mt-space-3);
+  border: 1px solid var(--mt-color-border);
+  border-radius: var(--mt-radius-md);
+  background: var(--mt-color-surface);
+  cursor: pointer;
+}
+
+.baseline-import-mode__option--active {
+  border-color: var(--mt-color-primary) !important;
+  background: var(--mt-color-primary-soft) !important;
+}
+
+.baseline-import-mode input {
+  grid-row: span 2;
+  margin-top: 0.2rem;
+}
+
+.baseline-import-mode span {
+  color: var(--mt-color-text);
+  font-weight: 900;
+}
+
+.baseline-import-mode small {
+  color: var(--mt-color-text-muted);
+  line-height: 1.35;
+}
+
 .baseline-import-progress {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) minmax(220px, 2fr) auto;

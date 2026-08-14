@@ -40,6 +40,7 @@ import type {
   AccessWriteCommand,
   AccessWritePreview,
   BaselineBridgeImportAsset,
+  BaselineBridgeImportMode,
   BaselineBridgeImportProgress,
   BaselineBridgeImportResult,
   ExportSettingRow,
@@ -222,6 +223,7 @@ const baselineXFormLoading = ref(false);
 const baselineXFormMessage = ref('');
 const baselineXFormError = ref('');
 const baselineImportFileName = ref('');
+const baselineImportMode = ref<BaselineBridgeImportMode>('append');
 const baselineImportLoading = ref(false);
 const baselineImportRunning = ref(false);
 const baselineImportError = ref('');
@@ -1311,12 +1313,14 @@ async function runBaselineImport(limit?: number) {
   try {
     const result = await api.importBaselineBridgeAsset(baselineImportAsset.value, {
       limit,
+      mode: baselineImportMode.value,
       onProgress(progress) {
         baselineImportProgress.value = progress;
       },
     });
     baselineImportResult.value = result;
-    baselineImportMessage.value = `Imported ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} through Power Pages Web API.`;
+    const modeLabel = result.mode === 'append' ? 'Appended' : 'Replaced matching';
+    baselineImportMessage.value = `${modeLabel} ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} through Power Pages Web API.`;
   } catch (caught) {
     baselineImportError.value = sanitizeBaselineImportError(caught);
   } finally {
@@ -3843,7 +3847,7 @@ onUnmounted(() => {
         <header class="admin-section-header admin-section-header--compact">
           <div>
             <p class="eyebrow">TACATDP baseline import</p>
-            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. Imports append to the existing project dataset by upserting matching baseline records; the JSON file stays local and is not deployed as a web file.</p>
+            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. Choose Append to preserve history or Replace to update matching baseline rows in place; the JSON file stays local and is not deployed as a web file.</p>
           </div>
           <div class="access-authorization-card" role="status" aria-label="Baseline import authorisation">
             <span>Authorised role</span>
@@ -3903,8 +3907,21 @@ onUnmounted(() => {
           <div>
             <p class="eyebrow">Step 3</p>
             <h2 id="baseline-import-run-title">Run controlled import</h2>
-            <p>Run the 5-row smoke test first. If it succeeds, run the full import. The import appends new baseline records and updates matching existing rows instead of replacing the project dataset.</p>
+            <p>Run the 5-row smoke test first. If it succeeds, run the full import. Replace affects matching imported baseline rows only; unrelated project records are not deleted.</p>
           </div>
+          <fieldset class="baseline-import-mode" :disabled="baselineImportRunning" aria-label="Baseline import mode">
+            <legend>Import mode</legend>
+            <label :class="{ 'baseline-import-mode__option--active': baselineImportMode === 'append' }">
+              <input v-model="baselineImportMode" type="radio" value="append">
+              <span>Append</span>
+              <small>Add a new submission version when the baseline record already exists.</small>
+            </label>
+            <label :class="{ 'baseline-import-mode__option--active': baselineImportMode === 'replace' }">
+              <input v-model="baselineImportMode" type="radio" value="replace">
+              <span>Replace</span>
+              <small>Update matching baseline rows in place without deleting unrelated records.</small>
+            </label>
+          </fieldset>
           <div class="baseline-import-actions">
             <button class="icon-action icon-action--secondary" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport(5)">
               <Check class="action-icon" aria-hidden="true" />
@@ -3936,6 +3953,10 @@ onUnmounted(() => {
             <div>
               <dt>Status</dt>
               <dd>{{ baselineImportResult.status }}</dd>
+            </div>
+            <div>
+              <dt>Mode</dt>
+              <dd>{{ baselineImportResult.mode }}</dd>
             </div>
             <div>
               <dt>Rows processed</dt>

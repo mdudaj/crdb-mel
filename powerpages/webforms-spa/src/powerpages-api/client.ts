@@ -386,9 +386,11 @@ export class PowerPagesApiClient {
       throw new Error('Baseline import asset has no rows.');
     }
 
+    const mode = options.mode ?? 'append';
     const rows = asset.rows.slice(0, options.limit ?? asset.rows.length);
     const result: BaselineBridgeImportResult = {
       status: options.dryRun ? 'validated' : 'executed',
+      mode,
       rowsProcessed: 0,
       totalRows: asset.rows.length,
       limit: options.limit,
@@ -398,6 +400,9 @@ export class PowerPagesApiClient {
       messages: [],
     };
     result.messages.push(`Asset validated: ${asset.rows.length} rows, version ${asset.formVersion}.`);
+    result.messages.push(mode === 'append'
+      ? 'Mode: append. Existing baseline submissions keep history through a new submission version where a matching row already exists.'
+      : 'Mode: replace. Matching baseline rows are updated in place; unrelated project records are not deleted.');
     if (options.dryRun) {
       return result;
     }
@@ -417,7 +422,7 @@ export class PowerPagesApiClient {
 
       const submissionId = await this.upsertSubmissionForBaseline(row, formVersionId, now);
       this.bumpImportCount(result, 'mp_Submission');
-      await this.upsertSubmissionVersionForBaseline(row, submissionId, now);
+      await this.upsertSubmissionVersionForBaseline(row, submissionId, now, mode);
       this.bumpImportCount(result, 'mp_SubmissionVersion');
       const trackedEntityId = await this.upsertTrackedEntityForBaseline(row, projectId);
       this.bumpImportCount(result, 'mp_TrackedEntity');
@@ -444,7 +449,7 @@ export class PowerPagesApiClient {
       totalRows: rows.length,
       message: `Imported ${result.rowsProcessed} rows`,
     });
-    result.messages.push(`Imported ${result.rowsProcessed} rows through Power Pages Web API.`);
+    result.messages.push(`${mode === 'append' ? 'Appended' : 'Replaced matching'} ${result.rowsProcessed} rows through Power Pages Web API.`);
     return result;
   }
 
@@ -2229,25 +2234,34 @@ export class PowerPagesApiClient {
     return this.createRecord('/_api/mp_submissions', this.omitUndefined(payload));
   }
 
-  private async upsertSubmissionVersionForBaseline(row: BaselineBridgeImportAsset['rows'][number], submissionId: string, now: string): Promise<string> {
+  private async upsertSubmissionVersionForBaseline(
+    row: BaselineBridgeImportAsset['rows'][number],
+    submissionId: string,
+    now: string,
+    mode: BaselineBridgeImportOptions['mode'],
+  ): Promise<string> {
     const existing = await this.findOne<{ mp_submissionversionid: string }>(
       '/_api/mp_submissionversions',
       'mp_submissionversionid,mp_versionkey',
       `mp_versionkey eq '${this.escapeODataString(row.versionKey)}'`,
     );
+    const shouldAppendVersion = mode === 'append' && !!existing?.mp_submissionversionid;
     const payload = {
-      mp_versionkey: row.versionKey,
+      mp_versionkey: shouldAppendVersion ? `${row.versionKey}:append:${Date.parse(now)}:${row.rowNumber}` : row.versionKey,
       mp_instanceid: row.instanceId,
-      mp_versionnumber: 1,
+      mp_versionnumber: shouldAppendVersion ? await this.nextSubmissionVersionNumber(row.instanceId) : 1,
       mp_current: true,
       mp_createdat: now,
       mp_xformsubmissionxml: row.xformXml,
       mp_submissionjson: row.submissionJson,
       'mp_Submission@odata.bind': `/mp_submissions(${submissionId})`,
     };
-    if (existing?.mp_submissionversionid) {
+    if (existing?.mp_submissionversionid && !shouldAppendVersion) {
       await this.send(`/_api/mp_submissionversions(${encodeURIComponent(existing.mp_submissionversionid)})`, { method: 'PATCH', body: payload });
       return existing.mp_submissionversionid;
+    }
+    if (existing?.mp_submissionversionid && shouldAppendVersion) {
+      await this.send(`/_api/mp_submissionversions(${encodeURIComponent(existing.mp_submissionversionid)})`, { method: 'PATCH', body: { mp_current: false } });
     }
     return this.createRecord('/_api/mp_submissionversions', payload);
   }

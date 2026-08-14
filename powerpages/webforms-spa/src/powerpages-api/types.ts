@@ -38,9 +38,12 @@ export interface BaselineBridgeImportRow {
   xformXml: string;
 }
 
+export type BaselineBridgeImportMode = 'append' | 'replace';
+
 export interface BaselineBridgeImportOptions {
   limit?: number;
   dryRun?: boolean;
+  mode?: BaselineBridgeImportMode;
   onProgress?: (progress: BaselineBridgeImportProgress) => void;
 }
 
@@ -53,6 +56,7 @@ export interface BaselineBridgeImportProgress {
 
 export interface BaselineBridgeImportResult {
   status: 'validated' | 'executed';
+  mode: BaselineBridgeImportMode;
   rowsProcessed: number;
   totalRows: number;
   limit?: number;
