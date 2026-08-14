@@ -2270,6 +2270,7 @@ export class PowerPagesApiClient {
 
   private async upsertTrackedEntityForBaseline(row: BaselineBridgeImportAsset['rows'][number], projectId: string): Promise<string> {
     let existing: { mp_trackedentityid: string } | null = null;
+    let lookupFailure: string | null = null;
     try {
       existing = await this.findOne<{ mp_trackedentityid: string }>(
         '/_api/mp_trackedentities',
@@ -2278,7 +2279,7 @@ export class PowerPagesApiClient {
       );
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unknown lookup error.';
-      throw new Error(`mp_TrackedEntity lookup failed: ${this.sanitizeBaselineImportDiagnostic(message)}`);
+      lookupFailure = this.sanitizeBaselineImportDiagnostic(message);
     }
 
     const payload = {
@@ -2296,6 +2297,9 @@ export class PowerPagesApiClient {
       return await this.createRecord('/_api/mp_trackedentities', payload);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unknown write error.';
+      if (lookupFailure) {
+        throw new Error(`mp_TrackedEntity lookup and create failed. Lookup: ${lookupFailure}. Create: ${this.sanitizeBaselineImportDiagnostic(message)}`);
+      }
       throw new Error(`mp_TrackedEntity write failed: ${this.sanitizeBaselineImportDiagnostic(message)}`);
     }
   }
