@@ -2269,23 +2269,35 @@ export class PowerPagesApiClient {
   }
 
   private async upsertTrackedEntityForBaseline(row: BaselineBridgeImportAsset['rows'][number], projectId: string): Promise<string> {
-    const existing = await this.findOne<{ mp_trackedentityid: string }>(
-      '/_api/mp_trackedentities',
-      'mp_trackedentityid,mp_entitykey',
-      `_mp_project_value eq ${projectId} and mp_entitytype eq ${TRACKED_ENTITY_TYPE_BENEFICIARY} and mp_entitykey eq '${this.escapeODataString(row.sourceKey)}'`,
-    );
+    let existing: { mp_trackedentityid: string } | null = null;
+    try {
+      existing = await this.findOne<{ mp_trackedentityid: string }>(
+        '/_api/mp_trackedentities',
+        'mp_trackedentityid,mp_entitykey',
+        `mp_entitytype eq ${TRACKED_ENTITY_TYPE_BENEFICIARY} and mp_entitykey eq '${this.escapeODataString(row.sourceKey)}'`,
+      );
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Unknown lookup error.';
+      throw new Error(`mp_TrackedEntity lookup failed: ${this.sanitizeBaselineImportDiagnostic(message)}`);
+    }
+
     const payload = {
       mp_entitytype: TRACKED_ENTITY_TYPE_BENEFICIARY,
       mp_entitykey: row.sourceKey,
       mp_displayname: row.customerName || `Beneficiary ${row.rowNumber}`,
       mp_status: TRACKED_ENTITY_STATUS_ACTIVE,
-      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+      'mp_project@odata.bind': `/mp_projects(${projectId})`,
     };
-    if (existing?.mp_trackedentityid) {
-      await this.send(`/_api/mp_trackedentities(${encodeURIComponent(existing.mp_trackedentityid)})`, { method: 'PATCH', body: payload });
-      return existing.mp_trackedentityid;
+    try {
+      if (existing?.mp_trackedentityid) {
+        await this.send(`/_api/mp_trackedentities(${encodeURIComponent(existing.mp_trackedentityid)})`, { method: 'PATCH', body: payload });
+        return existing.mp_trackedentityid;
+      }
+      return await this.createRecord('/_api/mp_trackedentities', payload);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Unknown write error.';
+      throw new Error(`mp_TrackedEntity write failed: ${this.sanitizeBaselineImportDiagnostic(message)}`);
     }
-    return this.createRecord('/_api/mp_trackedentities', payload);
   }
 
   private async upsertIdentifiersForBaseline(row: BaselineBridgeImportAsset['rows'][number], trackedEntityId: string): Promise<number> {
