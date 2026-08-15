@@ -472,23 +472,23 @@ export class PowerPagesApiClient {
       return `Resolved project ${projectCode} to ${projectId}.`;
     });
 
-    await run('Tracked entity read without id', 'GET /_api/mp_trackedentities?$select=mp_entitykey', async () => {
+    await run('Tracked entity read without id', 'GET /_api/mp_trackedentitys?$select=mp_entitykey', async () => {
       const result = await this.get<DataverseCollection<{ mp_entitykey?: string }>>(
-        '/_api/mp_trackedentities?$select=mp_entitykey&$top=1',
+        '/_api/mp_trackedentitys?$select=mp_entitykey&$top=1',
       );
       return `Read succeeded; returned ${result.value.length} row(s).`;
     });
 
-    await run('Tracked entity read with id', 'GET /_api/mp_trackedentities?$select=mp_trackedentityid,mp_entitykey', async () => {
+    await run('Tracked entity read with id', 'GET /_api/mp_trackedentitys?$select=mp_trackedentityid,mp_entitykey', async () => {
       const result = await this.get<DataverseCollection<{ mp_trackedentityid?: string }>>(
-        '/_api/mp_trackedentities?$select=mp_trackedentityid,mp_entitykey&$top=1',
+        '/_api/mp_trackedentitys?$select=mp_trackedentityid,mp_entitykey&$top=1',
       );
       return `Read with primary id succeeded; returned ${result.value.length} row(s).`;
     });
 
-    await run('Tracked entity FetchXML lookup', 'GET /_api/mp_trackedentities?fetchXml=...', async () => {
+    await run('Tracked entity FetchXML lookup', 'GET /_api/mp_trackedentitys?fetchXml=...', async () => {
       const result = await this.findOneByFetchXml<{ mp_trackedentityid?: string }>(
-        '/_api/mp_trackedentities',
+        '/_api/mp_trackedentitys',
         'mp_trackedentity',
         ['mp_trackedentityid', 'mp_entitykey'],
         [['mp_entitytype', 'eq', TRACKED_ENTITY_TYPE_BENEFICIARY]],
@@ -499,13 +499,13 @@ export class PowerPagesApiClient {
     if (!projectId) {
       steps.push({
         name: 'Tracked entity create with generated navigation name',
-        operation: 'POST /_api/mp_trackedentities',
+        operation: 'POST /_api/mp_trackedentitys',
         status: 'failed',
         detail: 'Skipped because project lookup failed.',
       });
       steps.push({
         name: 'Tracked entity create with lookup-column navigation name',
-        operation: 'POST /_api/mp_trackedentities',
+        operation: 'POST /_api/mp_trackedentitys',
         status: 'failed',
         detail: 'Skipped because project lookup failed.',
       });
@@ -518,8 +518,8 @@ export class PowerPagesApiClient {
       mp_status: TRACKED_ENTITY_STATUS_ACTIVE,
     };
 
-    await run('Tracked entity create with generated navigation name', 'POST /_api/mp_trackedentities using mp_Project@odata.bind', async () => {
-      const id = await this.createRecord('/_api/mp_trackedentities', {
+    await run('Tracked entity create with generated navigation name', 'POST /_api/mp_trackedentitys using mp_Project@odata.bind', async () => {
+      const id = await this.createRecord('/_api/mp_trackedentitys', {
         ...createBasePayload,
         mp_entitykey: `diagnostic:generated:${timestamp}`,
         mp_displayname: 'Diagnostic tracked entity generated bind',
@@ -528,8 +528,8 @@ export class PowerPagesApiClient {
       return `Create succeeded with generated navigation property; id ${id}.`;
     });
 
-    await run('Tracked entity create with lookup-column navigation name', 'POST /_api/mp_trackedentities using mp_project@odata.bind', async () => {
-      const id = await this.createRecord('/_api/mp_trackedentities', {
+    await run('Tracked entity create with lookup-column navigation name', 'POST /_api/mp_trackedentitys using mp_project@odata.bind', async () => {
+      const id = await this.createRecord('/_api/mp_trackedentitys', {
         ...createBasePayload,
         mp_entitykey: `diagnostic:lookup:${timestamp}`,
         mp_displayname: 'Diagnostic tracked entity lookup-column bind',
@@ -2361,7 +2361,7 @@ export class PowerPagesApiClient {
     let lookupFailure: string | null = null;
     try {
       existing = await this.findOneByFetchXml<{ mp_trackedentityid: string }>(
-        '/_api/mp_trackedentities',
+        '/_api/mp_trackedentitys',
         'mp_trackedentity',
         ['mp_trackedentityid', 'mp_entitykey'],
         [
@@ -2384,10 +2384,10 @@ export class PowerPagesApiClient {
     };
     try {
       if (existing?.mp_trackedentityid) {
-        await this.send(`/_api/mp_trackedentities(${encodeURIComponent(existing.mp_trackedentityid)})`, { method: 'PATCH', body: payload });
+        await this.send(`/_api/mp_trackedentitys(${encodeURIComponent(existing.mp_trackedentityid)})`, { method: 'PATCH', body: payload });
         return existing.mp_trackedentityid;
       }
-      return await this.createRecord('/_api/mp_trackedentities', payload);
+      return await this.createRecord('/_api/mp_trackedentitys', payload);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Unknown write error.';
       if (lookupFailure) {
@@ -2417,7 +2417,7 @@ export class PowerPagesApiClient {
         mp_identifiertype: identifierType,
         mp_identifiervalue: identifierValue,
         mp_status: IDENTIFIER_STATUS_ACTIVE,
-        'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+        'mp_TrackedEntity@odata.bind': `/mp_trackedentitys(${trackedEntityId})`,
       };
       if (existing?.mp_entityidentifierid) {
         await this.send(`/_api/mp_entityidentifiers(${encodeURIComponent(existing.mp_entityidentifierid)})`, { method: 'PATCH', body: payload });
@@ -2443,7 +2443,7 @@ export class PowerPagesApiClient {
       mp_verificationstatus: BENEFICIARY_VERIFICATION_UNDER_REVIEW,
       mp_datasource: 'Kobo baseline import',
       mp_lastupdatedat: now,
-      'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+      'mp_TrackedEntity@odata.bind': `/mp_trackedentitys(${trackedEntityId})`,
       'mp_Project@odata.bind': `/mp_projects(${projectId})`,
     });
     if (existing?.mp_beneficiaryprofileid) {
@@ -2464,7 +2464,7 @@ export class PowerPagesApiClient {
       mp_relationshiptype: SUBMISSION_LINK_RELATIONSHIP_BASELINE,
       mp_completeness: 100,
       mp_reviewstatus: SUBMISSION_LINK_REVIEW_UNDER_REVIEW,
-      'mp_TrackedEntity@odata.bind': `/mp_trackedentities(${trackedEntityId})`,
+      'mp_TrackedEntity@odata.bind': `/mp_trackedentitys(${trackedEntityId})`,
       'mp_Submission@odata.bind': `/mp_submissions(${submissionId})`,
     };
     if (existing?.mp_beneficiarysubmissionlinkid) {
