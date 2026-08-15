@@ -254,6 +254,26 @@ def find_deleted_present_conflicts(package: Path) -> list[str]:
     return conflicts
 
 
+def find_manifest_delete_intent_issues(package: Path) -> list[str]:
+    manifest = package / ".portalconfig/manifest.yml"
+    return [
+        f"{record.entity} {record.display_name or record.record_id} is marked IsDeleted: true; use the target-environment manifest before upload"
+        for record in parse_manifest(manifest)
+        if record.is_deleted
+    ]
+
+
+def find_source_map_issues(package: Path) -> list[str]:
+    web_files = package / "web-files"
+    if not web_files.exists():
+        fail(f"web-files directory not found: {web_files}")
+    return [
+        f"{path.relative_to(package)} should not be uploaded"
+        for path in sorted(web_files.iterdir())
+        if path.is_file() and (path.name.endswith(".map") or path.name.endswith(".map.webfile.yml"))
+    ]
+
+
 def home_fragment_paths(package: Path) -> list[Path]:
     candidates = [
         package / "web-pages/home/Home.webpage.copy.html",
@@ -391,14 +411,20 @@ def main() -> None:
     conflicts = find_deleted_present_conflicts(package)
     section_issues = find_empty_manifest_section_issues(package)
     environment_issues = find_environment_manifest_issues(package, args.environment_url)
+    delete_intent_issues = find_manifest_delete_intent_issues(package)
+    source_map_issues = find_source_map_issues(package)
     asset_issues = find_home_asset_reference_issues(package)
-    if conflicts or section_issues or environment_issues or asset_issues:
+    if conflicts or section_issues or environment_issues or delete_intent_issues or source_map_issues or asset_issues:
         for conflict in conflicts:
             print(f"Deleted-present conflict: {conflict}")
         for issue in section_issues:
             print(f"Manifest structure issue: {issue}")
         for issue in environment_issues:
             print(f"Environment manifest issue: {issue}")
+        for issue in delete_intent_issues:
+            print(f"Manifest delete intent issue: {issue}")
+        for issue in source_map_issues:
+            print(f"Source map issue: {issue}")
         for issue in asset_issues:
             print(f"Asset reference issue: {issue}")
         fail("Power Pages package hygiene validation failed")

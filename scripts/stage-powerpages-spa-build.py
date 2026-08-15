@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import uuid
+from urllib.parse import urlparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,11 +122,14 @@ def refresh_upload_mirror() -> None:
 
     upload_web_files = UPLOAD / "web-files"
     upload_web_files.mkdir(parents=True, exist_ok=True)
+    sync_upload_manifest_to_target_environment()
 
     for home, target in zip(HOME_FILES, UPLOAD_HOME_TARGETS, strict=True):
         if not target.parent.exists():
             fail(f"fresh upload package is missing {target.parent.relative_to(ROOT)}")
         shutil.copy2(home, target)
+
+    prune_upload_spa_assets(upload_web_files)
 
     for asset in sorted(path for path in DIST_ASSETS.iterdir() if path.is_file() and not path.name.endswith(".map")):
         shutil.copy2(asset, upload_web_files / asset.name)
@@ -135,6 +139,47 @@ def refresh_upload_mirror() -> None:
             shutil.copy2(site_metadata, upload_metadata)
         elif not upload_metadata.exists():
             upload_metadata.write_text(metadata_for(asset.name))
+
+
+def sync_upload_manifest_to_target_environment() -> None:
+    environment_url = os.environ.get("POWER_PLATFORM_ENVIRONMENT_URL", "").strip()
+    if not environment_url:
+        return
+
+    parsed = urlparse(environment_url)
+    host = (parsed.netloc or parsed.path).strip().strip("/")
+    if not host:
+        return
+
+    portal_config = UPLOAD / ".portalconfig"
+    target_manifest = portal_config / f"{host}-manifest.yml"
+    generic_manifest = portal_config / "manifest.yml"
+    if target_manifest.exists():
+        shutil.copy2(target_manifest, generic_manifest)
+
+
+def prune_upload_spa_assets(upload_web_files: Path) -> None:
+    current_assets = {
+        asset.name
+        for asset in DIST_ASSETS.iterdir()
+        if asset.is_file() and not asset.name.endswith(".map")
+    }
+    if not current_assets:
+        fail("missing deployable Vite assets; run npm run build:mshirika-runtime first")
+
+    for path in sorted(upload_web_files.iterdir()):
+        if not path.is_file():
+            continue
+        if path.name.endswith(".map") or path.name.endswith(".map.webfile.yml"):
+            path.unlink()
+            continue
+        if path.name.endswith(".webfile.yml"):
+            asset_name = path.name[: -len(".webfile.yml")]
+            if asset_name not in current_assets:
+                path.unlink()
+            continue
+        if path.name not in current_assets:
+            path.unlink()
 
 
 def repair_and_validate_upload_package() -> None:
