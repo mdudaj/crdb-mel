@@ -503,12 +503,6 @@ export class PowerPagesApiClient {
         status: 'failed',
         detail: 'Skipped because project lookup failed.',
       });
-      steps.push({
-        name: 'Tracked entity create with lookup-column navigation name',
-        operation: 'POST /_api/mp_trackedentitys',
-        status: 'failed',
-        detail: 'Skipped because project lookup failed.',
-      });
       return steps;
     }
 
@@ -526,16 +520,6 @@ export class PowerPagesApiClient {
         'mp_Project@odata.bind': `/mp_projects(${projectId})`,
       });
       return `Create succeeded with generated navigation property; id ${id}.`;
-    });
-
-    await run('Tracked entity create with lookup-column navigation name', 'POST /_api/mp_trackedentitys using mp_project@odata.bind', async () => {
-      const id = await this.createRecord('/_api/mp_trackedentitys', {
-        ...createBasePayload,
-        mp_entitykey: `diagnostic:lookup:${timestamp}`,
-        mp_displayname: 'Diagnostic tracked entity lookup-column bind',
-        'mp_project@odata.bind': `/mp_projects(${projectId})`,
-      });
-      return `Create succeeded with lookup-column navigation property; id ${id}.`;
     });
 
     return steps;
