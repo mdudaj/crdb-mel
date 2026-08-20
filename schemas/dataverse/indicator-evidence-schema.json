@@ -1,0 +1,770 @@
+{
+  "schema_name": "indicator_evidence_schema",
+  "generated_for_review_only": true,
+  "generated_on": "2026-08-20",
+  "environment_write": false,
+  "publisher_prefix_placeholder": "mp",
+  "purpose": "Review-only Dataverse model for moving TACATDP and future CRDB Sustainable Finance MEL calculations from dashboard code into governed indicator definitions, observations, evidence, source mappings, and indicator results.",
+  "scope": [
+    "Additive model-design artifact only.",
+    "No Dataverse table creation, table-permission change, site-setting change, import, or deployment is authorized by this file.",
+    "TACATDP remains the first configured project; the schema must support broader programme and operational MEL scopes without TACATDP-only table names."
+  ],
+  "design_decisions": [
+    "Keep canonical form submissions and imported report rows as evidence/source records; indicator facts are derived from them.",
+    "Represent each KPI as metadata in mp_IndicatorDefinition instead of hard-coding formulas inside dashboard components.",
+    "Normalize measured, estimated, and modelled inputs as mp_Observation records before producing aggregate mp_IndicatorResult rows.",
+    "Use mp_DataSourceMapping to document which form field, import column, Dataverse table, or integration value feeds each indicator input.",
+    "Link evidence to observations/results so official values can be traced back to submissions, GPS/photo/document references, timestamps, and verification status.",
+    "Store method and verification status on observations and results; do not combine estimated and verified values without exposing that status.",
+    "Use project-scoped alternate keys for idempotent imports and scheduled recalculation."
+  ],
+  "tables": [
+    {
+      "name": "mp_IndicatorDefinition",
+      "display_name": "Indicator Definition",
+      "primary_name_column": "mp_name",
+      "ownership": "UserOrTeam",
+      "purpose": "Configures an indicator/KPI, including formula, unit, frequency, source mappings, disaggregation, and verification method.",
+      "columns": [
+        {
+          "name": "mp_name",
+          "type": "Text",
+          "required": true,
+          "notes": "Human-readable indicator name."
+        },
+        {
+          "name": "mp_code",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable project-scoped code such as TAC-BEN-001 or SFU-FIN-001."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": false,
+          "notes": "Programme/project boundary. Null may be used only for reusable enterprise indicators."
+        },
+        {
+          "name": "mp_description",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Plain-language definition for MEL officers and reviewers."
+        },
+        {
+          "name": "mp_indicatortype",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Financial",
+            "Output",
+            "Outcome",
+            "ClimateImpactEstimate",
+            "OperationalDataQuality"
+          ],
+          "notes": "Classifies the indicator for UI grouping and review."
+        },
+        {
+          "name": "mp_resultlevel",
+          "type": "Choice",
+          "required": false,
+          "choices": [
+            "Programme",
+            "Component",
+            "Outcome",
+            "Output",
+            "Activity",
+            "Operational"
+          ],
+          "notes": "Flexible result-framework level."
+        },
+        {
+          "name": "mp_unit",
+          "type": "Text",
+          "required": true,
+          "notes": "Examples: count, TZS, percent, hectares, tCO2e."
+        },
+        {
+          "name": "mp_formula",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Reviewable formula expression or narrative method. Empty for directly reported indicators."
+        },
+        {
+          "name": "mp_numerator",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Numerator definition where applicable."
+        },
+        {
+          "name": "mp_denominator",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Denominator definition where applicable."
+        },
+        {
+          "name": "mp_reportingfrequency",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "OnDemand",
+            "Weekly",
+            "Monthly",
+            "Quarterly",
+            "Seasonal",
+            "Annual",
+            "Baseline",
+            "Endline"
+          ],
+          "notes": "Expected reporting cadence."
+        },
+        {
+          "name": "mp_disaggregationjson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "JSON list of supported breakdown dimensions such as region, district, sex, youth, crop, technology, and borrower type."
+        },
+        {
+          "name": "mp_datasourcemappingjson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Compact source mapping summary for quick review. Detailed rows live in mp_DataSourceMapping."
+        },
+        {
+          "name": "mp_verificationmethod",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Evidence and review method required before treating results as official."
+        },
+        {
+          "name": "mp_responsibleunit",
+          "type": "Text",
+          "required": false,
+          "notes": "Responsible CRDB unit or approved partner."
+        },
+        {
+          "name": "mp_reportingframework",
+          "type": "Text",
+          "required": false,
+          "notes": "Framework label such as GCF, CRDB internal, SFU portfolio, or programme-specific."
+        },
+        {
+          "name": "mp_status",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Draft",
+            "Active",
+            "Retired"
+          ],
+          "notes": "Only active indicators should feed production dashboards."
+        }
+      ]
+    },
+    {
+      "name": "mp_DataSourceMapping",
+      "display_name": "Data Source Mapping",
+      "primary_name_column": "mp_mappingkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Maps a source field/table/path to an indicator input so dashboards and reports do not own hidden formulas.",
+      "columns": [
+        {
+          "name": "mp_mappingkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as indicatorCode:sourceType:sourcePath."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": false,
+          "notes": "Project scope for programme-specific mappings."
+        },
+        {
+          "name": "mp_indicatordefinition",
+          "type": "Lookup:mp_IndicatorDefinition",
+          "required": true,
+          "notes": "Indicator that consumes this source."
+        },
+        {
+          "name": "mp_sourcetype",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "XFormField",
+            "ImportedFileColumn",
+            "DataverseTable",
+            "PowerAutomateFlow",
+            "PowerBIModel",
+            "ExternalIntegration"
+          ],
+          "notes": "Source category."
+        },
+        {
+          "name": "mp_sourcetable",
+          "type": "Text",
+          "required": false,
+          "notes": "Source table or entity set, for example mp_SubmissionReportRow."
+        },
+        {
+          "name": "mp_sourcecolumn",
+          "type": "Text",
+          "required": false,
+          "notes": "Source column or imported workbook column."
+        },
+        {
+          "name": "mp_sourcepath",
+          "type": "Text",
+          "required": false,
+          "notes": "XForm XPath or JSON path inside canonical/report payload."
+        },
+        {
+          "name": "mp_transformrule",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Plain-language or controlled transform rule for unit conversion, classification, or aggregation."
+        },
+        {
+          "name": "mp_required",
+          "type": "TwoOptions",
+          "required": true,
+          "notes": "Whether this source is required for the indicator to calculate."
+        },
+        {
+          "name": "mp_active",
+          "type": "TwoOptions",
+          "required": true,
+          "notes": "Inactive mappings are retained for lineage but excluded from new calculations."
+        },
+        {
+          "name": "mp_notes",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Review notes, limitations, or source-quality caveats."
+        }
+      ]
+    },
+    {
+      "name": "mp_Observation",
+      "display_name": "Observation",
+      "primary_name_column": "mp_observationkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Atomic measured, reported, imported, estimated, or modelled value used as an indicator input.",
+      "columns": [
+        {
+          "name": "mp_observationkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key for idempotent observation imports/calculations."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/programme boundary."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": false,
+          "notes": "Beneficiary, group, organisation, facility, or other monitored subject when the observation is entity-level."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Canonical submission lineage when observation came from field collection or baseline import."
+        },
+        {
+          "name": "mp_submissionreportrow",
+          "type": "Lookup:mp_SubmissionReportRow",
+          "required": false,
+          "notes": "Current reporting projection row used to derive the observation."
+        },
+        {
+          "name": "mp_datasourcemapping",
+          "type": "Lookup:mp_DataSourceMapping",
+          "required": false,
+          "notes": "Source mapping used to extract or transform the observed value."
+        },
+        {
+          "name": "mp_observedat",
+          "type": "DateTime",
+          "required": false,
+          "notes": "When the condition/value was observed."
+        },
+        {
+          "name": "mp_reportingperiod",
+          "type": "Text",
+          "required": false,
+          "notes": "Period key such as 2026-Q3 or baseline-2026."
+        },
+        {
+          "name": "mp_geography",
+          "type": "Text",
+          "required": false,
+          "notes": "Region/district/ward label or future geography key."
+        },
+        {
+          "name": "mp_valuedecimal",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Numeric value when applicable."
+        },
+        {
+          "name": "mp_valuetext",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Text/category value when numeric value is not applicable."
+        },
+        {
+          "name": "mp_unit",
+          "type": "Text",
+          "required": false,
+          "notes": "Unit snapshot."
+        },
+        {
+          "name": "mp_method",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Measured",
+            "Reported",
+            "Imported",
+            "Estimated",
+            "Modelled"
+          ],
+          "notes": "How the observation value was produced."
+        },
+        {
+          "name": "mp_qualitystatus",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Raw",
+            "Validated",
+            "Flagged",
+            "Rejected",
+            "Approved"
+          ],
+          "notes": "Data-quality state before indicator calculation."
+        },
+        {
+          "name": "mp_disaggregationjson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Snapshot dimensions such as sex, youth, crop, technology, region, branch, and borrower type."
+        },
+        {
+          "name": "mp_sourcepayloadref",
+          "type": "Text",
+          "required": false,
+          "notes": "Non-secret pointer to source payload, source row, or field path."
+        },
+        {
+          "name": "mp_notes",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Review notes or caveats."
+        }
+      ]
+    },
+    {
+      "name": "mp_Evidence",
+      "display_name": "Evidence",
+      "primary_name_column": "mp_evidencekey",
+      "ownership": "UserOrTeam",
+      "purpose": "Links supporting material, GPS/photo/document references, hashes, timestamps, and verification state to observations or results.",
+      "columns": [
+        {
+          "name": "mp_evidencekey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable evidence key."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/programme boundary."
+        },
+        {
+          "name": "mp_observation",
+          "type": "Lookup:mp_Observation",
+          "required": false,
+          "notes": "Observation supported by this evidence."
+        },
+        {
+          "name": "mp_indicatorresult",
+          "type": "Lookup:mp_IndicatorResult",
+          "required": false,
+          "notes": "Aggregate result supported by this evidence or evidence summary."
+        },
+        {
+          "name": "mp_submission",
+          "type": "Lookup:mp_Submission",
+          "required": false,
+          "notes": "Canonical submission lineage where evidence came from field collection."
+        },
+        {
+          "name": "mp_evidencetype",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "SubmissionPayload",
+            "Photo",
+            "GPS",
+            "Document",
+            "Signature",
+            "SystemRecord",
+            "ReviewerNote"
+          ],
+          "notes": "Evidence category."
+        },
+        {
+          "name": "mp_title",
+          "type": "Text",
+          "required": false,
+          "notes": "Short evidence title for review surfaces."
+        },
+        {
+          "name": "mp_uriorfilereference",
+          "type": "Text",
+          "required": false,
+          "notes": "Governed file/blob/document reference. Do not store secrets or public bearer URLs."
+        },
+        {
+          "name": "mp_hash",
+          "type": "Text",
+          "required": false,
+          "notes": "Optional checksum/hash for integrity review."
+        },
+        {
+          "name": "mp_capturedat",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Capture timestamp."
+        },
+        {
+          "name": "mp_capturedby",
+          "type": "Text",
+          "required": false,
+          "notes": "Collector/reviewer identity snapshot where permitted."
+        },
+        {
+          "name": "mp_gpslatitude",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Latitude for GPS/photo evidence."
+        },
+        {
+          "name": "mp_gpslongitude",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Longitude for GPS/photo evidence."
+        },
+        {
+          "name": "mp_verificationstatus",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Unreviewed",
+            "UnderReview",
+            "Verified",
+            "Rejected",
+            "Unavailable"
+          ],
+          "notes": "Evidence verification status."
+        },
+        {
+          "name": "mp_notes",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Review notes."
+        }
+      ]
+    },
+    {
+      "name": "mp_IndicatorResult",
+      "display_name": "Indicator Result",
+      "primary_name_column": "mp_resultkey",
+      "ownership": "UserOrTeam",
+      "purpose": "Stores calculated or reported indicator facts for dashboards, reports, and future Power BI semantic models.",
+      "columns": [
+        {
+          "name": "mp_resultkey",
+          "type": "Text",
+          "required": true,
+          "notes": "Stable key such as projectCode:indicatorCode:period:scope:geography:disaggregationHash."
+        },
+        {
+          "name": "mp_project",
+          "type": "Lookup:mp_Project",
+          "required": true,
+          "notes": "Project/programme boundary."
+        },
+        {
+          "name": "mp_indicatordefinition",
+          "type": "Lookup:mp_IndicatorDefinition",
+          "required": true,
+          "notes": "Indicator definition used to calculate/report this result."
+        },
+        {
+          "name": "mp_reportingperiod",
+          "type": "Text",
+          "required": true,
+          "notes": "Reporting period key."
+        },
+        {
+          "name": "mp_geography",
+          "type": "Text",
+          "required": false,
+          "notes": "Region/district/ward/future geography key for aggregate scope."
+        },
+        {
+          "name": "mp_trackedentity",
+          "type": "Lookup:mp_TrackedEntity",
+          "required": false,
+          "notes": "Only set for entity-level indicator facts; leave empty for aggregate results."
+        },
+        {
+          "name": "mp_value",
+          "type": "Decimal",
+          "required": false,
+          "notes": "Numeric result value."
+        },
+        {
+          "name": "mp_valuetext",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Non-numeric result value or result narrative."
+        },
+        {
+          "name": "mp_unit",
+          "type": "Text",
+          "required": false,
+          "notes": "Unit snapshot from the definition."
+        },
+        {
+          "name": "mp_method",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Measured",
+            "Reported",
+            "Imported",
+            "Estimated",
+            "Modelled",
+            "Mixed"
+          ],
+          "notes": "How the result value was produced."
+        },
+        {
+          "name": "mp_verificationstatus",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Draft",
+            "Calculated",
+            "UnderReview",
+            "Verified",
+            "Rejected",
+            "Unavailable"
+          ],
+          "notes": "Do not present official values unless status and method are acceptable for the reporting context."
+        },
+        {
+          "name": "mp_disaggregationjson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Snapshot of applied dimensions and filter values."
+        },
+        {
+          "name": "mp_sourcesummaryjson",
+          "type": "MultilineText",
+          "required": false,
+          "notes": "Counts and source references used for lineage, excluding sensitive raw identifiers."
+        },
+        {
+          "name": "mp_calculatedat",
+          "type": "DateTime",
+          "required": false,
+          "notes": "Calculation or import timestamp."
+        },
+        {
+          "name": "mp_calculatedby",
+          "type": "Text",
+          "required": false,
+          "notes": "Automation, user, or approved service identity that produced the result."
+        },
+        {
+          "name": "mp_status",
+          "type": "Choice",
+          "required": true,
+          "choices": [
+            "Current",
+            "Superseded",
+            "Failed"
+          ],
+          "notes": "Current result rows drive dashboards; superseded rows remain for lineage where retained."
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_IndicatorDefinition",
+      "lookup_column": "mp_project",
+      "required": false,
+      "notes": "Allows programme-specific or reusable enterprise indicators."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_DataSourceMapping",
+      "lookup_column": "mp_project",
+      "required": false,
+      "notes": "Project scope for source mappings."
+    },
+    {
+      "referenced_table": "mp_IndicatorDefinition",
+      "referencing_table": "mp_DataSourceMapping",
+      "lookup_column": "mp_indicatordefinition",
+      "required": true,
+      "notes": "Each mapping feeds one indicator definition."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_Observation",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope for observations."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_Observation",
+      "lookup_column": "mp_trackedentity",
+      "required": false,
+      "notes": "Entity-level observation lineage."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_Observation",
+      "lookup_column": "mp_submission",
+      "required": false,
+      "notes": "Canonical submission lineage."
+    },
+    {
+      "referenced_table": "mp_SubmissionReportRow",
+      "referencing_table": "mp_Observation",
+      "lookup_column": "mp_submissionreportrow",
+      "required": false,
+      "notes": "Reporting projection lineage."
+    },
+    {
+      "referenced_table": "mp_DataSourceMapping",
+      "referencing_table": "mp_Observation",
+      "lookup_column": "mp_datasourcemapping",
+      "required": false,
+      "notes": "Source extraction/transform lineage."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_Evidence",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope for evidence."
+    },
+    {
+      "referenced_table": "mp_Observation",
+      "referencing_table": "mp_Evidence",
+      "lookup_column": "mp_observation",
+      "required": false,
+      "notes": "Observation-level evidence."
+    },
+    {
+      "referenced_table": "mp_IndicatorResult",
+      "referencing_table": "mp_Evidence",
+      "lookup_column": "mp_indicatorresult",
+      "required": false,
+      "notes": "Aggregate result evidence or evidence summary."
+    },
+    {
+      "referenced_table": "mp_Submission",
+      "referencing_table": "mp_Evidence",
+      "lookup_column": "mp_submission",
+      "required": false,
+      "notes": "Canonical submission evidence lineage."
+    },
+    {
+      "referenced_table": "mp_Project",
+      "referencing_table": "mp_IndicatorResult",
+      "lookup_column": "mp_project",
+      "required": true,
+      "notes": "Project scope for indicator facts."
+    },
+    {
+      "referenced_table": "mp_IndicatorDefinition",
+      "referencing_table": "mp_IndicatorResult",
+      "lookup_column": "mp_indicatordefinition",
+      "required": true,
+      "notes": "Definition used by the result."
+    },
+    {
+      "referenced_table": "mp_TrackedEntity",
+      "referencing_table": "mp_IndicatorResult",
+      "lookup_column": "mp_trackedentity",
+      "required": false,
+      "notes": "Optional entity-level result scope."
+    }
+  ],
+  "alternate_keys": [
+    {
+      "table": "mp_IndicatorDefinition",
+      "name": "AK_IndicatorDefinition_Project_Code",
+      "columns": [
+        "mp_project",
+        "mp_code"
+      ],
+      "notes": "Project-scoped stable indicator code. Review Dataverse key constraints before implementation because lookup columns may require a different physical key strategy."
+    },
+    {
+      "table": "mp_DataSourceMapping",
+      "name": "AK_DataSourceMapping_Key",
+      "columns": [
+        "mp_mappingkey"
+      ],
+      "notes": "Idempotent mapping key."
+    },
+    {
+      "table": "mp_Observation",
+      "name": "AK_Observation_Key",
+      "columns": [
+        "mp_observationkey"
+      ],
+      "notes": "Idempotent observation import/calculation key."
+    },
+    {
+      "table": "mp_Evidence",
+      "name": "AK_Evidence_Key",
+      "columns": [
+        "mp_evidencekey"
+      ],
+      "notes": "Idempotent evidence key."
+    },
+    {
+      "table": "mp_IndicatorResult",
+      "name": "AK_IndicatorResult_Key",
+      "columns": [
+        "mp_resultkey"
+      ],
+      "notes": "Idempotent current/superseded result key."
+    }
+  ],
+  "implementation_gate": [
+    "Review object names, ownership, and role model with SFU and CRDB administrators.",
+    "Confirm Power Automate or service-principal ownership for scheduled calculation before moving official indicator refresh out of the browser.",
+    "Confirm field-level Web API exposure only for approved prototype surfaces; do not expose evidence file references broadly.",
+    "Confirm whether lookup columns can be used in the approved alternate-key strategy or whether denormalized project/indicator code columns are required."
+  ]
+}

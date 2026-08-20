@@ -17,6 +17,8 @@ The core rule is:
 - `schemas/dataverse/odk-central-inspired-mvp-schema.md`
 - `schemas/dataverse/reporting-projection-schema.md`
 - `schemas/dataverse/beneficiary-entity-extension-schema.json`
+- `schemas/dataverse/indicator-evidence-schema.json`
+- `schemas/dataverse/indicator-evidence-schema.md`
 - `docs/powerpages-odk-webforms/beneficiary-dataverse-schema-plan-20260811.md`
 - `docs/powerpages-odk-webforms/beneficiary-bridge-schema-deployment-preflight-20260813.md`
 - `docs/powerpages-odk-webforms/baseline-bridge-import-dry-run-20260814.md`
@@ -212,6 +214,19 @@ Create review-only schema artifacts for:
 
 Do not deploy these tables until SFU and CRDB platform administrators approve the object names, ownership, security roles, and environment-write path.
 
+Delivered review artifacts:
+
+- `schemas/dataverse/indicator-evidence-schema.json`
+- `schemas/dataverse/indicator-evidence-schema.md`
+
+Implementation boundary:
+
+- The artifact is additive and review-only.
+- No Dataverse table creation is authorized.
+- No Power Pages Web API field exposure is authorized.
+- No table permission, site setting, import, or deployment change is authorized.
+- Future implementation must confirm service ownership for scheduled indicator refresh before moving official calculation out of the browser.
+
 ## Recommended next implementation sequence
 
 1. Finalize the beneficiary bridge model as the current prototype identity model:
@@ -263,6 +278,7 @@ Run:
 ```bash
 node scripts/validate-prototype-model-design.mjs
 node scripts/validate-beneficiary-entity-schema.mjs
+node scripts/validate-indicator-evidence-schema.mjs
 npm run test:powerpages-assets
 ```
 
@@ -270,4 +286,5 @@ Expected result:
 
 - Model-design validator passes.
 - Beneficiary schema validator confirms tracked-entity extension rules.
+- Indicator/evidence schema validator confirms the review-only indicator, observation, evidence, source-mapping, and result contract.
 - Power Pages asset/package tests remain green.
