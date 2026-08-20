@@ -214,6 +214,20 @@ const dashboardClimateOutcomes = computed<OutcomeMetric[]>(() => {
   ];
 });
 
+const dashboardTrainingMetrics = computed(() => {
+  const training = liveBaselineProjection.value.training;
+  return {
+    farmers: training.farmersTrained > 0 ? formatWholeNumber(training.farmersTrained) : 'Awaiting',
+    records: training.records > 0 ? `${formatWholeNumber(training.records)} records` : 'Not imported',
+    female: training.femaleParticipationPct !== null ? formatPercent(training.femaleParticipationPct) : 'Awaiting',
+    femaleDetail: training.femaleTrained > 0 ? `${formatWholeNumber(training.femaleTrained)} female` : 'Not imported',
+    youth: training.youthParticipationPct !== null ? formatPercent(training.youthParticipationPct) : 'Awaiting',
+    youthDetail: training.youthTrained > 0 ? `${formatWholeNumber(training.youthTrained)} youth` : 'Not imported',
+    genderContent: training.genderResponsiveRecords > 0 ? formatWholeNumber(training.genderResponsiveRecords) : 'Awaiting',
+    genderContentDetail: training.genderResponsiveRecords > 0 ? 'Gender content' : 'Not imported',
+  };
+});
+
 const hasLiveKpiProjection = computed(() => liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null);
 
 const liveRegionsCovered = computed(() => new Set(
@@ -308,6 +322,10 @@ function formatWholeNumber(value: number) {
 
 function formatBillions(value: number) {
   return (value / 1_000_000_000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value)}%`;
 }
 
 function chartColorForIndex(index: number) {
@@ -658,13 +676,23 @@ function regionNameFromSubmission(regionLabel: string) {
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
-            <strong class="training-value-with-icon">{{ liveBaselineProjection.training.farmersTrained > 0 ? formatWholeNumber(liveBaselineProjection.training.farmersTrained) : 'Awaiting' }} <Users aria-hidden="true" /></strong>
-            <small>{{ liveBaselineProjection.training.records > 0 ? `${formatWholeNumber(liveBaselineProjection.training.records)} records` : 'Not imported' }}</small>
+            <strong class="training-value-with-icon">{{ dashboardTrainingMetrics.farmers }} <Users aria-hidden="true" /></strong>
+            <small>{{ dashboardTrainingMetrics.records }}</small>
           </div>
           <div>
-            <span>Youth Trained</span>
-            <strong>{{ liveBaselineProjection.training.youthTrained > 0 ? formatWholeNumber(liveBaselineProjection.training.youthTrained) : 'Awaiting' }}</strong>
-            <small>{{ liveBaselineProjection.training.youthTrained > 0 ? 'Baseline estimate' : 'Not imported' }}</small>
+            <span>Female Participation</span>
+            <strong>{{ dashboardTrainingMetrics.female }}</strong>
+            <small>{{ dashboardTrainingMetrics.femaleDetail }}</small>
+          </div>
+          <div>
+            <span>Youth Participation</span>
+            <strong>{{ dashboardTrainingMetrics.youth }}</strong>
+            <small>{{ dashboardTrainingMetrics.youthDetail }}</small>
+          </div>
+          <div>
+            <span>Gender Content</span>
+            <strong>{{ dashboardTrainingMetrics.genderContent }}</strong>
+            <small>{{ dashboardTrainingMetrics.genderContentDetail }}</small>
           </div>
         </div>
         <template #footer>
@@ -1026,7 +1054,7 @@ a,
   background: #F8FBF9;
 }
 
-.training-grid div:last-child {
+.training-grid div:nth-child(even) {
   justify-items: end;
   text-align: right;
 }

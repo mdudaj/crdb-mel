@@ -17,7 +17,12 @@ export interface TacatdpBaselineProjection {
   training: {
     records: number;
     farmersTrained: number;
+    maleTrained: number;
+    femaleTrained: number;
     youthTrained: number;
+    femaleParticipationPct: number | null;
+    youthParticipationPct: number | null;
+    genderResponsiveRecords: number;
   };
   area: {
     calculableRecords: number;
@@ -102,7 +107,12 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     training: {
       records: 0,
       farmersTrained: 0,
+      maleTrained: 0,
+      femaleTrained: 0,
       youthTrained: 0,
+      femaleParticipationPct: null,
+      youthParticipationPct: null,
+      genderResponsiveRecords: 0,
     },
     area: {
       calculableRecords: 0,
@@ -184,24 +194,48 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
       category.amountTzs += allocatedStageAmount;
     }
 
-    const farmersTrained = readNumber(answers, [
+    const explicitFarmersTrained = readNumber(answers, [
       /(?:^|\/)total_trained$/i,
       /total.*trained/i,
       /farmers?.*trained/i,
     ]);
-    if (isUsableNumber(farmersTrained)) {
+    const maleTrained = sumNumbers(answers, [
+      /(?:^|\/)male_trained$/i,
+      /(?:^|\/)training_dm$/i,
+      /(?:^|\/)training_im$/i,
+    ]);
+    const femaleTrained = sumNumbers(answers, [
+      /(?:^|\/)female_trained$/i,
+      /(?:^|\/)training_df$/i,
+      /(?:^|\/)training_if$/i,
+    ]);
+    const farmersTrained = isUsableNumber(explicitFarmersTrained)
+      ? explicitFarmersTrained
+      : maleTrained + femaleTrained;
+    if (farmersTrained > 0) {
       projection.training.records += 1;
       projection.training.farmersTrained += farmersTrained;
+      projection.training.maleTrained += maleTrained;
+      projection.training.femaleTrained += femaleTrained;
       region.farmersTrained += farmersTrained;
     }
 
-    const youthTrained = readNumber(answers, [
+    const explicitYouthTrained = readNumber(answers, [
       /(?:^|\/)total_youth_trained$/i,
       /(?:^|\/)total_youth$/i,
       /youth.*trained/i,
     ]);
-    if (isUsableNumber(youthTrained)) {
+    const youthTrained = isUsableNumber(explicitYouthTrained)
+      ? explicitYouthTrained
+      : sumNumbers(answers, [
+        /(?:^|\/)training_dy$/i,
+        /(?:^|\/)training_iy$/i,
+      ]);
+    if (youthTrained > 0) {
       projection.training.youthTrained += youthTrained;
+    }
+    if (readTruthy(answers, [/gender_content/i, /gender.*responsive.*content/i])) {
+      projection.training.genderResponsiveRecords += 1;
     }
 
     const baselineAcres = readNumber(answers, [
@@ -297,6 +331,14 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
   }
   projection.yield.medianSimpleChangePct = median(simpleYieldChanges);
   projection.water.medianEfficiencyPct = median(waterEfficiencyValues);
+  projection.training.femaleParticipationPct = percentage(
+    projection.training.femaleTrained,
+    projection.training.maleTrained + projection.training.femaleTrained,
+  );
+  projection.training.youthParticipationPct = percentage(
+    projection.training.youthTrained,
+    projection.training.farmersTrained,
+  );
   projection.loanPortfolio = buildLoanPortfolioValues(loanStageAccumulators);
   projection.regions = buildRegions(regionAccumulators);
   projection.technologies = buildTechnologyValues(technologyAccumulators);
@@ -333,6 +375,14 @@ function readText(answers: RootAnswers, patterns: RegExp[]): string {
     if (typeof value === 'number') return String(value);
   }
   return '';
+}
+
+function sumNumbers(answers: RootAnswers, patterns: RegExp[]): number {
+  return Object.entries(answers).reduce((total, [key, value]) => {
+    if (!patterns.some((pattern) => pattern.test(key))) return total;
+    const numeric = toNumber(value);
+    return numeric !== null ? total + numeric : total;
+  }, 0);
 }
 
 function readTruthy(answers: RootAnswers, patterns: RegExp[]): boolean {
@@ -526,4 +576,9 @@ function median(values: number[]): number | null {
   const middle = Math.floor(sorted.length / 2);
   if (sorted.length % 2 === 1) return sorted[middle];
   return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function percentage(value: number, denominator: number): number | null {
+  if (denominator <= 0) return null;
+  return (value / denominator) * 100;
 }

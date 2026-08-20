@@ -88,9 +88,6 @@ for (const fragment of [
   'Baseline loan',
   'Farmers Trained',
   'Baseline',
-  'Youth Trained',
-  'youthTrained',
-  'Baseline estimate',
   'tCO₂e Avoided',
   'Projection',
   'Verify',
@@ -136,6 +133,11 @@ for (const fragment of [
   'annualTco2eAvoided',
   'improvedHectares',
   'farmersTrained',
+  'femaleTrained',
+  'maleTrained',
+  'femaleParticipationPct',
+  'youthParticipationPct',
+  'genderResponsiveRecords',
   'improvedReports',
   'reportedLoanAmountTzs',
   'loanPortfolio: NamedValue[]',
@@ -188,6 +190,17 @@ if (!kpiCardSource.includes('text-overflow: ellipsis;') || !kpiCardSource.includ
 
 if (dashboardPageSource.includes('Training Sessions') || dashboardPageSource.includes('<strong>192</strong>') || dashboardPageSource.includes('Prototype pending')) {
   throw new Error('Training & Capacity Building card must not show unsupported prototype training sessions after baseline import projection exists.');
+}
+
+for (const fragment of [
+  'Female Participation',
+  'Youth Participation',
+  'Gender Content',
+  'dashboardTrainingMetrics',
+]) {
+  if (!dashboardPageSource.includes(fragment)) {
+    throw new Error(`Training & Capacity Building card must expose baseline-supported training breakdown: missing ${fragment}.`);
+  }
 }
 
 console.log('Dashboard visual spacing validation passed.');
