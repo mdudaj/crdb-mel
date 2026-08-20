@@ -76,4 +76,24 @@ if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashbo
   throw new Error('Program Impact Goal copy must keep a subtle scrim for readability over the illustration.');
 }
 
+for (const fragment of [
+  'Live KPI projection:',
+  'Baseline Records',
+  'Live report projection',
+  'Regions Covered',
+  'From beneficiary profiles',
+  'Training Data',
+  'Not in minimal import',
+  'Climate KPI',
+  'Requires verification',
+]) {
+  if (!dashboardPageSource.includes(fragment)) {
+    throw new Error(`Dashboard live KPI projection must include conservative ${fragment} state.`);
+  }
+}
+
+if (!dashboardPageSource.includes('api.listSubmissionReportRows({ page: 1, pageSize: 10 })')) {
+  throw new Error('Dashboard live KPI projection must read recent report rows, not only the total count.');
+}
+
 console.log('Dashboard visual spacing validation passed.');

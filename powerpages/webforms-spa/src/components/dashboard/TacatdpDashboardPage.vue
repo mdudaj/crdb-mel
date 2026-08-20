@@ -16,6 +16,7 @@ import { computed, defineAsyncComponent, onMounted, ref, type Component } from '
 import programImpactFarmer from '../../assets/dashboard/program-impact-farmer.png';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
 import { PowerPagesApiClient } from '../../powerpages-api/client';
+import type { BeneficiaryListItem, SubmissionReportRow } from '../../powerpages-api/types';
 import { buildDisbursementTrendOption, type DashboardChartOption } from './chartOptions';
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
@@ -96,6 +97,8 @@ const DashboardChart = defineAsyncComponent(async () => {
 const api = new PowerPagesApiClient();
 const liveBeneficiaryCount = ref<number | null>(null);
 const liveReportRowCount = ref<number | null>(null);
+const liveBeneficiaries = ref<BeneficiaryListItem[]>([]);
+const liveReportRows = ref<SubmissionReportRow[]>([]);
 const liveDashboardLoading = ref(false);
 const liveDashboardError = ref('');
 
@@ -103,16 +106,50 @@ const selectedRegion = regionalMetrics.find((region) => region.name === 'Morogor
 const regionData = regionalMetrics.map((region) => ({ name: region.name, value: region.disbursed }));
 
 const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) => {
-  if (metric.id === 'active-borrowers' && liveBeneficiaryCount.value !== null) {
-    return {
-      ...metric,
-      label: 'Beneficiaries',
-      value: liveBeneficiaryCount.value.toLocaleString(),
-      change: 'Live baseline registry',
-    };
+  if (!hasLiveKpiProjection.value) return metric;
+
+  if (metric.id === 'active-loans') {
+    return { ...metric, label: 'Baseline Records', value: formatLiveCount(liveReportRowCount.value), change: 'Live report projection' };
+  }
+  if (metric.id === 'active-borrowers') {
+    return { ...metric, label: 'Beneficiaries', value: formatLiveCount(liveBeneficiaryCount.value), change: 'Live beneficiary registry' };
+  }
+  if (metric.id === 'total-disbursed') {
+    return { ...metric, label: 'Regions Covered', value: liveRegionsCovered.value.toLocaleString(), change: 'From beneficiary profiles', icon: 'map' };
+  }
+  if (metric.id === 'repayment-rate') {
+    return { ...metric, label: 'Latest Update', value: liveLatestUpdateLabel.value, change: 'Report projection' };
+  }
+  if (metric.id === 'farmers-trained') {
+    return { ...metric, label: 'Training Data', value: 'Awaiting', change: 'Not in minimal import' };
+  }
+  if (metric.id === 'carbon-avoided') {
+    return { ...metric, label: 'Climate KPI', value: 'Not calc.', change: 'Requires verification' };
   }
   return metric;
 }));
+
+const hasLiveKpiProjection = computed(() => liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null);
+
+const liveRegionsCovered = computed(() => new Set(
+  liveBeneficiaries.value
+    .map((beneficiary) => beneficiary.region?.trim())
+    .filter((region): region is string => Boolean(region && region !== 'Not recorded')),
+).size);
+
+const liveLatestUpdateLabel = computed(() => {
+  const latest = latestLiveUpdateIso.value;
+  if (!latest) return 'Awaiting';
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(latest));
+});
+
+const latestLiveUpdateIso = computed(() => {
+  const candidateDates = [
+    ...liveReportRows.value.map((row) => row.mp_updatedat || row.mp_projectedat || row.mp_submittedat),
+  ].filter((value): value is string => Boolean(value));
+  if (candidateDates.length === 0) return '';
+  return candidateDates.sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0];
+});
 
 const liveDashboardSummary = computed(() => {
   if (liveDashboardLoading.value) return 'Loading live baseline registry counts…';
@@ -121,7 +158,9 @@ const liveDashboardSummary = computed(() => {
     const parts = [];
     if (liveBeneficiaryCount.value !== null) parts.push(`${liveBeneficiaryCount.value.toLocaleString()} beneficiary profiles`);
     if (liveReportRowCount.value !== null) parts.push(`${liveReportRowCount.value.toLocaleString()} submission report rows`);
-    return `Live baseline registry: ${parts.join(' · ')}`;
+    parts.push(`${liveRegionsCovered.value.toLocaleString()} regions covered`);
+    if (latestLiveUpdateIso.value) parts.push(`latest update ${liveLatestUpdateLabel.value}`);
+    return `Live KPI projection: ${parts.join(' · ')}`;
   }
   return 'Live baseline registry not yet queried.';
 });
@@ -132,11 +171,15 @@ async function loadDashboardLiveCounts() {
   try {
     const [beneficiaries, reportRows] = await Promise.all([
       api.listBeneficiaries(),
-      api.listSubmissionReportRows({ page: 1, pageSize: 1 }),
+      api.listSubmissionReportRows({ page: 1, pageSize: 10 }),
     ]);
+    liveBeneficiaries.value = beneficiaries;
+    liveReportRows.value = reportRows.rows;
     liveBeneficiaryCount.value = beneficiaries.length;
     liveReportRowCount.value = reportRows.total;
   } catch (caught) {
+    liveBeneficiaries.value = [];
+    liveReportRows.value = [];
     liveBeneficiaryCount.value = null;
     liveReportRowCount.value = null;
     liveDashboardError.value = caught instanceof Error ? caught.message : 'Unable to load live registry counts.';
@@ -165,6 +208,10 @@ function chartParam(params: unknown): { name: string; value: number; percent: nu
     };
   }
   return { name: '', value: 0, percent: 0 };
+}
+
+function formatLiveCount(value: number | null) {
+  return value === null ? 'Awaiting' : value.toLocaleString();
 }
 
 const loanPortfolioOption = computed<DashboardChartOption>(() => ({
@@ -335,6 +382,7 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
 function iconFor(metric: KpiMetric) {
   if (metric.icon === 'group') return Users;
   if (metric.icon === 'finance') return HandCoins;
+  if (metric.icon === 'map') return MapPinned;
   if (metric.icon === 'repayment') return TrendingUp;
   if (metric.icon === 'sprout') return Sprout;
   if (metric.icon === 'co2') return Building2;
