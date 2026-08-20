@@ -152,9 +152,9 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
     const amount = liveBaselineProjection.value.finance.reportedLoanAmountTzs;
     return {
       ...metric,
-      label: 'Reported Amount',
+      label: 'Loan Amount',
       value: amount > 0 ? `TZS ${formatBillions(amount)}B` : 'Awaiting',
-      change: amount > 0 ? 'Baseline loan' : 'Not imported',
+      change: amount > 0 ? 'Baseline loans' : 'Not imported',
       changeDirection: 'neutral',
     };
   }

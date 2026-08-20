@@ -84,8 +84,8 @@ for (const fragment of [
   'Live projection:',
   'Baseline Records',
   'Rows',
-  'Reported Amount',
-  'Baseline loan',
+  'Loan Amount',
+  'Baseline loans',
   'Farmers Trained',
   'Baseline',
   'tCO₂e Avoided',
@@ -207,8 +207,16 @@ if (!kpiCardSource.includes("changeDirection?: 'up' | 'neutral'") || !kpiCardSou
   throw new Error('KpiCard must support neutral helper text so status metadata is not shown as a positive trend.');
 }
 
-if (!kpiCardSource.includes('text-overflow: ellipsis;') || !kpiCardSource.includes(':title="change"')) {
-  throw new Error('KpiCard helper text must fail safely with ellipsis and full hover/title context instead of visibly clipping partial words.');
+if (!kpiCardSource.includes('text-overflow: ellipsis;') || !kpiCardSource.includes(':title="change"') || !kpiCardSource.includes(':title="label"') || !kpiCardSource.includes(':title="value"')) {
+  throw new Error('KpiCard text must fail safely with ellipsis and full hover/title context instead of visibly clipping partial words.');
+}
+
+if (!kpiCardSource.includes('line-height: 1.25;') || !kpiCardSource.includes('line-height: 1.18;')) {
+  throw new Error('KpiCard label/value/helper text must keep explicit line-height to avoid cropped characters.');
+}
+
+if (!kpiCardSource.includes('flex: 1 1 auto;') || !kpiCardSource.includes('flex: 0 0 44px;')) {
+  throw new Error('KpiCard content must reserve more horizontal space by using flexible text content and compact icon sizing.');
 }
 
 if (dashboardPageSource.includes('Training Sessions') || dashboardPageSource.includes('<strong>192</strong>') || dashboardPageSource.includes('Prototype pending')) {

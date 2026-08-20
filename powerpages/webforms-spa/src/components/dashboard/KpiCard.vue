@@ -20,8 +20,8 @@ withDefaults(defineProps<{
       <component :is="icon" aria-hidden="true" />
     </span>
     <div>
-      <span>{{ label }}</span>
-      <strong>{{ value }}</strong>
+      <span :title="label">{{ label }}</span>
+      <strong :title="value">{{ value }}</strong>
       <small :class="{ 'kpi-card__change--neutral': changeDirection === 'neutral' }" :title="change">
         <span v-if="changeDirection === 'up'" aria-hidden="true">↑</span>
         {{ change }}
@@ -40,7 +40,7 @@ withDefaults(defineProps<{
   gap: var(--dash-space-3, 12px);
   min-width: 0;
   min-height: 104px;
-  padding: var(--dash-space-4, 16px);
+  padding: var(--dash-space-4, 16px) 14px;
   border: 1px solid var(--dash-border, #E3E8E5);
   border-radius: 12px;
   background: var(--dash-surface, #FFFFFF);
@@ -59,9 +59,9 @@ withDefaults(defineProps<{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 48px;
-  width: 48px;
-  height: 48px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
 }
 
@@ -81,8 +81,8 @@ withDefaults(defineProps<{
 .kpi-card__icon--purple { background: #EDE9FE; color: #7C3AED; }
 
 .kpi-card > div {
+  flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
 }
 
 .kpi-card span,
@@ -92,6 +92,7 @@ withDefaults(defineProps<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .kpi-card span,
@@ -101,7 +102,8 @@ withDefaults(defineProps<{
 
 .kpi-card strong {
   margin: var(--dash-space-2, 8px) 0;
-  font-size: clamp(1.14rem, 1.35vw, 1.36rem);
+  font-size: clamp(1.06rem, 1.2vw, 1.28rem);
+  line-height: 1.18;
   letter-spacing: -0.03em;
 }
 
