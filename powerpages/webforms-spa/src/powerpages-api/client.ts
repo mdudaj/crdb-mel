@@ -1360,6 +1360,25 @@ export class PowerPagesApiClient {
     return result.rows;
   }
 
+  async listDashboardSubmissionReportRows(input: {
+    maxRows?: number;
+    filters?: ReportingFilters;
+  } = {}): Promise<SubmissionReportRow[]> {
+    const maxRows = Math.min(Math.max(input.maxRows ?? 1000, 1), 1000);
+    const rows: SubmissionReportRow[] = [];
+    let page = 1;
+
+    while (rows.length < maxRows) {
+      const pageSize = Math.min(100, maxRows - rows.length);
+      const result = await this.listSubmissionReportRows({ page, pageSize, filters: input.filters });
+      rows.push(...result.rows);
+      if (result.rows.length === 0 || rows.length >= result.total) break;
+      page += 1;
+    }
+
+    return rows;
+  }
+
   getReportingAccessScope(): ReportingAccessScope {
     if (this.isCurrentUserAccessAdmin()) {
       return { mode: 'all-records' };
@@ -2740,17 +2759,20 @@ export class PowerPagesApiClient {
     }
   }
 
-  private parseBaselineSubmissionJson(value: string): { instanceName?: string; answers?: Record<string, unknown> } {
+  private parseBaselineSubmissionJson(value: string): { instanceName?: string; answers?: Record<string, unknown>; repeats?: Record<string, Array<Record<string, unknown>>> } {
     try {
-      const parsed = JSON.parse(value) as { instanceName?: unknown; answers?: unknown; rootAnswers?: unknown; data?: unknown };
+      const parsed = JSON.parse(value) as { instanceName?: unknown; answers?: unknown; rootAnswers?: unknown; root?: unknown; repeats?: unknown; data?: unknown };
       const answers = typeof parsed.answers === 'object' && parsed.answers !== null && !Array.isArray(parsed.answers)
         ? parsed.answers as Record<string, unknown>
         : typeof parsed.rootAnswers === 'object' && parsed.rootAnswers !== null && !Array.isArray(parsed.rootAnswers)
           ? parsed.rootAnswers as Record<string, unknown>
-          : undefined;
+          : typeof parsed.root === 'object' && parsed.root !== null && !Array.isArray(parsed.root)
+            ? parsed.root as Record<string, unknown>
+            : undefined;
       return {
         instanceName: typeof parsed.instanceName === 'string' ? parsed.instanceName : undefined,
         answers,
+        repeats: this.parseBaselineRepeats(parsed.repeats),
       };
     } catch {
       return {};
@@ -2760,9 +2782,79 @@ export class PowerPagesApiClient {
   private buildBaselineRootAnswersJson(value: string): string {
     const parsed = this.parseBaselineSubmissionJson(value);
     if (parsed.answers) {
-      return JSON.stringify(parsed.answers);
+      return JSON.stringify({
+        ...parsed.answers,
+        __dashboardAggregates: this.buildBaselineDashboardAggregates(parsed.repeats ?? {}),
+      });
     }
     return '{}';
+  }
+
+  private parseBaselineRepeats(value: unknown): Record<string, Array<Record<string, unknown>>> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const repeats: Record<string, Array<Record<string, unknown>>> = {};
+    for (const [name, rows] of Object.entries(value as Record<string, unknown>)) {
+      if (!Array.isArray(rows)) continue;
+      repeats[name] = rows.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === 'object' && !Array.isArray(row)));
+    }
+    return repeats;
+  }
+
+  private buildBaselineDashboardAggregates(repeats: Record<string, Array<Record<string, unknown>>>): Record<string, unknown> {
+    const loans = (repeats.loan_repeat ?? []).map((loan) => {
+      const amountTzs = this.toBaselineNumber(loan['What was the amount (TZS) of this loan?']);
+      const year = this.normalizeBaselineLoanYear(loan['In what year was this loan received?']);
+      const stages = Object.entries(loan)
+        .filter(([key, value]) => key.startsWith('Which agricultural value chain stages were financed by this loan?/') && this.isBaselineTruthy(value))
+        .map(([key]) => key.split('/').pop() ?? '')
+        .filter(Boolean);
+      return this.omitUndefined({
+        amountTzs: amountTzs ?? undefined,
+        year: year || undefined,
+        stages,
+      });
+    });
+    return { loans };
+  }
+
+  private normalizeBaselineLoanYear(value: unknown): string {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return this.excelSerialDateYear(value) || String(Math.trunc(value));
+    }
+    if (typeof value !== 'string') return '';
+    const normalized = value.trim();
+    if (!normalized) return '';
+    if (/^\d{4}$/.test(normalized)) return normalized;
+    if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) return normalized.slice(0, 4);
+    const numeric = Number(normalized);
+    if (Number.isFinite(numeric)) return this.excelSerialDateYear(numeric) || normalized;
+    const parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return String(parsed.getFullYear());
+    return normalized;
+  }
+
+  private excelSerialDateYear(value: number): string {
+    if (value < 20000 || value > 60000) return '';
+    const epoch = Date.UTC(1899, 11, 30);
+    const date = new Date(epoch + value * 24 * 60 * 60 * 1000);
+    return String(date.getUTCFullYear());
+  }
+
+  private toBaselineNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value !== 'string') return null;
+    const normalized = value.replace(/,/g, '').trim();
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private isBaselineTruthy(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value !== 'string') return false;
+    const normalized = value.trim().toLowerCase();
+    return Boolean(normalized && !['0', 'false', 'no', 'n/a', 'none'].includes(normalized));
   }
 
   private sanitizeProjectionKeyPart(value: string): string {

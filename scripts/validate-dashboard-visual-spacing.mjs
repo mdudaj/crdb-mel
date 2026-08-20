@@ -9,10 +9,14 @@ const chartOptionsPath = resolve(repoRoot, 'powerpages/webforms-spa/src/componen
 const dashboardCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/DashboardCard.vue');
 const kpiCardPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/KpiCard.vue');
 const dashboardPagePath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/TacatdpDashboardPage.vue');
+const projectionPath = resolve(repoRoot, 'powerpages/webforms-spa/src/components/dashboard/tacatdpBaselineProjection.ts');
+const apiClientPath = resolve(repoRoot, 'powerpages/webforms-spa/src/powerpages-api/client.ts');
 const source = readFileSync(chartOptionsPath, 'utf8');
 const dashboardCardSource = readFileSync(dashboardCardPath, 'utf8');
 const kpiCardSource = readFileSync(kpiCardPath, 'utf8');
 const dashboardPageSource = readFileSync(dashboardPagePath, 'utf8');
+const projectionSource = readFileSync(projectionPath, 'utf8');
+const apiClientSource = readFileSync(apiClientPath, 'utf8');
 
 function assertIncludes(fragment, message) {
   if (!source.includes(fragment)) {
@@ -77,23 +81,98 @@ if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashbo
 }
 
 for (const fragment of [
-  'Live KPI projection:',
+  'Live projection:',
   'Baseline Records',
-  'Live report projection',
-  'Regions Covered',
-  'From beneficiary profiles',
-  'Training Data',
-  'Not in minimal import',
-  'Climate KPI',
-  'Requires verification',
+  'Rows',
+  'Reported Amount',
+  'Baseline loan',
+  'Farmers Trained',
+  'Baseline',
+  'tCO₂e Avoided',
+  'Projection',
+  'Verify',
+  "changeDirection: 'neutral'",
+  'Demo data: dashboard visual design only',
+  'flex-wrap: wrap;',
+  'border-radius: 999px;',
 ]) {
   if (!dashboardPageSource.includes(fragment)) {
     throw new Error(`Dashboard live KPI projection must include conservative ${fragment} state.`);
   }
 }
 
-if (!dashboardPageSource.includes('api.listSubmissionReportRows({ page: 1, pageSize: 10 })')) {
-  throw new Error('Dashboard live KPI projection must read recent report rows, not only the total count.');
+for (const fragment of [
+  'dashboardRegionMetrics',
+  'dashboardTechnologyFinancing',
+  'dashboardDisbursementTrend',
+  'dashboardRecentSubmissions',
+  'regionData.value',
+  'Reported</span>',
+]) {
+  if (!dashboardPageSource.includes(fragment)) {
+    throw new Error(`Dashboard live projection must drive regional/map/chart/list data through ${fragment}.`);
+  }
+}
+
+if (!dashboardPageSource.includes('calculateTacatdpBaselineProjection') || !dashboardPageSource.includes('liveBaselineProjection')) {
+  throw new Error('Dashboard must calculate KPI projections from imported baseline report rows.');
+}
+
+if (!dashboardPageSource.includes('api.listDashboardSubmissionReportRows({ maxRows: 1000 })')) {
+  throw new Error('Dashboard live KPI projection must page through report rows up to the prototype dashboard limit, not only read the first page.');
+}
+
+for (const fragment of [
+  'export function calculateTacatdpBaselineProjection',
+  'DIESEL_KG_CO2E_PER_LITRE = 2.68',
+  'ACRE_TO_HECTARE = 0.404686',
+  'annualTco2eAvoided',
+  'improvedHectares',
+  'farmersTrained',
+  'improvedReports',
+  'reportedLoanAmountTzs',
+  'regions: RegionMetric[]',
+  'technologies: NamedValue[]',
+  'disbursementTrend: TrendPoint[]',
+  'recentSubmissions: RecentSubmission[]',
+  'TECHNOLOGY_PATTERNS',
+  'buildRegions',
+  'buildTechnologyValues',
+  'buildTrend',
+  'buildRecentSubmissions',
+  'readTruthy',
+]) {
+  if (!projectionSource.includes(fragment)) {
+    throw new Error(`Baseline KPI projection helper is missing required calculation fragment: ${fragment}`);
+  }
+}
+
+if (!apiClientSource.includes('async listDashboardSubmissionReportRows') || !apiClientSource.includes('maxRows ?? 1000')) {
+  throw new Error('Power Pages API client must expose a bounded dashboard report-row reader for automatic KPI projection.');
+}
+
+if (!apiClientSource.includes('parsed.root') || !apiClientSource.includes('buildBaselineRootAnswersJson')) {
+  throw new Error('Baseline report-row projection must preserve bridge asset root answers in mp_rootanswersjson.');
+}
+
+for (const fragment of [
+  '__dashboardAggregates',
+  'buildBaselineDashboardAggregates',
+  'loan_repeat',
+  'normalizeBaselineLoanYear',
+  'excelSerialDateYear',
+]) {
+  if (!apiClientSource.includes(fragment)) {
+    throw new Error(`Baseline import projection must enrich report rows for dashboard aggregates: missing ${fragment}.`);
+  }
+}
+
+if (!kpiCardSource.includes("changeDirection?: 'up' | 'neutral'") || !kpiCardSource.includes("changeDirection === 'up'")) {
+  throw new Error('KpiCard must support neutral helper text so status metadata is not shown as a positive trend.');
+}
+
+if (!kpiCardSource.includes('text-overflow: ellipsis;') || !kpiCardSource.includes(':title="change"')) {
+  throw new Error('KpiCard helper text must fail safely with ellipsis and full hover/title context instead of visibly clipping partial words.');
 }
 
 console.log('Dashboard visual spacing validation passed.');

@@ -3,6 +3,7 @@ export interface KpiMetric {
   label: string;
   value: string;
   change: string;
+  changeDirection?: 'up' | 'neutral';
   icon: string;
   tone: 'green' | 'blue' | 'amber' | 'purple';
 }

@@ -5,9 +5,11 @@ withDefaults(defineProps<{
   label: string;
   value: string;
   change: string;
+  changeDirection?: 'up' | 'neutral';
   tone?: 'green' | 'blue' | 'amber' | 'purple';
   icon: Component;
 }>(), {
+  changeDirection: 'up',
   tone: 'green',
 });
 </script>
@@ -20,7 +22,10 @@ withDefaults(defineProps<{
     <div>
       <span>{{ label }}</span>
       <strong>{{ value }}</strong>
-      <small>↑ {{ change }}</small>
+      <small :class="{ 'kpi-card__change--neutral': changeDirection === 'neutral' }" :title="change">
+        <span v-if="changeDirection === 'up'" aria-hidden="true">↑</span>
+        {{ change }}
+      </small>
     </div>
   </article>
 </template>
@@ -77,6 +82,7 @@ withDefaults(defineProps<{
 
 .kpi-card > div {
   min-width: 0;
+  overflow: hidden;
 }
 
 .kpi-card span,
@@ -84,6 +90,8 @@ withDefaults(defineProps<{
 .kpi-card strong {
   display: block;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-card span,
@@ -100,5 +108,9 @@ withDefaults(defineProps<{
 .kpi-card small {
   color: #15803D;
   font-weight: 700;
+}
+
+.kpi-card__change--neutral {
+  color: #64706A;
 }
 </style>

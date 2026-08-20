@@ -21,6 +21,7 @@ import { buildDisbursementTrendOption, type DashboardChartOption } from './chart
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
 import KpiCard from './KpiCard.vue';
+import { calculateTacatdpBaselineProjection } from './tacatdpBaselineProjection';
 import {
   climateOutcomes,
   dashboardKpis,
@@ -31,6 +32,7 @@ import {
   regionalMetrics,
   technologyFinancing,
   type KpiMetric,
+  type OutcomeMetric,
 } from '../../prototype/tacatdpDashboardData';
 
 type TanzaniaAdm1Feature = {
@@ -102,38 +104,114 @@ const liveReportRows = ref<SubmissionReportRow[]>([]);
 const liveDashboardLoading = ref(false);
 const liveDashboardError = ref('');
 
-const selectedRegion = regionalMetrics.find((region) => region.name === 'Morogoro') ?? regionalMetrics[0];
-const regionData = regionalMetrics.map((region) => ({ name: region.name, value: region.disbursed }));
+const liveBaselineProjection = computed(() => calculateTacatdpBaselineProjection(liveReportRows.value));
+const dashboardRegionMetrics = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.regions.length > 0
+    ? liveBaselineProjection.value.regions
+    : regionalMetrics
+));
+const selectedRegion = computed(() => dashboardRegionMetrics.value[0] ?? regionalMetrics[0]);
+const regionData = computed(() => dashboardRegionMetrics.value.map((region) => ({ name: region.name, value: region.disbursed })));
+const dashboardTechnologyFinancing = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.technologies.length > 0
+    ? liveBaselineProjection.value.technologies
+    : technologyFinancing
+));
+const dashboardDisbursementTrend = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.disbursementTrend.length > 0
+    ? liveBaselineProjection.value.disbursementTrend
+    : disbursementTrend
+));
+const dashboardRecentSubmissions = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.recentSubmissions.length > 0
+    ? liveBaselineProjection.value.recentSubmissions
+    : recentSubmissions
+));
 
 const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) => {
   if (!hasLiveKpiProjection.value) return metric;
 
   if (metric.id === 'active-loans') {
-    return { ...metric, label: 'Baseline Records', value: formatLiveCount(liveReportRowCount.value), change: 'Live report projection' };
+    return { ...metric, label: 'Baseline Records', value: formatLiveCount(liveReportRowCount.value), change: 'Rows', changeDirection: 'neutral' };
   }
   if (metric.id === 'active-borrowers') {
-    return { ...metric, label: 'Beneficiaries', value: formatLiveCount(liveBeneficiaryCount.value), change: 'Live beneficiary registry' };
+    return { ...metric, label: 'Beneficiaries', value: formatLiveCount(liveBeneficiaryCount.value), change: 'Registry', changeDirection: 'neutral' };
   }
   if (metric.id === 'total-disbursed') {
-    return { ...metric, label: 'Regions Covered', value: liveRegionsCovered.value.toLocaleString(), change: 'From beneficiary profiles', icon: 'map' };
+    const amount = liveBaselineProjection.value.finance.reportedLoanAmountTzs;
+    return {
+      ...metric,
+      label: 'Reported Amount',
+      value: amount > 0 ? `TZS ${formatBillions(amount)}B` : 'Awaiting',
+      change: amount > 0 ? 'Baseline loan' : 'Not imported',
+      changeDirection: 'neutral',
+    };
   }
   if (metric.id === 'repayment-rate') {
-    return { ...metric, label: 'Latest Update', value: liveLatestUpdateLabel.value, change: 'Report projection' };
+    return { ...metric, label: 'Latest Update', value: liveLatestUpdateLabel.value, change: 'Projected', changeDirection: 'neutral' };
   }
   if (metric.id === 'farmers-trained') {
-    return { ...metric, label: 'Training Data', value: 'Awaiting', change: 'Not in minimal import' };
+    const farmersTrained = liveBaselineProjection.value.training.farmersTrained;
+    return {
+      ...metric,
+      label: 'Farmers Trained',
+      value: farmersTrained > 0 ? formatWholeNumber(farmersTrained) : 'Awaiting',
+      change: farmersTrained > 0 ? 'Baseline' : 'Not imported',
+      changeDirection: 'neutral',
+    };
   }
   if (metric.id === 'carbon-avoided') {
-    return { ...metric, label: 'Climate KPI', value: 'Not calc.', change: 'Requires verification' };
+    const annualTco2eAvoided = liveBaselineProjection.value.ghg.annualTco2eAvoided;
+    return {
+      ...metric,
+      label: 'tCO₂e Avoided',
+      value: annualTco2eAvoided > 0 ? formatWholeNumber(annualTco2eAvoided) : 'Pending',
+      change: annualTco2eAvoided > 0 ? 'Projection' : 'Verify',
+      changeDirection: 'neutral',
+    };
   }
   return metric;
 }));
 
+const hasCalculatedBaselineProjection = computed(() => liveBaselineProjection.value.rowsWithAnswers > 0);
+
+const dashboardClimateOutcomes = computed<OutcomeMetric[]>(() => {
+  if (!hasLiveKpiProjection.value || liveBaselineProjection.value.rowsWithAnswers === 0) return climateOutcomes;
+
+  const projection = liveBaselineProjection.value;
+  const yieldIncrease = projection.yield.weightedDetailedChangePct ?? projection.yield.medianSimpleChangePct;
+
+  return [
+    {
+      ...climateOutcomes[0],
+      value: projection.area.improvedHectares > 0 ? formatWholeNumber(projection.area.improvedHectares) : 'Awaiting',
+      change: projection.area.validRecords > 0 ? `${formatWholeNumber(projection.area.validRecords)} valid records` : 'Needs validation',
+    },
+    {
+      ...climateOutcomes[1],
+      value: yieldIncrease !== null ? `${Math.round(yieldIncrease)}%` : 'Awaiting',
+      change: projection.yield.validDetailedRecords > 0 ? 'Weighted baseline' : 'Needs validation',
+    },
+    {
+      ...climateOutcomes[2],
+      value: projection.soil.improvedReports > 0 ? formatWholeNumber(projection.soil.improvedReports) : 'Awaiting',
+      change: projection.soil.improvedReports > 0 ? 'Reported signals' : 'Needs validation',
+    },
+    {
+      ...climateOutcomes[3],
+      value: projection.ghg.annualTco2eAvoided > 0 ? formatWholeNumber(projection.ghg.annualTco2eAvoided) : 'Pending',
+      change: projection.ghg.validSavingRecords > 0 ? `${formatWholeNumber(projection.ghg.validSavingRecords)} valid records` : 'Needs verification',
+    },
+  ];
+});
+
 const hasLiveKpiProjection = computed(() => liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null);
 
 const liveRegionsCovered = computed(() => new Set(
-  liveBeneficiaries.value
-    .map((beneficiary) => beneficiary.region?.trim())
+  [
+    ...liveBeneficiaries.value.map((beneficiary) => beneficiary.region?.trim()),
+    ...liveBaselineProjection.value.regions.map((region) => region.name),
+  ]
     .filter((region): region is string => Boolean(region && region !== 'Not recorded')),
 ).size);
 
@@ -156,11 +234,12 @@ const liveDashboardSummary = computed(() => {
   if (liveDashboardError.value) return `Live registry read unavailable: ${liveDashboardError.value}`;
   if (liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null) {
     const parts = [];
-    if (liveBeneficiaryCount.value !== null) parts.push(`${liveBeneficiaryCount.value.toLocaleString()} beneficiary profiles`);
-    if (liveReportRowCount.value !== null) parts.push(`${liveReportRowCount.value.toLocaleString()} submission report rows`);
-    parts.push(`${liveRegionsCovered.value.toLocaleString()} regions covered`);
-    if (latestLiveUpdateIso.value) parts.push(`latest update ${liveLatestUpdateLabel.value}`);
-    return `Live KPI projection: ${parts.join(' · ')}`;
+    if (liveBeneficiaryCount.value !== null) parts.push(`${liveBeneficiaryCount.value.toLocaleString()} profiles`);
+    if (liveReportRowCount.value !== null) parts.push(`${liveReportRowCount.value.toLocaleString()} report rows`);
+    if (liveBaselineProjection.value.rowsWithAnswers > 0) parts.push(`${liveBaselineProjection.value.rowsWithAnswers.toLocaleString()} calculated`);
+    parts.push(`${liveRegionsCovered.value.toLocaleString()} regions`);
+    if (latestLiveUpdateIso.value) parts.push(`Updated ${liveLatestUpdateLabel.value}`);
+    return `Live projection: ${parts.join(' · ')}`;
   }
   return 'Live baseline registry not yet queried.';
 });
@@ -171,12 +250,12 @@ async function loadDashboardLiveCounts() {
   try {
     const [beneficiaries, reportRows] = await Promise.all([
       api.listBeneficiaries(),
-      api.listSubmissionReportRows({ page: 1, pageSize: 10 }),
+      api.listDashboardSubmissionReportRows({ maxRows: 1000 }),
     ]);
     liveBeneficiaries.value = beneficiaries;
-    liveReportRows.value = reportRows.rows;
+    liveReportRows.value = reportRows;
     liveBeneficiaryCount.value = beneficiaries.length;
-    liveReportRowCount.value = reportRows.total;
+    liveReportRowCount.value = reportRows.length;
   } catch (caught) {
     liveBeneficiaries.value = [];
     liveReportRows.value = [];
@@ -212,6 +291,14 @@ function chartParam(params: unknown): { name: string; value: number; percent: nu
 
 function formatLiveCount(value: number | null) {
   return value === null ? 'Awaiting' : value.toLocaleString();
+}
+
+function formatWholeNumber(value: number) {
+  return Math.round(value).toLocaleString();
+}
+
+function formatBillions(value: number) {
+  return (value / 1_000_000_000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 const loanPortfolioOption = computed<DashboardChartOption>(() => ({
@@ -257,7 +344,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   }],
 }));
 
-const disbursementTrendOption = computed<DashboardChartOption>(() => buildDisbursementTrendOption(disbursementTrend));
+const disbursementTrendOption = computed<DashboardChartOption>(() => buildDisbursementTrendOption(dashboardDisbursementTrend.value));
 
 const loanPerformanceOption = computed<DashboardChartOption>(() => ({
   title: {
@@ -305,24 +392,24 @@ const loanPerformanceOption = computed<DashboardChartOption>(() => ({
 const technologyOption = computed<DashboardChartOption>(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 6, right: 56, top: 8, bottom: 0, containLabel: true },
-  xAxis: { show: false, type: 'value', max: 3000 },
+  xAxis: { show: false, type: 'value', max: Math.max(1, ...dashboardTechnologyFinancing.value.map((item) => item.value)) },
   yAxis: {
     type: 'category',
-    data: technologyFinancing.map((item) => item.name).reverse(),
+    data: dashboardTechnologyFinancing.value.map((item) => item.name).reverse(),
     axisTick: { show: false },
     axisLine: { show: false },
     axisLabel: { color: '#17211C', width: 158, overflow: 'truncate' },
   },
   series: [{
     type: 'bar',
-    data: technologyFinancing.map((item) => item.value).reverse(),
+    data: dashboardTechnologyFinancing.value.map((item) => item.value).reverse(),
     barWidth: 8,
     itemStyle: { color: '#15803D', borderRadius: [0, 8, 8, 0] },
     label: {
       show: true,
       position: 'right',
       formatter: ({ dataIndex }) => {
-        const item = [...technologyFinancing].reverse()[dataIndex];
+        const item = [...dashboardTechnologyFinancing.value].reverse()[dataIndex];
         return `${item.value.toLocaleString()} (${item.percent}%)`;
       },
       color: '#64706A',
@@ -336,9 +423,9 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
     trigger: 'item',
     formatter: (params: unknown) => {
       const itemParams = chartParam(params);
-      const region = regionalMetrics.find((item) => item.name === itemParams.name);
-      if (!region) return `${itemParams.name}<br>No prototype data`;
-      return `${region.name}<br>${region.disbursedLabel} disbursed<br>${region.loans.toLocaleString()} loans<br>${region.repaymentRate} repayment`;
+      const region = dashboardRegionMetrics.value.find((item) => item.name === itemParams.name);
+      if (!region) return `${itemParams.name}<br>No baseline data`;
+      return `${region.name}<br>${region.disbursedLabel} reported loan amount<br>${region.loans.toLocaleString()} loans<br>${region.borrowers.toLocaleString()} profiles<br>${region.farmersTrained.toLocaleString()} farmers trained`;
     },
   },
   visualMap: {
@@ -369,7 +456,7 @@ const regionalMapOption = computed<DashboardChartOption>(() => ({
     roam: false,
     nameProperty: 'shapeName',
     selectedMode: 'single',
-    data: regionData,
+    data: regionData.value,
     layoutCenter: ['38%', '52%'],
     layoutSize: '82%',
     label: { show: true, color: '#214036', fontSize: 9 },
@@ -428,7 +515,7 @@ function regionNameFromSubmission(regionLabel: string) {
     </header>
 
     <div class="dashboard-status-strip" role="status" aria-live="polite">
-      <p class="dashboard-demo-note">Prototype dashboard using demonstration data for TACATDP visualisation design. Figures are not official CRDB Bank or Green Climate Fund statistics.</p>
+      <p class="dashboard-demo-note">Demo data: dashboard visual design only; figures are not official CRDB or GCF statistics.</p>
       <p class="dashboard-live-note" :class="{ 'dashboard-live-note--warning': liveDashboardError }">{{ liveDashboardSummary }}</p>
     </div>
 
@@ -439,6 +526,7 @@ function regionNameFromSubmission(regionLabel: string) {
         :label="metric.label"
         :value="metric.value"
         :change="metric.change"
+        :change-direction="metric.changeDirection"
         :tone="metric.tone"
         :icon="iconFor(metric)"
         :class="{ 'kpi-card--clickable': metric.id === 'active-borrowers' || metric.id === 'farmers-trained' }"
@@ -482,7 +570,7 @@ function regionNameFromSubmission(regionLabel: string) {
             <strong>{{ selectedRegion.name }}</strong>
           </div>
           <div>
-            <span>Disbursed</span>
+            <span>Reported</span>
             <strong>{{ selectedRegion.disbursedLabel }}</strong>
           </div>
           <div>
@@ -511,37 +599,37 @@ function regionNameFromSubmission(regionLabel: string) {
     <section class="insights-grid" aria-label="TACATDP monitoring insights">
       <DashboardCard :span="8" title="Climate Resilience Outcomes">
         <div class="outcome-grid">
-          <section class="outcome-metric" :title="climateOutcomes[0].definition">
+          <section class="outcome-metric" :title="dashboardClimateOutcomes[0].definition">
             <span class="outcome-metric__icon outcome-metric__icon--blue" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 2C8.7 6.1 6 9.7 6 13a6 6 0 0 0 12 0c0-3.3-2.7-6.9-6-11Z" /></svg>
             </span>
             <small>Area Under Improved<br>Practices (ha)</small>
-            <strong>26,842</strong>
-            <em>↑ 18% vs Apr</em>
+            <strong>{{ dashboardClimateOutcomes[0].value }}</strong>
+            <em>{{ dashboardClimateOutcomes[0].change }}</em>
           </section>
-          <section class="outcome-metric" :title="climateOutcomes[1].definition">
+          <section class="outcome-metric" :title="dashboardClimateOutcomes[1].definition">
             <span class="outcome-metric__icon outcome-metric__icon--green" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 21V10" /><path d="M12 13c-4.2 0-6.8-2.3-7.8-6.8C8.7 6.2 11 8.6 12 13Z" /><path d="M12 11c1-4.4 3.3-6.7 7.8-6.8C18.8 8.8 16.2 11 12 11Z" /></svg>
             </span>
             <small>Yield Increase<br>(Avg %)</small>
-            <strong>28%</strong>
-            <em>↑ 6pp vs Apr</em>
+            <strong>{{ dashboardClimateOutcomes[1].value }}</strong>
+            <em>{{ dashboardClimateOutcomes[1].change }}</em>
           </section>
-          <section class="outcome-metric" :title="climateOutcomes[2].definition">
+          <section class="outcome-metric" :title="dashboardClimateOutcomes[2].definition">
             <span class="outcome-metric__icon outcome-metric__icon--amber" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M7.5 7.5h9l2.2 11.5H5.3L7.5 7.5Z" /><path d="M9 7.5 10.2 4h3.6L15 7.5" /><path d="M12 17v-4" /><path d="M12 14.4c-1.8 0-2.9-1-3.4-2.9 2 .1 3.1 1 3.4 2.9Z" /><path d="M12 14.2c.5-1.8 1.6-2.7 3.4-2.7-.5 1.9-1.6 2.8-3.4 2.7Z" /></svg>
             </span>
             <small>Soil Fertility Improved<br>(Reports)</small>
-            <strong>5,642</strong>
-            <em>↑ 15% vs Apr</em>
+            <strong>{{ dashboardClimateOutcomes[2].value }}</strong>
+            <em>{{ dashboardClimateOutcomes[2].change }}</em>
           </section>
-          <section class="outcome-metric" :title="climateOutcomes[3].definition">
+          <section class="outcome-metric" :title="dashboardClimateOutcomes[3].definition">
             <span class="outcome-metric__icon outcome-metric__icon--teal" aria-hidden="true">
               <svg viewBox="0 0 30 24"><path d="M9 19h13.2a5.3 5.3 0 0 0 .8-10.5A7.1 7.1 0 0 0 9.8 6 5.8 5.8 0 0 0 9 19Z" /><text x="14.8" y="15.3" text-anchor="middle">CO₂</text></svg>
             </span>
             <small>tCO₂e Avoided<br>(Cumulative)</small>
-            <strong>32,184</strong>
-            <em>↑ 19% vs Apr</em>
+            <strong>{{ dashboardClimateOutcomes[3].value }}</strong>
+            <em>{{ dashboardClimateOutcomes[3].change }}</em>
           </section>
         </div>
       </DashboardCard>
@@ -550,13 +638,13 @@ function regionNameFromSubmission(regionLabel: string) {
         <div class="training-grid">
           <div>
             <span>Farmers Trained</span>
-            <strong class="training-value-with-icon">8,452 <Users aria-hidden="true" /></strong>
-            <small>↑ 21% vs Apr</small>
+            <strong class="training-value-with-icon">{{ liveBaselineProjection.training.farmersTrained > 0 ? formatWholeNumber(liveBaselineProjection.training.farmersTrained) : 'Awaiting' }} <Users aria-hidden="true" /></strong>
+            <small>{{ liveBaselineProjection.training.records > 0 ? `${formatWholeNumber(liveBaselineProjection.training.records)} records` : 'Not imported' }}</small>
           </div>
           <div>
             <span>Training Sessions</span>
             <strong>192</strong>
-            <small>↑ 15% vs Apr</small>
+            <small>Prototype pending</small>
           </div>
         </div>
         <template #footer>
@@ -567,7 +655,7 @@ function regionNameFromSubmission(regionLabel: string) {
       <DashboardCard :span="6" title="Recent Data Submissions">
         <div class="submission-list">
           <button
-            v-for="submission in recentSubmissions"
+            v-for="submission in dashboardRecentSubmissions"
             :key="submission.region"
             class="submission-row"
             type="button"
@@ -669,26 +757,35 @@ function regionNameFromSubmission(regionLabel: string) {
 }
 
 .dashboard-status-strip {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--dash-space-2);
 }
 
 .dashboard-demo-note {
-  padding: var(--dash-space-2) var(--dash-space-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  padding: 6px var(--dash-space-3);
   border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 10px;
+  border-radius: 999px;
   background: rgba(245, 158, 11, 0.08);
 }
 
 .dashboard-live-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   margin: 0;
-  padding: var(--dash-space-2) var(--dash-space-3);
+  padding: 6px var(--dash-space-3);
   border: 1px solid #B7D6BF;
-  border-radius: 10px;
+  border-radius: 999px;
   background: #EAF7EE;
   color: var(--dash-dark);
   font-size: 0.84rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .dashboard-live-note--warning {
