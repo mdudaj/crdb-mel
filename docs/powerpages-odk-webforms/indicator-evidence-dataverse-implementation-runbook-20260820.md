@@ -67,20 +67,68 @@ Required result:
 
 Preferred implementation path:
 
-1. Generate or hand-author solution metadata for the five tables from `indicator-evidence-schema.json`.
-2. Include the metadata in the CRDB MEL development solution.
-3. Import the solution into the confirmed development environment.
+1. Clone the current Mshirika `tacatdp_prototype` solution.
+2. Generate solution metadata for the five tables from `indicator-evidence-schema.json`.
+3. Pack unmanaged and managed solution zips.
+4. Validate the generated solution source and packed zips.
+5. Import the unmanaged package into the confirmed Mshirika development environment first.
 4. Publish changes.
-5. Verify metadata inventory.
-6. Only then configure Power Pages Web API and table permissions needed by the prototype.
+6. Verify metadata inventory.
+7. Only then configure Power Pages Web API and table permissions needed by the prototype.
 
-Execution command shape after package creation:
+Package generation command shape:
+
+```bash
+source scripts/use-powerplatform-env.sh mshirika
+pac auth select --name "$PAC_AUTH_NAME"
+pac solution clone \
+  --environment "<development-environment-url-or-id>" \
+  --name tacatdp_prototype \
+  --outputDirectory /tmp/mshirika-indicator-evidence-clone \
+  --packagetype Both \
+  --async \
+  --max-async-wait-time 20
+
+python3 scripts/generate-indicator-evidence-solution-patch.py \
+  --source /tmp/mshirika-indicator-evidence-clone/tacatdp_prototype/src \
+  --output /tmp/mshirika-indicator-evidence-solution/src \
+  --repo-root /home/jmduda/KodeX/crdb-mel \
+  --version 0.2.6.0
+
+python3 scripts/validate-indicator-evidence-solution-package.py \
+  /tmp/mshirika-indicator-evidence-solution/src
+
+pac solution pack \
+  --zipfile /tmp/tacatdp_indicator_evidence_unmanaged.zip \
+  --folder /tmp/mshirika-indicator-evidence-solution/src \
+  --packagetype Unmanaged \
+  --log /tmp/tacatdp-indicator-evidence-pack-unmanaged.log \
+  --errorlevel Info
+
+pac solution pack \
+  --zipfile /tmp/tacatdp_indicator_evidence_managed.zip \
+  --folder /tmp/mshirika-indicator-evidence-solution/src \
+  --packagetype Managed \
+  --useUnmanagedFileForMissingManaged \
+  --log /tmp/tacatdp-indicator-evidence-pack-managed.log \
+  --errorlevel Info
+
+python3 scripts/validate-indicator-evidence-solution-package.py \
+  /tmp/tacatdp_indicator_evidence_unmanaged.zip
+
+python3 scripts/validate-indicator-evidence-solution-package.py \
+  /tmp/tacatdp_indicator_evidence_managed.zip
+```
+
+Mshirika import command shape after package validation:
 
 ```bash
 pac solution import \
-  --path "<solution-zip>" \
-  --environment "<development-environment-url-or-id>" \
-  --publish-changes
+  --environment "$POWER_PLATFORM_ENVIRONMENT_URL" \
+  --path /tmp/tacatdp_indicator_evidence_unmanaged.zip \
+  --publish-changes \
+  --async \
+  --max-async-wait-time 20
 ```
 
 Do not use `--skip-dependency-check` unless the exact dependency is understood and approved. Do not use `--force-overwrite` unless the target customization impact has been reviewed.
@@ -160,7 +208,7 @@ Avoid portal writes to these tables for the first implementation. Scheduled calc
 
 ## Seed data plan
 
-Create a small development seed after schema exists:
+Proposed development seed after schema exists:
 
 | Indicator code | Name | Method | Status |
 |---|---|---|---|
@@ -171,6 +219,28 @@ Create a small development seed after schema exists:
 | `TAC-TRN-001` | Farmers trained | Reported | Active |
 
 Do not seed official repayment or tCO₂e indicators as verified results until finance and climate methodologies are approved.
+
+Recommended first seed scope:
+
+- Seed only `mp_IndicatorDefinition` and `mp_DataSourceMapping`.
+- Do not seed `mp_IndicatorResult` until the calculation job or browser migration path is implemented.
+- Mark all baseline-derived indicators as `Imported` or `Reported`, not `Verified`.
+- Keep climate indicators as draft definitions until SFU approves calculation methodology.
+
+## Power Pages direct-read recommendation
+
+Do not switch the dashboard to read `mp_IndicatorResult` yet.
+
+Recommended sequence:
+
+1. Create the schema in Mshirika.
+2. Seed indicator definitions and source mappings.
+3. Implement a projection job or temporary admin-triggered calculation that writes `mp_IndicatorResult`.
+4. Add read-only Power Pages Web API settings for `mp_IndicatorResult`.
+5. Switch only one dashboard section to read `mp_IndicatorResult`.
+6. Compare it against the existing browser projection before migrating the rest.
+
+Reason: if Power Pages reads `mp_IndicatorResult` before a reliable refresh job exists, the dashboard will show stale or empty governed KPI tables while the current browser projection already updates from baseline import rows.
 
 ## Post-import verification
 
@@ -207,6 +277,9 @@ If Power Pages reads fail after permission setup:
 - The approved schema has an execution order.
 - Preflight commands are listed.
 - Microsoft-specific Power Pages and Dataverse constraints are documented.
+- The Mshirika solution package generation path is documented.
+- The seed indicators are proposed but not inserted.
+- The Power Pages read strategy is staged instead of switching the dashboard prematurely.
 - Table-permission scope is intentionally conservative.
 - Evidence fields are protected by default.
 - Verification and rollback checks are defined before any environment write.

@@ -219,6 +219,7 @@ Delivered review artifacts:
 - `schemas/dataverse/indicator-evidence-schema.json`
 - `schemas/dataverse/indicator-evidence-schema.md`
 - `docs/powerpages-odk-webforms/indicator-evidence-dataverse-implementation-runbook-20260820.md`
+- `docs/powerpages-odk-webforms/indicator-evidence-mshirika-deployment-20260820.md`
 
 Implementation boundary:
 

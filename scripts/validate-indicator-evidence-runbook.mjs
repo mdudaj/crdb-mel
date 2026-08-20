@@ -4,9 +4,11 @@ import { resolve } from 'node:path';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const runbookPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-evidence-dataverse-implementation-runbook-20260820.md');
+const deploymentPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-evidence-mshirika-deployment-20260820.md');
 const modelDocPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/prototype-model-design-20260820.md');
 
 const runbook = readFileSync(runbookPath, 'utf8');
+const deployment = readFileSync(deploymentPath, 'utf8');
 const modelDoc = readFileSync(modelDocPath, 'utf8');
 
 function assert(condition, message) {
@@ -29,6 +31,9 @@ for (const fragment of [
   'pac auth who',
   'pac env who',
   'pac solution import',
+  'generate-indicator-evidence-solution-patch.py',
+  'validate-indicator-evidence-solution-package.py',
+  '/tmp/tacatdp_indicator_evidence_unmanaged.zip',
   '--publish-changes',
   'Do not use `--skip-dependency-check`',
   'Do not use `--force-overwrite`',
@@ -42,6 +47,13 @@ for (const fragment of [
   'Avoid portal writes to these tables for the first implementation',
   'approved Power Automate ownership',
   'approved application user/service principal',
+  'Do not switch the dashboard to read `mp_IndicatorResult` yet',
+  'Seed only `mp_IndicatorDefinition` and `mp_DataSourceMapping`',
+  'TAC-BEN-001',
+  'TAC-FIN-001',
+  'TAC-REG-001',
+  'TAC-TEC-001',
+  'TAC-TRN-001',
   'Do not retry with `--force-overwrite` immediately',
 ]) {
   assertIncludes(runbook, fragment, `Runbook missing required fragment: ${fragment}`);
@@ -67,5 +79,28 @@ for (const forbidden of [
 }
 
 assertIncludes(modelDoc, 'indicator-evidence-dataverse-implementation-runbook-20260820.md', 'Model design must link to the implementation runbook.');
+assertIncludes(modelDoc, 'indicator-evidence-mshirika-deployment-20260820.md', 'Model design must link to the Mshirika deployment note.');
+
+for (const fragment of [
+  'Status: deployed to Mshirika development environment',
+  'PowerPagesDeveloper-070926-125720',
+  '07b77aa3-c0c0-e513-8b8c-407b83639a45',
+  'mp_IndicatorDefinition',
+  'mp_DataSourceMapping',
+  'mp_Observation',
+  'mp_Evidence',
+  'mp_IndicatorResult',
+  'Solution import completed successfully',
+  'Publish all customizations completed successfully',
+  'No Power Pages settings or table permissions were changed',
+  'TAC-BEN-001',
+  'TAC-FIN-001',
+  'TAC-REG-001',
+  'TAC-TEC-001',
+  'TAC-TRN-001',
+  'Do not switch the dashboard to read `mp_IndicatorResult` immediately',
+]) {
+  assertIncludes(deployment, fragment, `Deployment note missing required fragment: ${fragment}`);
+}
 
 console.log('Indicator/evidence implementation runbook validation passed.');
