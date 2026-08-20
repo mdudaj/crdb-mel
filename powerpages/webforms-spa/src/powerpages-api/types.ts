@@ -3,6 +3,76 @@ export interface DataverseCollection<T> {
   '@odata.count'?: number;
 }
 
+export interface BaselineBridgeImportAsset {
+  assetType: 'tacatdp-baseline-bridge-import';
+  projectCode: string;
+  formId: string;
+  formVersion: string;
+  counts?: {
+    rows?: number;
+    sourceUuidIdentifiers?: number;
+    customerIdIdentifiers?: number;
+    phoneIdentifiers?: number;
+    duplicateReviewGroups?: number;
+    duplicateReviewRows?: number;
+  };
+  duplicatePolicy?: string;
+  rows: BaselineBridgeImportRow[];
+}
+
+export interface BaselineBridgeImportRow {
+  rowNumber: number;
+  uuid?: string;
+  customerId?: string;
+  customerName?: string;
+  phone?: string;
+  region?: string;
+  district?: string;
+  startedAt?: string | null;
+  submittedAt?: string | null;
+  sourceKey: string;
+  instanceId: string;
+  versionKey: string;
+  linkKey: string;
+  submissionJson: string;
+  xformXml: string;
+}
+
+export type BaselineBridgeImportMode = 'append' | 'replace';
+
+export interface BaselineBridgeImportOptions {
+  limit?: number;
+  dryRun?: boolean;
+  mode?: BaselineBridgeImportMode;
+  onProgress?: (progress: BaselineBridgeImportProgress) => void;
+}
+
+export interface BaselineBridgeImportProgress {
+  processedRows: number;
+  totalRows: number;
+  currentRowNumber?: number;
+  message: string;
+}
+
+export interface BaselineBridgeImportResult {
+  status: 'validated' | 'executed';
+  mode: BaselineBridgeImportMode;
+  rowsProcessed: number;
+  totalRows: number;
+  limit?: number;
+  counts: Record<string, number>;
+  duplicateReviewGroups: number;
+  duplicateReviewRows: number;
+  messages: string[];
+}
+
+export interface BaselineImportDiagnosticStep {
+  name: string;
+  operation: string;
+  status: 'passed' | 'failed';
+  detail: string;
+}
+
 export interface FormAssignmentRow {
   mp_formassignmentid: string;
   mp_assignmentkey: string;
@@ -287,11 +357,13 @@ export interface SubmissionRow {
   mp_updatedat?: string;
   mp_lifecyclestatus?: number;
   mp_reviewstate?: number;
+  _mp_formversion_value?: string;
 }
 
 export interface SubmissionVersionRow {
   mp_submissionversionid: string;
   mp_versionnumber: number;
+  mp_instanceid?: string;
   mp_xformsubmissionxml?: string;
   mp_submissionjson?: string;
 }
@@ -305,6 +377,109 @@ export interface OdkSubmitResult {
   attachmentCount: number;
   attachmentBinaryUploadCount: number;
   attachmentWarnings: string[];
+}
+
+
+export interface BeneficiaryProfileRow {
+  mp_beneficiaryprofileid: string;
+  mp_name?: string;
+  mp_beneficiarycategory?: number;
+  mp_region?: string;
+  mp_district?: string;
+  mp_verificationstatus?: number;
+  mp_datasource?: string;
+  mp_lastupdatedat?: string;
+  _mp_trackedentity_value?: string;
+}
+
+export interface EntityIdentifierRow {
+  mp_entityidentifierid: string;
+  mp_identifiertype?: number;
+  mp_identifiervalue?: string;
+  mp_status?: number;
+  _mp_trackedentity_value?: string;
+}
+
+export interface BeneficiarySubmissionLinkRow {
+  mp_beneficiarysubmissionlinkid: string;
+  mp_linkkey?: string;
+  mp_relationshiptype?: number;
+  mp_completeness?: number;
+  mp_reviewstatus?: number;
+  _mp_trackedentity_value?: string;
+  _mp_submission_value?: string;
+}
+
+export interface BeneficiaryListItem {
+  id: string;
+  name: string;
+  category: 'Individual farmer' | 'Farmer group' | 'AMCOS' | 'SACCOS';
+  region: string;
+  district: string;
+  borrowerStatus: 'Active borrower' | 'Training only' | 'Pending verification';
+  loanType: 'Short-term' | 'Medium-term' | 'Long-term' | 'Not financed';
+  technology: string;
+  projectParticipation: {
+    programme: string;
+    project: string;
+    implementationPartner: string;
+    enrolmentDate: string;
+    participationRole: string;
+  };
+  finance: {
+    loanAccountRef: string;
+    disbursedAmount: string;
+    outstandingBalance: string;
+    repaymentRate: string;
+  };
+  technologiesFinanced: Array<{
+    name: string;
+    category: string;
+    adoptionStage: 'Planned' | 'In use' | 'Scaling';
+  }>;
+  trainingSummary: {
+    sessionsAttended: number;
+    lastTopic: string;
+    completionRate: string;
+    lastTrainingDate: string;
+  };
+  latestSubmission: {
+    form: string;
+    reportingPeriod: string;
+    status: 'Submitted' | 'Under review' | 'Returned' | 'Awaiting submission';
+    completeness: string;
+    dataSource: string;
+  };
+  identityGovernance?: {
+    matchState: 'Linked to tracked entity' | 'Candidate match review' | 'Create new tracked entity' | 'Needs investigation';
+    matchSignals: string;
+    reviewerDecision: string;
+  };
+  groupMembership?: {
+    membershipType: 'Individual beneficiary' | 'Group beneficiary' | 'AMCOS beneficiary' | 'SACCOS beneficiary';
+    membersLinked: string;
+    membershipStatus: 'Active' | 'Pending verification' | 'Not modelled';
+  };
+  locationHistory?: {
+    currentLocation: string;
+    source: string;
+    effectiveFrom: string;
+    historyState: 'Current profile location' | 'Correction pending' | 'Awaiting submission';
+  };
+  outcomeSnapshot: {
+    areaUnderImprovedPractices: string;
+    yieldIncrease: string;
+    climateEstimate: string;
+  };
+  futureDataverseMapping: {
+    table: string;
+    recordId: string;
+    relationshipNotes: string;
+  };
+  trained: boolean;
+  verificationStatus: 'Verified' | 'Under review' | 'Incomplete';
+  lastUpdated: string;
+  source: 'dataverse' | 'prototype';
 }
 
 export interface SubmissionSummary {

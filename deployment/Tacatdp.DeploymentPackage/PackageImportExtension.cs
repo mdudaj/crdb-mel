@@ -104,8 +104,9 @@ namespace Tacatdp.DeploymentPackage
             }
 
             var xformPath = Path.Combine(packageRoot, "PkgAssets", "Content", SeedManifest.XFormFileName);
+            var baselineBridgePath = Path.Combine(packageRoot, "PkgAssets", "Content", SeedManifest.BaselineBridgeFileName);
             Trace.TraceInformation("TACATDP seed deployment started.");
-            new SeedDeployer(CrmSvc).Deploy(xformPath);
+            new SeedDeployer(CrmSvc).Deploy(xformPath, baselineBridgePath);
             Trace.TraceInformation("TACATDP seed deployment completed.");
             return true;
         }

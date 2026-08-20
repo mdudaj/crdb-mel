@@ -30,13 +30,20 @@ import {
   Users,
 } from '@lucide/vue';
 import { computed, defineAsyncComponent, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import TacatdpDashboardPage from '../components/dashboard/TacatdpDashboardPage.vue';
 import { draftStore, type LocalDraft } from '../offline/drafts';
 import { PowerPagesApiClient } from '../powerpages-api/client';
+import BeneficiariesView from './BeneficiariesView.vue';
 import type {
   AssignFormAccessResult,
   AccessUserSummary,
   AccessWriteCommand,
   AccessWritePreview,
+  BaselineBridgeImportAsset,
+  BaselineImportDiagnosticStep,
+  BaselineBridgeImportMode,
+  BaselineBridgeImportProgress,
+  BaselineBridgeImportResult,
   ExportSettingRow,
   FormAssignmentSummary,
   MailboxReadinessStatus,
@@ -51,11 +58,11 @@ import type {
 } from '../powerpages-api/types';
 import { measureAsync } from '../performance';
 
-type AppView = 'dashboard' | 'projects' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'roadmap';
+type AppView = 'dashboard' | 'workspace' | 'projects' | 'beneficiaries' | 'records' | 'runner' | 'access' | 'reporting' | 'system-activity' | 'baseline-import' | 'roadmap';
 type FormSection = 'summary' | 'data' | 'exports' | 'powerbi';
 type AccessSection = 'users' | 'add' | 'roles' | 'activity' | 'configuration';
 type AccessChangeAction = 'email' | 'role' | 'suspend' | 'reactivate';
-type RouteIntent = 'dashboard' | 'projects' | 'reporting' | 'access' | 'system-activity';
+type RouteIntent = 'dashboard' | 'projects' | 'beneficiaries' | 'reporting' | 'access' | 'system-activity' | 'baseline-import';
 type SystemActivitySection = 'health' | 'events' | 'onboarding' | 'submissions' | 'integrations';
 
 interface AccessActivityEvent {
@@ -150,7 +157,6 @@ const selectedRoadmapModule = ref('Programmes');
 const activeFormSection = ref<FormSection>('summary');
 const shellNavCollapsed = ref(false);
 const mobileNavOpen = ref(false);
-const melPlatformNavOpen = ref(false);
 const recordSearch = ref('');
 const reportDateFrom = ref('');
 const reportDateTo = ref('');
@@ -212,6 +218,23 @@ const notificationSaving = ref(false);
 const notificationMessage = ref('');
 const notificationError = ref('');
 const activeSystemActivitySection = ref<SystemActivitySection>('health');
+const baselineImportAsset = ref<BaselineBridgeImportAsset | null>(null);
+const baselineXFormFileName = ref('');
+const baselineXFormLoading = ref(false);
+const baselineXFormMessage = ref('');
+const baselineXFormError = ref('');
+const baselineImportFileName = ref('');
+const baselineImportMode = ref<BaselineBridgeImportMode>('append');
+const baselineImportLoading = ref(false);
+const baselineImportRunning = ref(false);
+const baselineImportError = ref('');
+const baselineImportMessage = ref('');
+const baselineImportProgress = ref<BaselineBridgeImportProgress | null>(null);
+const baselineImportResult = ref<BaselineBridgeImportResult | null>(null);
+const baselineProjectionRunning = ref(false);
+const baselineDiagnosticRunning = ref(false);
+const baselineDiagnosticResults = ref<BaselineImportDiagnosticStep[]>([]);
+const baselineDiagnosticError = ref('');
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -291,6 +314,7 @@ const powerBiTables = [
   { logical: 'mp_submissionrepeatrow', label: 'Submission repeat rows', purpose: 'One row per repeat-group instance' },
   { logical: 'mp_submissionanswer', label: 'Submission answers', purpose: 'Long-format answer facts' },
 ];
+
 const accessRoleReference = [
   { role: 'Platform Administrator', summary: 'Manages users, projects, forms, reporting, and configuration.' },
   { role: 'Project Manager', summary: 'Manages users and form access for assigned projects.' },
@@ -638,8 +662,11 @@ const accessWorkflowCanSubmit = computed(() => (
 const selectedProject = computed(() => projectWorkspaces.value.find((project) => project.id === selectedProjectId.value) ?? null);
 const shellPageTitle = computed(() => {
   if (activeView.value === 'dashboard') return 'Dashboard';
+  if (activeView.value === 'workspace') return 'Workspace';
+  if (activeView.value === 'beneficiaries') return 'Beneficiaries';
   if (activeView.value === 'access') return 'User & Access';
   if (activeView.value === 'system-activity') return 'System Activity';
+  if (activeView.value === 'baseline-import') return 'Baseline Import';
   if (activeView.value === 'reporting') return 'Reporting';
   if (activeView.value === 'roadmap') return selectedRoadmapModule.value;
   if (activeView.value === 'runner') return selectedAssignment.value?.formName || 'Form';
@@ -647,11 +674,13 @@ const shellPageTitle = computed(() => {
   return 'Projects';
 });
 const shellPageEyebrow = computed(() => {
-  if (activeView.value === 'access' || activeView.value === 'system-activity') return 'Administration';
-  if (activeView.value === 'reporting' || activeView.value === 'roadmap') return 'MEL platform';
+  if (activeView.value === 'access' || activeView.value === 'system-activity' || activeView.value === 'baseline-import') return 'Administration';
+  if (activeView.value === 'reporting' || activeView.value === 'roadmap' || activeView.value === 'beneficiaries') return 'MEL platform';
   if (activeView.value === 'records') return 'Project';
   if (activeView.value === 'runner') return runnerTitle.value;
-  return 'SFU operational workspace';
+  if (activeView.value === 'workspace') return 'Field operations';
+  if (activeView.value === 'dashboard') return 'Monitoring sustainability outcomes and loan performance across Tanzania.';
+  return 'MEL platform';
 });
 const selectedProjectAssignments = computed(() => selectedProject.value?.assignments ?? []);
 const primaryAssignment = computed(() => selectedProjectAssignments.value[0] ?? assignments.value[0] ?? null);
@@ -688,6 +717,7 @@ const signedInUserInitials = computed(() => {
   return (parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : label.slice(0, 2)).toUpperCase();
 });
 const signedInUserRoleLabel = computed(() => (canManageAccess.value ? 'Platform Administrator' : 'MEL User'));
+
 const dashboardMetricItems = computed(() => [
   {
     id: 'active-projects',
@@ -887,6 +917,12 @@ function contactStateTone(value: AccessUserSummary['contactState']): string {
   return 'neutral';
 }
 
+function accessStatusTone(value: AccessUserSummary['accessStatus']): string {
+  if (value === 'Active') return 'success';
+  if (value === 'Needs contact check') return 'warning';
+  return 'neutral';
+}
+
 function formatSystemHealthStatus(value: SystemHealthItem['status']): string {
   if (value === 'healthy') return 'Healthy';
   if (value === 'pending') return 'Pending';
@@ -941,6 +977,13 @@ function formatProjectionStatus(value?: number): string {
   if (value === 100000001) return 'Stale';
   if (value === 100000002) return 'Failed';
   return value == null ? 'Unknown' : `Projection ${value}`;
+}
+
+function projectionStatusTone(value?: number): string {
+  if (value === 100000000) return 'success';
+  if (value === 100000001) return 'warning';
+  if (value === 100000002) return 'warning';
+  return 'neutral';
 }
 
 function formatAnswerValue(answer: SubmissionAnswerRow): string {
@@ -1124,10 +1167,29 @@ function openDashboard() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function openWorkspace() {
+  postSubmitMessage.value = '';
+  accessRouteDenied.value = false;
+  activeView.value = 'workspace';
+  mobileNavOpen.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function backToProjects() {
   postSubmitMessage.value = '';
   activeView.value = 'projects';
   mobileNavOpen.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openBeneficiaries(options: { preserveHash?: boolean } = {}) {
+  postSubmitMessage.value = '';
+  accessRouteDenied.value = false;
+  activeView.value = 'beneficiaries';
+  mobileNavOpen.value = false;
+  if (!options.preserveHash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/beneficiaries`);
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1173,6 +1235,14 @@ async function openSystemActivity() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function openBaselineImport() {
+  accessRouteDenied.value = !canManageAccess.value;
+  activeView.value = 'baseline-import';
+  mobileNavOpen.value = false;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/baseline-import`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function openRoadmapModule(moduleName: string) {
   selectedRoadmapModule.value = moduleName;
   activeView.value = 'roadmap';
@@ -1184,10 +1254,153 @@ function setSystemActivitySection(section: SystemActivitySection) {
   activeSystemActivitySection.value = section;
 }
 
+async function handleBaselineXFormFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  baselineXFormFileName.value = file?.name ?? '';
+  baselineXFormMessage.value = '';
+  baselineXFormError.value = '';
+  if (!file) {
+    return;
+  }
+
+  baselineXFormLoading.value = true;
+  try {
+    const formVersionId = await api.seedLatestTacatdpXForm(await file.text());
+    baselineXFormMessage.value = `Form version 2608130924 is ready in Dataverse (${formVersionId}).`;
+  } catch (caught) {
+    baselineXFormError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineXFormLoading.value = false;
+  }
+}
+
+async function handleBaselineImportFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportResult.value = null;
+  baselineImportProgress.value = null;
+  baselineImportAsset.value = null;
+  baselineImportFileName.value = file?.name ?? '';
+  if (!file) {
+    return;
+  }
+
+  baselineImportLoading.value = true;
+  try {
+    const parsed = JSON.parse(await file.text()) as BaselineBridgeImportAsset;
+    const validation = await api.importBaselineBridgeAsset(parsed, { dryRun: true });
+    baselineImportAsset.value = parsed;
+    baselineImportResult.value = validation;
+    baselineImportMessage.value = `Validated ${validation.totalRows.toLocaleString()} baseline rows.`;
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineImportLoading.value = false;
+  }
+}
+
+async function runBaselineImport(limit?: number) {
+  if (!baselineImportAsset.value) {
+    baselineImportError.value = 'Select the generated baseline bridge JSON file first.';
+    return;
+  }
+  baselineImportRunning.value = true;
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportProgress.value = {
+    processedRows: 0,
+    totalRows: Math.min(limit ?? baselineImportAsset.value.rows.length, baselineImportAsset.value.rows.length),
+    message: 'Starting baseline import',
+  };
+  try {
+    const result = await api.importBaselineBridgeAsset(baselineImportAsset.value, {
+      limit,
+      mode: baselineImportMode.value,
+      onProgress(progress) {
+        baselineImportProgress.value = progress;
+      },
+    });
+    baselineImportResult.value = result;
+    baselineImportProgress.value = {
+      processedRows: result.rowsProcessed,
+      totalRows: Math.min(limit ?? baselineImportAsset.value.rows.length, baselineImportAsset.value.rows.length),
+      message: 'Refreshing reporting projection',
+    };
+    submissions.value = await api.listSavedSubmissions();
+    savedPage.value = 1;
+    await loadReportingData();
+    const modeLabel = result.mode === 'append' ? 'Appended' : 'Replaced matching';
+    baselineImportMessage.value = `${modeLabel} ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} and refreshed the reporting projection.`;
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineImportRunning.value = false;
+  }
+}
+
+async function runBaselineProjectionRepair(limit?: number) {
+  baselineProjectionRunning.value = true;
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportProgress.value = {
+    processedRows: 0,
+    totalRows: limit ?? 0,
+    message: 'Starting baseline report row projection',
+  };
+  try {
+    const result = await api.rebuildBaselineReportRowsFromCanonical({
+      limit,
+      onProgress(progress) {
+        baselineImportProgress.value = progress;
+      },
+    });
+    baselineImportResult.value = result;
+    baselineImportMessage.value = `Built or updated ${result.counts.mp_SubmissionReportRow?.toLocaleString() ?? '0'} report row${result.counts.mp_SubmissionReportRow === 1 ? '' : 's'} from canonical baseline submissions.`;
+    submissions.value = await api.listSavedSubmissions();
+    await loadReportingData();
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineProjectionRunning.value = false;
+  }
+}
+
+async function runBaselineTrackedEntityDiagnostics() {
+  baselineDiagnosticRunning.value = true;
+  baselineDiagnosticError.value = '';
+  baselineDiagnosticResults.value = [];
+  try {
+    baselineDiagnosticResults.value = await api.runBaselineTrackedEntityDiagnostics('TACATDP');
+  } catch (caught) {
+    baselineDiagnosticError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineDiagnosticRunning.value = false;
+  }
+}
+
+function sanitizeBaselineImportError(caught: unknown): string {
+  const message = caught instanceof Error ? caught.message : 'Baseline import failed.';
+  return message
+    .replace(/mp_identifiervalue eq '[^']*'/g, "mp_identifiervalue eq '<redacted>'")
+    .replace(/mp_instanceid eq '[^']*'/g, "mp_instanceid eq '<redacted>'")
+    .replace(/mp_entitykey eq '[^']*'/g, "mp_entitykey eq '<redacted>'")
+    .replace(/mp_linkkey eq '[^']*'/g, "mp_linkkey eq '<redacted>'")
+    .slice(0, 900);
+}
+
 function routeIntentFromHash(): RouteIntent | null {
-  const route = window.location.hash.replace(/^#\/?/, '').split('/')[0].trim().toLowerCase();
+  const route = window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
   if (route === 'system-activity' || route === 'activity') {
     return 'system-activity';
+  }
+  if (route === 'baseline-import') {
+    return 'baseline-import';
+  }
+  if (route === 'beneficiaries') {
+    return 'beneficiaries';
   }
   if (route === 'dashboard' || route === 'projects' || route === 'reporting' || route === 'access') {
     return route;
@@ -1200,6 +1413,10 @@ async function applyRouteIntent(intent: RouteIntent | null) {
     await openSystemActivity();
     return;
   }
+  if (intent === 'baseline-import') {
+    openBaselineImport();
+    return;
+  }
   if (intent === 'access') {
     await openAccessManagement();
     return;
@@ -1210,6 +1427,10 @@ async function applyRouteIntent(intent: RouteIntent | null) {
   }
   if (intent === 'projects') {
     backToProjects();
+    return;
+  }
+  if (intent === 'beneficiaries') {
+    openBeneficiaries({ preserveHash: true });
     return;
   }
   if (intent === 'dashboard') {
@@ -2232,6 +2453,7 @@ async function loadWorkspace() {
       ? 'No Dataverse submit write attempted for this selected form.'
       : 'No assigned form selected.';
     lastWorkspaceRefreshAt.value = new Date().toISOString();
+    void loadReportingData();
   } catch (caught) {
     const message = caught instanceof Error ? caught.message : 'Unable to load workspace.';
     if ((message.includes('401') || message.includes('403')) && !api.hasPowerPagesSession()) {
@@ -2317,109 +2539,139 @@ onUnmounted(() => {
       />
       <aside class="managed-side-nav" aria-label="MEL Tool navigation">
         <div class="managed-side-nav__brand">
-          <img :src="crdbLogoUrl" alt="CRDB Bank">
+          <img class="managed-side-nav__logo" :src="crdbLogoUrl" alt="CRDB Bank">
           <div class="managed-side-nav__brand-text">
-            <strong>MEL Tool</strong>
+            <strong>TACATDP <span aria-hidden="true">🌱</span></strong>
+            <small>CRDB · Green Climate Fund</small>
           </div>
         </div>
 
-        <nav class="managed-side-nav__section managed-side-nav__section--primary" aria-label="Field operations navigation">
-          <h2>Field Operations</h2>
+        <nav class="managed-side-nav__section managed-side-nav__section--primary" aria-label="Overview navigation">
+          <h2>Overview</h2>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'dashboard' }"
             type="button"
-            aria-label="Dashboard"
+            aria-label="Overview"
             @click="openDashboard"
           >
             <LayoutDashboard class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Dashboard</span>
-            <span class="action-tooltip" role="tooltip">Dashboard</span>
+            <span>Overview</span>
+            <span class="action-tooltip" role="tooltip">Overview</span>
+          </button>
+        </nav>
+
+        <nav class="managed-side-nav__section" aria-label="Programme navigation">
+          <h2>Programme</h2>
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'projects' || activeView === 'records' }"
+            type="button"
+            aria-label="Programmes"
+            @click="openRoadmapModule('Programmes')"
+          >
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Programmes</span>
+            <span class="action-tooltip" role="tooltip">Programmes</span>
           </button>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'projects' || activeView === 'records' }"
             type="button"
-            aria-label="Projects"
+            aria-label="Projects and loans"
             @click="backToProjects"
           >
             <FolderOpen class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Projects</span>
-            <span class="action-tooltip" role="tooltip">Projects</span>
+            <span>Projects / Loans</span>
+            <span class="action-tooltip" role="tooltip">Projects / Loans</span>
+          </button>
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'beneficiaries' }"
+            type="button"
+            aria-label="Beneficiaries"
+            @click="openBeneficiaries()"
+          >
+            <Users class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Beneficiaries</span>
+            <span class="action-tooltip" role="tooltip">Beneficiaries</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Disbursements" @click="openRoadmapModule('Disbursements')">
+            <Database class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Disbursements</span>
+            <span class="action-tooltip" role="tooltip">Disbursements</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Repayments" @click="openRoadmapModule('Repayments')">
+            <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Repayments</span>
+            <span class="action-tooltip" role="tooltip">Repayments</span>
           </button>
         </nav>
 
-        <nav class="managed-side-nav__section" aria-label="Results and reporting navigation">
-          <h2>Results &amp; Reporting</h2>
+        <nav class="managed-side-nav__section" aria-label="Monitoring and evaluation navigation">
+          <h2>Monitoring &amp; Evaluation</h2>
+          <button class="managed-nav-item" type="button" aria-label="Indicators" @click="openRoadmapModule('Indicators')">
+            <Database class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Indicators</span>
+            <span class="action-tooltip" role="tooltip">Indicators</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Impact Logframe" @click="openRoadmapModule('Impact Logframe')">
+            <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Impact Logframe</span>
+            <span class="action-tooltip" role="tooltip">Impact Logframe</span>
+          </button>
+          <button
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'workspace' }"
+            type="button"
+            aria-label="Data Submissions"
+            @click="openWorkspace"
+          >
+            <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Data Submissions</span>
+            <span class="action-tooltip" role="tooltip">Data Submissions</span>
+          </button>
           <button
             class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'reporting' }"
             type="button"
-            aria-label="Reporting"
+            aria-label="Reports"
             @click="openReportingDestination"
           >
             <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Reporting</span>
-            <span class="action-tooltip" role="tooltip">Reporting</span>
-          </button>
-          <button class="managed-nav-item" type="button" aria-label="Power BI" @click="openRoadmapModule('Power BI')">
-            <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Power BI</span>
-            <span class="action-tooltip" role="tooltip">Power BI</span>
+            <span>Reports</span>
+            <span class="action-tooltip" role="tooltip">Reports</span>
           </button>
         </nav>
 
-        <nav class="managed-side-nav__section managed-side-nav__section--roadmap" aria-label="MEL platform roadmap navigation">
-          <h2>MEL Platform</h2>
+        <nav class="managed-side-nav__section" aria-label="Insights navigation">
+          <h2>Insights</h2>
           <button
-            class="managed-nav-item managed-nav-item--disclosure"
+            class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'dashboard' }"
             type="button"
-            aria-label="Toggle MEL Platform modules"
-            :aria-expanded="melPlatformNavOpen"
-            @click="melPlatformNavOpen = !melPlatformNavOpen"
+            aria-label="Dashboards"
+            @click="openDashboard"
           >
-            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
-            <span>Future modules</span>
-            <ChevronDown class="managed-nav-item__chevron" aria-hidden="true" />
-            <span class="action-tooltip" role="tooltip">MEL Platform</span>
+            <BarChart3 class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Dashboards</span>
+            <span class="action-tooltip" role="tooltip">Dashboards</span>
           </button>
-          <div v-if="melPlatformNavOpen" class="managed-nav-subgroup" aria-label="Future MEL Platform modules">
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Programmes" @click="openRoadmapModule('Programmes')">
-              <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Programmes</span>
-              <span class="action-tooltip" role="tooltip">Programmes</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Beneficiaries" @click="openRoadmapModule('Beneficiaries')">
-              <Users class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Beneficiaries</span>
-              <span class="action-tooltip" role="tooltip">Beneficiaries</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Field Data" @click="openRoadmapModule('Field Data')">
-              <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Field Data</span>
-              <span class="action-tooltip" role="tooltip">Field Data</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Indicators" @click="openRoadmapModule('Indicators')">
-              <Database class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Indicators</span>
-              <span class="action-tooltip" role="tooltip">Indicators</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Evidence" @click="openRoadmapModule('Evidence')">
-              <ShieldCheck class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Evidence</span>
-              <span class="action-tooltip" role="tooltip">Evidence</span>
-            </button>
-            <button class="managed-nav-item managed-nav-item--sub" type="button" aria-label="Learning" @click="openRoadmapModule('Learning')">
-              <Activity class="managed-nav-item__icon" aria-hidden="true" />
-              <span>Learning</span>
-              <span class="action-tooltip" role="tooltip">Learning</span>
-            </button>
-          </div>
+          <button class="managed-nav-item" type="button" aria-label="Maps" @click="openRoadmapModule('Maps')">
+            <Activity class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Maps</span>
+            <span class="action-tooltip" role="tooltip">Maps</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Learning and Insights" @click="openRoadmapModule('Learning & Insights')">
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Learning &amp; Insights</span>
+            <span class="action-tooltip" role="tooltip">Learning &amp; Insights</span>
+          </button>
         </nav>
 
 
         <nav class="managed-side-nav__section managed-side-nav__section--admin" aria-label="Administration navigation">
-          <h2>Administration</h2>
+          <h2>Admin</h2>
           <button
             v-if="canManageAccess"
             class="managed-nav-item"
@@ -2435,14 +2687,31 @@ onUnmounted(() => {
           <button
             v-if="canManageAccess"
             class="managed-nav-item"
+            :class="{ 'managed-nav-item--active': activeView === 'baseline-import' }"
+            type="button"
+            aria-label="Baseline Import"
+            @click="openBaselineImport"
+          >
+            <FileSpreadsheet class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Baseline Import</span>
+            <span class="action-tooltip" role="tooltip">Baseline Import</span>
+          </button>
+          <button
+            v-if="canManageAccess"
+            class="managed-nav-item"
             :class="{ 'managed-nav-item--active': activeView === 'access' }"
             type="button"
             aria-label="User and Access"
             @click="openAccessManagement"
           >
             <UserCog class="managed-nav-item__icon" aria-hidden="true" />
-            <span>User &amp; Access</span>
-            <span class="action-tooltip" role="tooltip">User &amp; Access</span>
+            <span>Users</span>
+            <span class="action-tooltip" role="tooltip">Users</span>
+          </button>
+          <button class="managed-nav-item" type="button" aria-label="Organizations" @click="openRoadmapModule('Organizations')">
+            <Clipboard class="managed-nav-item__icon" aria-hidden="true" />
+            <span>Organizations</span>
+            <span class="action-tooltip" role="tooltip">Organizations</span>
           </button>
           <button class="managed-nav-item" type="button" aria-label="Settings" @click="openRoadmapModule('Settings')">
             <Settings class="managed-nav-item__icon" aria-hidden="true" />
@@ -2453,7 +2722,7 @@ onUnmounted(() => {
 
         <button class="managed-side-nav__org" type="button" aria-label="Current organization and branch">
           <span>Sustainable Finance Unit</span>
-          <strong>Head Office</strong>
+          <strong>CRDB Bank</strong>
           <ChevronDown class="managed-side-nav__org-icon" aria-hidden="true" />
         </button>
       </aside>
@@ -2489,6 +2758,14 @@ onUnmounted(() => {
 
         <div class="managed-workspace-body">
     <template v-if="activeView === 'dashboard'">
+      <TacatdpDashboardPage />
+    </template>
+
+    <template v-else-if="activeView === 'beneficiaries'">
+      <BeneficiariesView />
+    </template>
+
+    <template v-else-if="activeView === 'workspace'">
       <section class="sync-status-strip" aria-label="Device and assignment status">
         <span class="state-dot" :class="{ 'state-dot--offline': !online }" aria-hidden="true"></span>
         <strong>{{ online ? 'Device connected' : 'Device offline' }}</strong>
@@ -2743,49 +3020,68 @@ onUnmounted(() => {
         {{ error }}
       </section>
 
-      <section v-if="workspaceHydrating && assignments.length === 0" class="project-list" aria-live="polite" aria-label="Loading available projects">
-        <article v-for="index in 3" :key="`project-skeleton:${index}`" class="project-card project-card--entry project-card--skeleton" aria-hidden="true">
+      <section class="material-list-surface project-list-surface" aria-labelledby="projects-list-title">
+        <header class="material-surface-header project-list-header">
           <div>
-            <span class="skeleton-line skeleton-line--eyebrow"></span>
-            <span class="skeleton-line skeleton-line--title"></span>
-            <span class="skeleton-line skeleton-line--body"></span>
-            <span class="skeleton-line skeleton-line--body skeleton-line--short"></span>
+            <p class="eyebrow">Projects</p>
+            <h2 id="projects-list-title">Assigned projects</h2>
+            <p>Open a project workspace to collect data, review submitted records, export CSV files, or inspect reporting setup.</p>
           </div>
-          <span class="skeleton-action"></span>
-        </article>
-      </section>
+          <span class="material-count-chip project-list-count">{{ projectWorkspaces.length }} assigned</span>
+        </header>
 
-      <section v-if="projectWorkspaces.length > 0" class="project-list" aria-label="Available projects">
-        <article
-          v-for="project in projectWorkspaces"
-          :key="project.id"
-          class="project-card project-card--entry"
-        >
-          <div>
-            <p class="eyebrow">Project</p>
-            <h2>{{ project.name }}</h2>
-            <p>{{ project.description }}</p>
-            <dl class="compact-facts">
-              <div>
-                <dt>Forms</dt>
-                <dd>{{ project.assignments.length }}</dd>
-              </div>
-              <div>
-                <dt>Local drafts</dt>
-                <dd>{{ draftCount }}</dd>
-              </div>
-            </dl>
-          </div>
-          <button class="icon-action" type="button" :aria-label="`Open ${project.name}`" @click="openProject(project)">
-            <FolderOpen class="action-icon" aria-hidden="true" />
-            Open
-          </button>
-        </article>
-      </section>
+        <section v-if="workspaceHydrating && assignments.length === 0" class="project-list" aria-live="polite" aria-label="Loading available projects">
+          <article v-for="index in 3" :key="`project-skeleton:${index}`" class="project-card project-card--entry project-card--skeleton" aria-hidden="true">
+            <div>
+              <span class="skeleton-line skeleton-line--eyebrow"></span>
+              <span class="skeleton-line skeleton-line--title"></span>
+              <span class="skeleton-line skeleton-line--body"></span>
+              <span class="skeleton-line skeleton-line--body skeleton-line--short"></span>
+            </div>
+            <span class="skeleton-action"></span>
+          </article>
+        </section>
 
-      <section v-else-if="!workspaceHydrating && !error" class="empty-state" aria-label="No projects">
-        <h2>No projects</h2>
-        <p>No project assignments were returned for this Power Pages session.</p>
+        <section v-else-if="projectWorkspaces.length > 0" class="project-list" aria-label="Available projects">
+          <article
+            v-for="project in projectWorkspaces"
+            :key="project.id"
+            class="project-card project-card--entry project-card--material"
+            tabindex="0"
+          >
+            <header class="project-card__header">
+              <div>
+                <p class="eyebrow">Project</p>
+                <h2>{{ project.name }}</h2>
+              </div>
+              <span class="state-chip state-chip--success">Assigned</span>
+            </header>
+            <div class="project-card__content">
+              <p>{{ project.description }}</p>
+              <dl class="compact-facts">
+                <div>
+                  <dt>Forms</dt>
+                  <dd>{{ project.assignments.length }}</dd>
+                </div>
+                <div>
+                  <dt>Local drafts</dt>
+                  <dd>{{ draftCount }}</dd>
+                </div>
+              </dl>
+            </div>
+            <footer class="material-card-footer project-card__footer">
+              <button class="icon-action" type="button" :aria-label="`Open ${project.name}`" @click="openProject(project)">
+                <FolderOpen class="action-icon" aria-hidden="true" />
+                Open project
+              </button>
+            </footer>
+          </article>
+        </section>
+
+        <section v-else-if="!workspaceHydrating && !error" class="empty-state empty-state--inline project-empty-state" aria-label="No projects">
+          <h2>No projects</h2>
+          <p>No project assignments were returned for this Power Pages session.</p>
+        </section>
       </section>
     </template>
 
@@ -2813,15 +3109,18 @@ onUnmounted(() => {
         {{ reportError }}
       </section>
 
-      <section class="workspace-panel" aria-labelledby="reporting-projects-title">
-        <header class="section-heading">
+      <section class="material-list-surface reporting-list-surface" aria-labelledby="reporting-projects-title">
+        <header class="material-surface-header reporting-list-header">
           <div>
             <p class="eyebrow">Project reporting</p>
             <h2 id="reporting-projects-title">Reporting workspaces</h2>
+            <p>Open assigned project reporting areas for data review, governed CSV exports, and Power BI setup guidance.</p>
           </div>
+          <span class="material-count-chip reporting-list-count">{{ reportingProjectRows.length }} workspace{{ reportingProjectRows.length === 1 ? '' : 's' }}</span>
         </header>
-        <div v-if="reportingProjectRows.length > 0" class="responsive-table" role="region" aria-label="Reporting workspace table" tabindex="0">
+        <div v-if="reportingProjectRows.length > 0" class="responsive-table material-table reporting-table" role="region" aria-label="Reporting workspace table" tabindex="0">
           <table>
+            <caption class="sr-only">Reporting workspaces with project name, form count, projected record count, last updated date, projection status, and actions.</caption>
             <thead>
               <tr>
                 <th scope="col">Project</th>
@@ -2833,13 +3132,13 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in reportingProjectRows" :key="`reporting:${row.project.id}`">
+              <tr v-for="row in reportingProjectRows" :key="`reporting:${row.project.id}`" tabindex="0">
                 <td>
                   <strong>{{ row.project.name }}</strong>
                   <span>{{ row.project.description }}</span>
                 </td>
-                <td>{{ row.forms }}</td>
-                <td>{{ row.records }}</td>
+                <td class="reporting-table__number">{{ row.forms }}</td>
+                <td class="reporting-table__number">{{ row.records }}</td>
                 <td>{{ formatDate(row.lastUpdated) }}</td>
                 <td><span class="state-chip" :class="reportError ? 'state-chip--warning' : 'state-chip--success'">{{ row.projectionStatus }}</span></td>
                 <td>
@@ -2862,7 +3161,7 @@ onUnmounted(() => {
             </tbody>
           </table>
         </div>
-        <section v-else class="empty-state empty-state--inline" aria-label="No reporting workspaces">
+        <section v-else class="empty-state empty-state--inline reporting-empty-state" aria-label="No reporting workspaces">
           <h2>No reporting workspaces</h2>
           <p>Project reporting will appear after assignments are available.</p>
         </section>
@@ -2880,13 +3179,19 @@ onUnmounted(() => {
 
       <section class="project-form-workspace" aria-label="Project data workspace">
         <article class="project-command-card" aria-label="Selected project">
-          <button class="collect-action" type="button" :disabled="!primaryAssignment" aria-label="Collect" @click="openRunner(primaryAssignment)">
-            <NotepadText class="action-icon" aria-hidden="true" />
-            Collect
-          </button>
           <div class="project-command-card__copy">
             <h2>{{ selectedProject?.name }}</h2>
             <p>{{ online ? 'Online' : 'Offline' }} · {{ selectedProjectAssignments.length }} form{{ selectedProjectAssignments.length === 1 ? '' : 's' }} · {{ savedCount }} submitted</p>
+          </div>
+          <div class="project-command-card__actions" aria-label="Project actions">
+            <button class="collect-action" type="button" :disabled="!primaryAssignment" aria-label="Collect" @click="openRunner(primaryAssignment)">
+              <NotepadText class="action-icon" aria-hidden="true" />
+              Collect
+            </button>
+            <button v-if="canManageAccess" class="collect-action collect-action--secondary" type="button" aria-label="Import baseline" @click="openBaselineImport">
+              <Database class="action-icon" aria-hidden="true" />
+              Import baseline
+            </button>
           </div>
         </article>
 
@@ -2961,12 +3266,14 @@ onUnmounted(() => {
             </article>
           </section>
 
-          <section v-else-if="activeFormSection === 'data'" class="data-table-panel" role="tabpanel" aria-label="Submitted data">
-            <div class="record-toolbar">
+          <section v-else-if="activeFormSection === 'data'" class="material-surface project-detail-surface data-table-panel" role="tabpanel" aria-labelledby="project-data-title">
+            <div class="record-toolbar material-surface-header project-detail-surface__header">
               <div>
                 <p class="eyebrow">Data</p>
-                <h3>Reporting records</h3>
+                <h3 id="project-data-title">Reporting records</h3>
+                <p>Submitted and projected records for the selected project form.</p>
               </div>
+              <span class="material-count-chip project-detail-count">{{ reportTotal }} record{{ reportTotal === 1 ? '' : 's' }}</span>
               <label class="record-search">
                 <Search class="record-search__icon" aria-hidden="true" />
                 <span class="sr-only">Search submitted data</span>
@@ -3057,8 +3364,9 @@ onUnmounted(() => {
               <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
             </section>
 
-            <div v-else class="responsive-table" role="region" aria-label="Reporting data table" tabindex="0">
+            <div v-else class="responsive-table material-table project-detail-table" role="region" aria-label="Reporting data table" tabindex="0">
               <table>
+                <caption class="sr-only">Reporting records with record name, version, updated date, review state, projection status, and row actions.</caption>
                 <thead>
                   <tr>
                     <th scope="col">Record</th>
@@ -3070,15 +3378,15 @@ onUnmounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="reportRow in reportRows" :key="reportRow.mp_submissionreportrowid">
+                  <tr v-for="reportRow in reportRows" :key="reportRow.mp_submissionreportrowid" tabindex="0">
                     <td>
                       <strong>{{ reportRow.mp_displayname || reportRow.mp_instanceid }}</strong>
                       <span>{{ reportRow.mp_instanceid }}</span>
                     </td>
-                    <td>{{ reportRow.mp_versionnumber || 1 }}</td>
+                    <td class="project-detail-table__number">{{ reportRow.mp_versionnumber || 1 }}</td>
                     <td>{{ formatDate(reportRow.mp_updatedat || reportRow.mp_submittedat) }}</td>
                     <td>{{ formatReviewState(reportRow.mp_reviewstate) }}</td>
-                    <td><span class="state-chip">{{ formatProjectionStatus(reportRow.mp_projectionstatus) }}</span></td>
+                    <td><span class="state-chip" :class="`state-chip--${projectionStatusTone(reportRow.mp_projectionstatus)}`">{{ formatProjectionStatus(reportRow.mp_projectionstatus) }}</span></td>
                     <td>
                       <div class="table-actions">
                         <button
@@ -3153,8 +3461,8 @@ onUnmounted(() => {
               </p>
             </nav>
 
-            <section v-if="selectedReportRow" class="record-detail-panel" aria-labelledby="record-detail-title">
-              <header class="record-detail-header">
+            <section v-if="selectedReportRow" class="material-detail-section record-detail-panel" aria-labelledby="record-detail-title">
+              <header class="material-detail-header record-detail-header">
                 <div>
                   <p class="eyebrow">Record detail</p>
                   <h3 id="record-detail-title">{{ selectedReportRow.mp_displayname || selectedReportRow.mp_instanceid }}</h3>
@@ -3167,8 +3475,8 @@ onUnmounted(() => {
                 <h2>Loading answers</h2>
                 <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
               </section>
-              <dl v-else class="answer-list">
-                <div v-for="answer in reportAnswers" :key="answer.mp_submissionanswerid" class="answer-row">
+              <dl v-else class="material-detail-list answer-list">
+                <div v-for="answer in reportAnswers" :key="answer.mp_submissionanswerid" class="material-detail-row answer-row">
                   <dt>{{ answer.mp_fieldlabel || answer.mp_fieldname || answer.mp_fieldpath }}</dt>
                   <dd>{{ formatAnswerValue(answer) }}</dd>
                   <small>{{ answer.mp_fieldpath }}<template v-if="answer._mp_submissionrepeatrow_value"> · Repeat answer</template></small>
@@ -3181,7 +3489,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else-if="activeFormSection === 'exports'" class="export-workspace" role="tabpanel" aria-label="Exports">
+          <section v-else-if="activeFormSection === 'exports'" class="material-surface project-detail-surface export-workspace" role="tabpanel" aria-label="Exports">
             <header class="section-heading">
               <div>
                 <p class="eyebrow">Exports</p>
@@ -3191,7 +3499,7 @@ onUnmounted(() => {
             </header>
             <section v-if="exportMessage" class="status-banner status-banner--success" aria-live="polite">{{ exportMessage }}</section>
             <section v-if="exportError" class="status-banner status-banner--error" aria-live="polite">{{ exportError }}</section>
-            <div class="export-create-panel">
+            <div class="material-detail-section export-create-panel">
               <label class="filter-field export-name-field">
                 <span>Export name</span>
                 <input :value="exportName" type="text" readonly aria-readonly="true">
@@ -3216,9 +3524,9 @@ onUnmounted(() => {
                 <p>CSV does not include repeat rows. XLSX remains unavailable until repeat-group data and a governed workbook generator are verified.</p>
               </div>
             </div>
-            <section class="named-export-list" aria-labelledby="saved-exports-title">
+            <section class="material-detail-section named-export-list" aria-labelledby="saved-exports-title">
               <h3 id="saved-exports-title">Saved exports</h3>
-              <article v-for="setting in exportSettings" :key="setting.mp_exportsettingid" class="named-export-row">
+              <article v-for="setting in exportSettings" :key="setting.mp_exportsettingid" class="material-row named-export-row" tabindex="0">
                 <div>
                   <strong>{{ setting.mp_name }}</strong>
                   <span>CSV · Current filters · Updated {{ formatDate(setting.mp_updatedat || setting.mp_createdat) }}</span>
@@ -3235,7 +3543,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <section v-else class="powerbi-workspace" role="tabpanel" aria-label="Power BI">
+          <section v-else class="material-surface project-detail-surface powerbi-workspace" role="tabpanel" aria-label="Power BI">
             <header class="section-heading section-heading--with-icon">
               <BarChart3 class="guidance-icon" aria-hidden="true" />
               <div>
@@ -3244,7 +3552,7 @@ onUnmounted(() => {
                 <p>Use the Microsoft Dataverse connector and an organizational account with reporting-table read access.</p>
               </div>
             </header>
-            <section class="connection-panel" aria-labelledby="connection-title">
+            <section class="material-detail-section connection-panel" aria-labelledby="connection-title">
               <div>
                 <span class="field-label" id="connection-title">Environment URL</span>
                 <code>{{ powerBiEnvironmentUrl }}</code>
@@ -3256,7 +3564,7 @@ onUnmounted(() => {
               </button>
             </section>
             <p v-if="powerBiCopyStatus" class="copy-status" aria-live="polite">{{ powerBiCopyStatus }}</p>
-            <section class="powerbi-steps" aria-labelledby="powerbi-steps-title">
+            <section class="material-detail-section powerbi-steps" aria-labelledby="powerbi-steps-title">
               <h3 id="powerbi-steps-title">Connection steps</h3>
               <ol>
                 <li>In Power BI Desktop, select Get data, then Microsoft Dataverse.</li>
@@ -3265,9 +3573,9 @@ onUnmounted(() => {
                 <li>Relate repeat and answer tables to the root report table through the submission report row lookup.</li>
               </ol>
             </section>
-            <section class="powerbi-table-list" aria-labelledby="powerbi-tables-title">
+            <section class="material-detail-section powerbi-table-list" aria-labelledby="powerbi-tables-title">
               <h3 id="powerbi-tables-title">Reporting tables</h3>
-              <article v-for="table in powerBiTables" :key="table.logical" class="powerbi-table-row">
+              <article v-for="table in powerBiTables" :key="table.logical" class="material-row powerbi-table-row" tabindex="0">
                 <Database class="action-icon" aria-hidden="true" />
                 <div>
                   <strong>{{ table.label }}</strong>
@@ -3348,7 +3656,7 @@ onUnmounted(() => {
           </button>
         </nav>
 
-        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel" role="tabpanel" aria-label="System health">
+        <section v-if="activeSystemActivitySection === 'health'" class="access-readiness-panel material-surface system-activity-surface" role="tabpanel" aria-label="System health">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Health</p>
@@ -3368,7 +3676,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel" role="tabpanel" aria-label="Recent system events">
+        <section v-else-if="activeSystemActivitySection === 'events'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Recent system events">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Events</p>
@@ -3377,7 +3685,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Recent system activity list">
-            <article v-for="event in systemActivityEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3395,7 +3703,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel" role="tabpanel" aria-label="Onboarding activity">
+        <section v-else-if="activeSystemActivitySection === 'onboarding'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Onboarding activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Onboarding</p>
@@ -3404,7 +3712,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Onboarding activity list">
-            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityOnboardingEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3469,8 +3777,9 @@ onUnmounted(() => {
             <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
           </section>
 
-          <div v-else class="responsive-table access-table activation-diagnostics-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
+          <div v-else class="responsive-table material-table access-table activation-diagnostics-table system-activity-table" role="region" aria-label="Activation diagnostics table" tabindex="0">
             <table>
+              <caption class="sr-only">Activation diagnostics with user identity, contact, email, invitation, redemption, external identity, web role, assignment, and next action.</caption>
               <thead>
                 <tr>
                   <th scope="col">User</th>
@@ -3485,7 +3794,7 @@ onUnmounted(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in activationDiagnostics" :key="row.id">
+                <tr v-for="row in activationDiagnostics" :key="row.id" tabindex="0">
                   <td>
                     <strong>{{ row.name }}</strong>
                     <span>{{ row.email }}</span>
@@ -3496,7 +3805,7 @@ onUnmounted(() => {
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.redemptionStatus)}`">{{ formatActivationState(row.redemptionStatus) }}</span></td>
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.externalIdentityStatus)}`">{{ formatActivationState(row.externalIdentityStatus) }}</span></td>
                   <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.webRoleStatus)}`">{{ formatActivationState(row.webRoleStatus) }}</span></td>
-                  <td><span class="state-chip" :class="`state-chip--${activationStateTone(row.assignmentStatus)}`">{{ row.activeAssignmentCount }} active</span></td>
+                  <td class="system-activity-table__number"><span class="state-chip" :class="`state-chip--${activationStateTone(row.assignmentStatus)}`">{{ row.activeAssignmentCount }} active</span></td>
                   <td>
                     <span class="state-chip" :class="`state-chip--${nextActionTone(row.nextAction)}`">{{ row.nextAction }}</span>
                     <small class="activation-detail">{{ row.detail }}</small>
@@ -3513,7 +3822,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel" role="tabpanel" aria-label="Submission activity">
+        <section v-else-if="activeSystemActivitySection === 'submissions'" class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Submission activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Submissions</p>
@@ -3522,7 +3831,7 @@ onUnmounted(() => {
             </div>
           </header>
           <section class="access-activity-list" aria-label="Submission activity list">
-            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivitySubmissionEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3544,7 +3853,7 @@ onUnmounted(() => {
           </section>
         </section>
 
-        <section v-else class="access-activity-panel" role="tabpanel" aria-label="Integration activity">
+        <section v-else class="access-activity-panel material-surface system-activity-surface" role="tabpanel" aria-label="Integration activity">
           <header class="section-heading">
             <div>
               <p class="eyebrow">Integrations</p>
@@ -3560,7 +3869,7 @@ onUnmounted(() => {
             </div>
           </section>
           <section class="access-activity-list" aria-label="Integration activity list">
-            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="system-activity-row">
+            <article v-for="event in systemActivityIntegrationEvents" :key="event.id" class="material-row system-activity-row system-activity-row--material" tabindex="0">
               <span class="state-chip" :class="`state-chip--${systemActivityTone(event.severity)}`">{{ event.status }}</span>
               <div>
                 <strong>{{ event.action }}</strong>
@@ -3576,6 +3885,218 @@ onUnmounted(() => {
               </div>
             </article>
           </section>
+        </section>
+      </section>
+    </template>
+
+    <template v-else-if="activeView === 'baseline-import'">
+      <section v-if="!canManageAccess" class="empty-state" aria-label="Baseline Import denied">
+        <ShieldCheck class="guidance-icon" aria-hidden="true" />
+        <h2>You do not have access to Baseline Import</h2>
+        <p>This temporary import route is available only to users with an approved Platform Administrator web role.</p>
+      </section>
+
+      <section v-else class="baseline-import-workspace" aria-label="Baseline Import workspace">
+        <header class="admin-section-header admin-section-header--compact">
+          <div>
+            <p class="eyebrow">TACATDP baseline import</p>
+            <p>Import the generated baseline bridge JSON through the signed-in Power Pages session. Choose Append to preserve history or Replace to update matching baseline rows in place; the JSON file stays local and is not deployed as a web file.</p>
+          </div>
+          <div class="access-authorization-card" role="status" aria-label="Baseline import authorisation">
+            <span>Authorised role</span>
+            <strong>{{ matchedAccessRoleLabel }}</strong>
+            <small>Power Pages Web API</small>
+          </div>
+        </header>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-xform-file-title">
+          <div>
+            <p class="eyebrow">Step 1</p>
+            <h2 id="baseline-xform-file-title">Seed latest form version</h2>
+            <p>Select the compiled XForm XML for version 2608130924. This prepares the Dataverse form-version row that baseline submissions reference.</p>
+          </div>
+          <label class="baseline-import-file-picker" :class="{ 'baseline-import-file-picker--disabled': baselineXFormLoading || baselineImportRunning }">
+            <input type="file" accept="application/xml,text/xml,.xml" :disabled="baselineXFormLoading || baselineImportRunning" @change="handleBaselineXFormFileChange" />
+            <span class="baseline-import-file-picker__icon" aria-hidden="true">
+              <FileSpreadsheet class="action-icon" />
+            </span>
+            <span class="baseline-import-file-picker__body">
+              <strong>Compiled XForm XML</strong>
+              <small>{{ baselineXFormFileName || 'Choose .xml file' }}</small>
+            </span>
+            <span class="baseline-import-file-picker__action">Browse</span>
+          </label>
+          <p v-if="baselineXFormFileName" class="baseline-import-selected-file">Selected: {{ baselineXFormFileName }}</p>
+          <p v-if="baselineXFormMessage" class="status-banner status-banner--success" aria-live="polite">{{ baselineXFormMessage }}</p>
+          <p v-if="baselineXFormError" class="status-banner status-banner--error" aria-live="polite">{{ baselineXFormError }}</p>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-file-title">
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h2 id="baseline-import-file-title">Select generated import asset</h2>
+            <p>Use the local file generated by `scripts/import-baseline-bridge.py --mode package-asset`. Do not upload the source Kobo workbook here.</p>
+          </div>
+          <label class="baseline-import-file-picker" :class="{ 'baseline-import-file-picker--disabled': baselineImportLoading || baselineImportRunning }">
+            <input type="file" accept="application/json,.json" :disabled="baselineImportLoading || baselineImportRunning" @change="handleBaselineImportFileChange" />
+            <span class="baseline-import-file-picker__icon" aria-hidden="true">
+              <Database class="action-icon" />
+            </span>
+            <span class="baseline-import-file-picker__body">
+              <strong>Baseline bridge JSON</strong>
+              <small>{{ baselineImportFileName || 'Choose .json file' }}</small>
+            </span>
+            <span class="baseline-import-file-picker__action">Browse</span>
+          </label>
+          <p v-if="baselineImportFileName" class="baseline-import-selected-file">Selected: {{ baselineImportFileName }}</p>
+        </section>
+
+        <section class="access-metric-strip" aria-label="Baseline import summary">
+          <article class="metric-card metric-card--accent">
+            <span class="metric-value">{{ baselineImportAsset?.rows.length?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Rows in file</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.customerIdIdentifiers?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Customer IDs</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.phoneIdentifiers?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Phones</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-value">{{ baselineImportAsset?.counts?.duplicateReviewGroups?.toLocaleString() ?? '—' }}</span>
+            <span class="metric-label">Review groups</span>
+          </article>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-run-title">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2 id="baseline-import-run-title">Run controlled import</h2>
+            <p>Run the 5-row smoke test first. If it succeeds, run the full import. Replace affects matching imported baseline rows only; unrelated project records are not deleted.</p>
+          </div>
+          <fieldset class="baseline-import-mode" :disabled="baselineImportRunning" aria-label="Baseline import mode">
+            <legend>Import mode</legend>
+            <label :class="{ 'baseline-import-mode__option--active': baselineImportMode === 'append' }">
+              <input v-model="baselineImportMode" type="radio" value="append">
+              <span>Append</span>
+              <small>Add a new submission version when the baseline record already exists.</small>
+            </label>
+            <label :class="{ 'baseline-import-mode__option--active': baselineImportMode === 'replace' }">
+              <input v-model="baselineImportMode" type="radio" value="replace">
+              <span>Replace</span>
+              <small>Update matching baseline rows in place without deleting unrelated records.</small>
+            </label>
+          </fieldset>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport(5)">
+              <Check class="action-icon" aria-hidden="true" />
+              Run 5-row smoke
+            </button>
+            <button class="icon-action" type="button" :disabled="!baselineImportAsset || baselineImportRunning" @click="runBaselineImport()">
+              <Database class="action-icon" aria-hidden="true" />
+              Run full import
+            </button>
+          </div>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-projection-repair-title">
+          <div>
+            <p class="eyebrow">Step 4</p>
+            <h2 id="baseline-projection-repair-title">Build report rows</h2>
+            <p>Use this after a baseline import if the project summary or Data tab does not show the imported submissions. It creates one reporting row per canonical baseline submission without re-importing the workbook.</p>
+          </div>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineProjectionRunning || baselineImportRunning" @click="runBaselineProjectionRepair(5)">
+              <Check class="action-icon" aria-hidden="true" />
+              Build 5-row projection smoke
+            </button>
+            <button class="icon-action" type="button" :disabled="baselineProjectionRunning || baselineImportRunning" @click="runBaselineProjectionRepair()">
+              <Database class="action-icon" aria-hidden="true" />
+              Build all report rows
+            </button>
+          </div>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-diagnostics-title">
+          <div>
+            <p class="eyebrow">Diagnostics</p>
+            <h2 id="baseline-import-diagnostics-title">Tracked entity Web API checks</h2>
+            <p>Use this only when the import fails at mp_TrackedEntity. It checks project lookup, tracked-entity reads, FetchXML, and the MVP create path without a project lookup bind.</p>
+          </div>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineDiagnosticRunning || baselineImportRunning || baselineProjectionRunning" @click="runBaselineTrackedEntityDiagnostics">
+              <Activity class="action-icon" aria-hidden="true" />
+              Run tracked-entity diagnostics
+            </button>
+          </div>
+          <p v-if="baselineDiagnosticError" class="status-banner status-banner--error" aria-live="polite">{{ baselineDiagnosticError }}</p>
+          <div v-if="baselineDiagnosticResults.length" class="responsive-table material-table" role="region" aria-label="Tracked entity diagnostics" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Check</th>
+                  <th scope="col">Operation</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="step in baselineDiagnosticResults" :key="`${step.name}-${step.operation}`">
+                  <td>{{ step.name }}</td>
+                  <td><code>{{ step.operation }}</code></td>
+                  <td><span class="state-chip" :class="step.status === 'passed' ? 'state-chip--success' : 'state-chip--error'">{{ step.status }}</span></td>
+                  <td>{{ step.detail }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section v-if="baselineImportProgress" class="material-surface baseline-import-progress" aria-live="polite">
+          <strong>{{ baselineImportProgress.message }}</strong>
+          <progress :value="baselineImportProgress.processedRows" :max="baselineImportProgress.totalRows"></progress>
+          <span>{{ baselineImportProgress.processedRows.toLocaleString() }} / {{ baselineImportProgress.totalRows.toLocaleString() }}</span>
+        </section>
+
+        <section v-if="baselineImportMessage" class="status-banner status-banner--success" aria-live="polite">
+          {{ baselineImportMessage }}
+        </section>
+        <section v-if="baselineImportError" class="status-banner status-banner--error" aria-live="polite">
+          {{ baselineImportError }}
+        </section>
+
+        <section v-if="baselineImportResult" class="material-surface baseline-import-result" aria-labelledby="baseline-import-result-title">
+          <h2 id="baseline-import-result-title">Import result</h2>
+          <dl>
+            <div>
+              <dt>Status</dt>
+              <dd>{{ baselineImportResult.status }}</dd>
+            </div>
+            <div>
+              <dt>Mode</dt>
+              <dd>{{ baselineImportResult.mode }}</dd>
+            </div>
+            <div>
+              <dt>Rows processed</dt>
+              <dd>{{ baselineImportResult.rowsProcessed.toLocaleString() }}</dd>
+            </div>
+            <div>
+              <dt>Total rows</dt>
+              <dd>{{ baselineImportResult.totalRows.toLocaleString() }}</dd>
+            </div>
+            <div>
+              <dt>Duplicate review</dt>
+              <dd>{{ baselineImportResult.duplicateReviewGroups.toLocaleString() }} groups / {{ baselineImportResult.duplicateReviewRows.toLocaleString() }} rows</dd>
+            </div>
+          </dl>
+          <div class="baseline-import-counts" aria-label="Rows written by Dataverse table">
+            <article v-for="(count, table) in baselineImportResult.counts" :key="table">
+              <strong>{{ count.toLocaleString() }}</strong>
+              <span>{{ table }}</span>
+            </article>
+          </div>
         </section>
       </section>
     </template>
@@ -3692,128 +4213,139 @@ onUnmounted(() => {
         </nav>
 
         <section v-if="activeAccessSection === 'users'" class="access-tab-panel" role="tabpanel" aria-label="Users">
-          <section class="access-toolbar" aria-label="User access filters">
-            <div>
-              <p class="eyebrow">Users</p>
-              <h3>Portal users</h3>
-            </div>
-            <label class="filter-field">
-              <span>Role</span>
-              <select v-model="accessRoleFilter">
-                <option value="">All roles</option>
-                <option v-for="role in accessRoleOptions" :key="role" :value="role">{{ role }}</option>
-              </select>
-            </label>
-            <label class="record-search">
-              <Search class="record-search__icon" aria-hidden="true" />
-              <span class="sr-only">Search users</span>
-              <input v-model="accessSearch" type="search" autocomplete="off" placeholder="Search users" aria-label="Search users">
-            </label>
-          </section>
-
-          <section v-if="accessLoading" class="loading-panel loading-panel--inline" aria-live="polite" aria-label="Loading users">
-            <h2>Loading users</h2>
-            <p>Checking assignments and contacts</p>
-            <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          </section>
-
-          <div v-else class="responsive-table access-table" role="region" aria-label="User access table" tabindex="0">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">User</th>
-                  <th scope="col">Contact</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Projects</th>
-                  <th scope="col">Forms</th>
-                  <th scope="col">Access</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="user in filteredAccessUsers" :key="user.id">
-                  <td>
-                    <strong>{{ user.name }}</strong>
-                    <span>{{ user.email }}</span>
-                  </td>
-                  <td>
-                    <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
-                  </td>
-                  <td>{{ user.role }}</td>
-                  <td>{{ user.projectCount }}</td>
-                  <td>{{ user.formCount }}</td>
-                  <td>{{ user.accessStatus }}</td>
-                  <td>
-                    <div class="table-actions">
-                      <details class="access-row-menu">
-                        <summary aria-label="More actions">
-                          <MoreVertical class="action-icon" aria-hidden="true" />
-                          <span class="action-tooltip" role="tooltip">More actions</span>
-                        </summary>
-                        <div class="access-row-menu__items" role="menu">
-                          <button type="button" role="menuitem" @click="openAccessUser(user)">
-                            <Eye class="action-icon" aria-hidden="true" />
-                            Manage access
-                          </button>
-                          <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
-                            <Mail class="action-icon" aria-hidden="true" />
-                            Resend invitation
-                          </button>
-                        </div>
-                      </details>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <section v-if="!accessLoading" class="access-card-list" aria-label="User access cards">
-            <article v-for="user in filteredAccessUsers" :key="`card:${user.id}`" class="access-user-card">
+          <section class="material-list-surface access-list-surface" aria-labelledby="access-users-title">
+            <header class="material-surface-header access-list-header">
               <div>
-                <p class="eyebrow">User</p>
-                <h3>{{ user.name }}</h3>
-                <p>{{ user.email }}</p>
+                <p class="eyebrow">Users</p>
+                <h3 id="access-users-title">Portal users</h3>
+                <p>Review contacts, role scope, project assignments, form access, and activation state.</p>
               </div>
-              <dl class="access-card-facts">
-                <div>
-                  <dt>Contact</dt>
-                  <dd>{{ formatContactState(user.contactState) }}</dd>
-                </div>
-                <div>
-                  <dt>Role</dt>
-                  <dd>{{ user.role }}</dd>
-                </div>
-                <div>
-                  <dt>Forms</dt>
-                  <dd>{{ user.formCount }}</dd>
-                </div>
-              </dl>
-              <div class="access-card-actions">
-                <details class="access-row-menu">
-                  <summary aria-label="More actions">
-                    <MoreVertical class="action-icon" aria-hidden="true" />
-                    <span class="action-tooltip" role="tooltip">More actions</span>
-                  </summary>
-                  <div class="access-row-menu__items" role="menu">
-                    <button type="button" role="menuitem" @click="openAccessUser(user)">
-                      <Eye class="action-icon" aria-hidden="true" />
-                      Manage access
-                    </button>
-                    <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
-                      <Mail class="action-icon" aria-hidden="true" />
-                      Resend invitation
-                    </button>
-                  </div>
-                </details>
-              </div>
-            </article>
-          </section>
+              <span class="material-count-chip access-list-count">{{ filteredAccessUsers.length }} shown</span>
+            </header>
 
-          <section v-if="!accessLoading && !accessError && filteredAccessUsers.length === 0" class="empty-state empty-state--inline" aria-label="No users">
-            <Users class="guidance-icon" aria-hidden="true" />
-            <h2>No users match the current filters</h2>
-            <p>Clear search or role filters to review all assigned users.</p>
+            <section class="access-toolbar" aria-label="User access filters">
+              <label class="filter-field">
+                <span>Role</span>
+                <select v-model="accessRoleFilter">
+                  <option value="">All roles</option>
+                  <option v-for="role in accessRoleOptions" :key="role" :value="role">{{ role }}</option>
+                </select>
+              </label>
+              <label class="record-search">
+                <Search class="record-search__icon" aria-hidden="true" />
+                <span class="sr-only">Search users</span>
+                <input v-model="accessSearch" type="search" autocomplete="off" placeholder="Search users" aria-label="Search users">
+              </label>
+            </section>
+
+            <section v-if="accessLoading" class="loading-panel loading-panel--inline access-loading-state" aria-live="polite" aria-label="Loading users">
+              <h2>Loading users</h2>
+              <p>Checking assignments and contacts.</p>
+              <span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </section>
+
+            <div v-else-if="filteredAccessUsers.length > 0" class="responsive-table material-table access-table" role="region" aria-label="User access table" tabindex="0">
+              <table>
+                <caption class="sr-only">Portal users with contact state, role, project count, form count, access state, and row actions.</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Projects</th>
+                    <th scope="col">Forms</th>
+                    <th scope="col">Access</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="user in filteredAccessUsers" :key="user.id" tabindex="0">
+                    <td>
+                      <strong>{{ user.name }}</strong>
+                      <span>{{ user.email }}</span>
+                    </td>
+                    <td>
+                      <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
+                    </td>
+                    <td>{{ user.role }}</td>
+                    <td class="access-table__number">{{ user.projectCount }}</td>
+                    <td class="access-table__number">{{ user.formCount }}</td>
+                    <td>
+                      <span class="state-chip" :class="`state-chip--${accessStatusTone(user.accessStatus)}`">{{ user.accessStatus }}</span>
+                    </td>
+                    <td>
+                      <div class="table-actions">
+                        <details class="access-row-menu">
+                          <summary aria-label="More actions">
+                            <MoreVertical class="action-icon" aria-hidden="true" />
+                            <span class="action-tooltip" role="tooltip">More actions</span>
+                          </summary>
+                          <div class="access-row-menu__items" role="menu">
+                            <button type="button" role="menuitem" @click="openAccessUser(user)">
+                              <Eye class="action-icon" aria-hidden="true" />
+                              Manage access
+                            </button>
+                            <button type="button" role="menuitem" @click="openResendInvitationWorkflow(user)">
+                              <Mail class="action-icon" aria-hidden="true" />
+                              Resend invitation
+                            </button>
+                          </div>
+                        </details>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <section v-if="!accessLoading && filteredAccessUsers.length > 0" class="access-card-list" aria-label="User access cards">
+              <article v-for="user in filteredAccessUsers" :key="`card:${user.id}`" class="access-user-card">
+                <header class="access-user-card__header">
+                  <div>
+                    <p class="eyebrow">User</p>
+                    <h3>{{ user.name }}</h3>
+                    <p>{{ user.email }}</p>
+                  </div>
+                  <span class="state-chip" :class="`state-chip--${accessStatusTone(user.accessStatus)}`">{{ user.accessStatus }}</span>
+                </header>
+                <dl class="access-card-facts">
+                  <div>
+                    <dt>Contact</dt>
+                    <dd>
+                      <span class="state-chip" :class="`state-chip--${contactStateTone(user.contactState)}`">{{ formatContactState(user.contactState) }}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Role</dt>
+                    <dd>{{ user.role }}</dd>
+                  </div>
+                  <div>
+                    <dt>Projects</dt>
+                    <dd>{{ user.projectCount }}</dd>
+                  </div>
+                  <div>
+                    <dt>Forms</dt>
+                    <dd>{{ user.formCount }}</dd>
+                  </div>
+                </dl>
+                <div class="access-card-actions">
+                  <button type="button" class="icon-action icon-action--secondary" @click="openAccessUser(user)">
+                    <Eye class="action-icon" aria-hidden="true" />
+                    Manage access
+                  </button>
+                  <button type="button" class="icon-action icon-action--secondary" @click="openResendInvitationWorkflow(user)">
+                    <Mail class="action-icon" aria-hidden="true" />
+                    Resend invitation
+                  </button>
+                </div>
+              </article>
+            </section>
+
+            <section v-if="!accessLoading && !accessError && filteredAccessUsers.length === 0" class="empty-state empty-state--inline access-empty-state" aria-label="No users">
+              <Users class="guidance-icon" aria-hidden="true" />
+              <h2>No users match the current filters</h2>
+              <p>Clear search or role filters to review all assigned users.</p>
+            </section>
           </section>
         </section>
 
@@ -3827,12 +4359,12 @@ onUnmounted(() => {
 
         <aside
           v-if="activeAccessSection === 'users' && selectedAccessUser"
-          class="access-detail-drawer"
+          class="material-detail-surface access-detail-drawer"
           role="dialog"
           aria-modal="true"
           aria-labelledby="access-detail-title"
         >
-          <header class="access-drawer-header">
+          <header class="material-detail-header access-drawer-header">
             <div>
               <p class="eyebrow">User detail</p>
               <h3 id="access-detail-title">{{ selectedAccessUser.name }}</h3>
@@ -3840,20 +4372,20 @@ onUnmounted(() => {
             </div>
             <button class="icon-action icon-action--secondary" type="button" @click="closeAccessUser">Close</button>
           </header>
-          <dl class="access-detail-list">
-            <div>
+          <dl class="material-detail-list access-detail-list">
+            <div class="material-detail-row">
               <dt>Contact state</dt>
               <dd>{{ formatContactState(selectedAccessUser.contactState) }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Role</dt>
               <dd>{{ selectedAccessUser.role }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Access status</dt>
               <dd>{{ selectedAccessUser.accessStatus }}</dd>
             </div>
-            <div>
+            <div class="material-detail-row">
               <dt>Assigned forms</dt>
               <dd>{{ selectedAccessUser.formCount }}</dd>
             </div>
@@ -3984,7 +4516,7 @@ onUnmounted(() => {
               </details>
             </section>
 
-            <footer class="access-workflow-actions">
+            <footer class="material-drawer-actions access-workflow-actions">
               <button class="icon-action icon-action--secondary" type="button" @click="closeAccessChangeAction">
                 <ArrowLeft class="action-icon" aria-hidden="true" />
                 Cancel
@@ -4001,15 +4533,15 @@ onUnmounted(() => {
               </button>
             </footer>
           </section>
-          <section class="access-assignment-list" aria-label="Assigned forms">
-            <header class="access-assignment-header">
+          <section class="material-detail-section access-assignment-list" aria-label="Assigned forms">
+            <header class="material-detail-header access-assignment-header">
               <div>
                 <p class="eyebrow">Assignments</p>
                 <h4>Project and form access</h4>
               </div>
               <span class="state-chip state-chip--neutral">{{ selectedAccessUser.formCount }} forms</span>
             </header>
-            <article v-for="assignment in selectedAccessUser.assignments" :key="assignment.assignmentId" class="access-assignment-row">
+            <article v-for="assignment in selectedAccessUser.assignments" :key="assignment.assignmentId" class="material-row access-assignment-row" tabindex="0">
               <div>
                 <strong>{{ assignment.formName }}</strong>
                 <span>{{ selectedAccessProjectName }}</span>
@@ -4026,15 +4558,15 @@ onUnmounted(() => {
               </dl>
             </article>
           </section>
-          <section class="access-drawer-activity" aria-label="Selected user activity">
-            <header class="access-assignment-header">
+          <section class="material-detail-section access-drawer-activity" aria-label="Selected user activity">
+            <header class="material-detail-header access-assignment-header">
               <div>
                 <p class="eyebrow">Audit preview</p>
                 <h4>User activity</h4>
               </div>
               <span class="state-chip state-chip--neutral">{{ selectedAccessUserActivity.length }} events</span>
             </header>
-            <article v-for="event in selectedAccessUserActivity" :key="event.id" class="access-activity-row access-activity-row--compact">
+            <article v-for="event in selectedAccessUserActivity" :key="event.id" class="material-row access-activity-row access-activity-row--compact" tabindex="0">
               <span class="state-chip" :class="`state-chip--${event.status}`">{{ event.event }}</span>
               <p>{{ event.detail }}</p>
               <small>{{ event.source }}</small>
@@ -4209,27 +4741,27 @@ onUnmounted(() => {
               <p class="eyebrow">Route guard</p>
               <h4>Authorisation</h4>
             </header>
-            <dl class="access-authorization-list">
-              <div>
+            <dl class="material-detail-list access-authorization-list">
+              <div class="material-detail-row">
                 <dt>Decision source</dt>
                 <dd>{{ accessAuthorizationSourceLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Required role</dt>
                 <dd>{{ requiredAccessRoleLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Detected roles</dt>
                 <dd>{{ detectedAccessRoleLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Matched admin role</dt>
                 <dd>{{ matchedAccessRoleLabel }}</dd>
               </div>
             </dl>
           </section>
           <section class="access-readiness-list" aria-label="Write-path status checklist">
-            <article v-for="gate in accessWriteReadiness.requiredGates" :key="gate" class="access-readiness-row">
+            <article v-for="gate in accessWriteReadiness.requiredGates" :key="gate" class="material-row access-readiness-row" tabindex="0">
               <span class="state-chip state-chip--warning">required</span>
               <div>
                 <strong>Required</strong>
@@ -4247,7 +4779,7 @@ onUnmounted(() => {
           role="tabpanel"
           aria-label="Add user"
         >
-          <header class="record-detail-header">
+          <header class="material-detail-header record-detail-header">
             <div>
               <p class="eyebrow">Access workflow</p>
               <h3 id="access-workflow-title">Create, invite and assign</h3>
@@ -4330,40 +4862,40 @@ onUnmounted(() => {
               <span>Business reason</span>
               <textarea v-model="accessWorkflowReason" rows="3" placeholder="Capture the approved business reason before activation."></textarea>
             </label>
-            <dl class="access-preview-list">
-              <div>
+            <dl class="material-detail-list access-preview-list">
+              <div class="material-detail-row">
                 <dt>Workflow</dt>
                 <dd>{{ accessWorkflowOnboardingLabel }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Name</dt>
                 <dd>{{ accessWorkflowFullName }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>User</dt>
                 <dd>{{ accessWorkflowEmailNormalized }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Contact</dt>
                 <dd>{{ formatContactState(accessWorkflowContactState) }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Role</dt>
                 <dd>{{ accessWorkflowRole }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Project</dt>
                 <dd>{{ accessWorkflowSelectedProject?.name || 'No project selected' }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Forms</dt>
                 <dd>{{ accessWorkflowSelectedForms.length }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Reason</dt>
                 <dd>{{ accessWorkflowReasonText }}</dd>
               </div>
-              <div>
+              <div class="material-detail-row">
                 <dt>Email</dt>
                 <dd>{{ accessWorkflowDeliveryLabel }}</dd>
               </div>
@@ -4403,24 +4935,24 @@ onUnmounted(() => {
                   Queue request {{ accessWorkflowOnboardingResult.requestId }}:
                   {{ accessWorkflowOnboardingResult.emailMessage }}
                 </p>
-                <dl v-if="accessWorkflowOnboardingResult" class="access-preview-list access-preview-list--compact">
-                  <div>
+                <dl v-if="accessWorkflowOnboardingResult" class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div class="material-detail-row">
                     <dt>Email delivery</dt>
                     <dd>{{ accessWorkflowOnboardingResult.emailDelivery }}</dd>
                   </div>
                 </dl>
               </header>
               <article v-for="result in accessWorkflowSubmitResults" :key="result.requestId" class="access-preview-record">
-                <dl class="access-preview-list access-preview-list--compact">
-                  <div>
+                <dl class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div class="material-detail-row">
                     <dt>Request id</dt>
                     <dd>{{ result.requestId }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Status</dt>
                     <dd>{{ result.status }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Audit key</dt>
                     <dd>{{ result.auditKey }}</dd>
                   </div>
@@ -4473,16 +5005,16 @@ onUnmounted(() => {
                   <p class="eyebrow">Manual invitation</p>
                   <h5>{{ manualInvitationExpired ? 'Code expired' : 'Code ready' }}</h5>
                 </header>
-                <dl class="manual-invitation-grid">
-                  <div>
+                <dl class="material-detail-list manual-invitation-grid">
+                  <div class="material-detail-row">
                     <dt>Redeem link</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationRedeemUrl }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Invitation code</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationCode }}</dd>
                   </div>
-                  <div>
+                  <div class="material-detail-row">
                     <dt>Expires</dt>
                     <dd>{{ accessWorkflowOnboardingResult.invitationExpiresAt ? formatDate(accessWorkflowOnboardingResult.invitationExpiresAt) : 'Not set' }}</dd>
                   </div>
@@ -4513,8 +5045,8 @@ onUnmounted(() => {
 
               <details class="onboarding-technical-details">
                 <summary>Technical details</summary>
-                <dl class="access-preview-list access-preview-list--compact">
-                  <div v-for="[label, value] in onboardingTechnicalSummary" :key="label">
+                <dl class="material-detail-list access-preview-list access-preview-list--compact">
+                  <div v-for="[label, value] in onboardingTechnicalSummary" :key="label" class="material-detail-row">
                     <dt>{{ label }}</dt>
                     <dd>{{ value }}</dd>
                   </div>
@@ -4523,7 +5055,7 @@ onUnmounted(() => {
             </section>
           </section>
 
-          <footer class="access-workflow-actions">
+          <footer class="material-drawer-actions access-workflow-actions">
             <button class="icon-action icon-action--secondary" type="button" :disabled="accessWorkflowStep === 1" @click="previousAccessWorkflowStep">
               <ArrowLeft class="action-icon" aria-hidden="true" />
               Back
@@ -4602,8 +5134,12 @@ onUnmounted(() => {
     </section>
         </div>
         <footer class="managed-app-footer" aria-label="Application footer">
-          <span>CRDB Bank</span>
-          <span>Copyright 2026</span>
+          <span class="managed-app-footer__status">
+            <span>Last updated: May 31, 2025 10:45 AM</span>
+            <span class="managed-app-footer__dot" aria-hidden="true"></span>
+            <span>Data synced</span>
+          </span>
+          <span>© 2025 CRDB Bank — Sustainable Finance Unit. All rights reserved.</span>
         </footer>
       </section>
     </div>

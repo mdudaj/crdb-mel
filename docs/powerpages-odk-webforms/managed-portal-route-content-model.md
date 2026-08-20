@@ -236,6 +236,40 @@ real functionality.
 
 ## Side Navigation Model
 
+### 2026-08-13 navigation revision
+
+The prototype has moved beyond a TACATDP-only field launcher. It is now being
+positioned as a Sustainable Finance MEL platform where TACATDP remains the
+first finance-project proof of concept.
+
+Agreed navigation language:
+
+- Rename `Projects / Loans` to `Finance Projects`.
+- Add a future operational-work route label as `Operational Initiatives`, not
+  `Operations`.
+
+Reason:
+
+- `Finance Projects` should stay tied to financed programmes, loans,
+  guarantees, insurance-linked finance, facilities, beneficiaries, and financed
+  technologies.
+- `Operational Initiatives` covers broader non-finance MEL work without naming
+  specific internal examples in the navigation.
+- Operational initiatives should be modelled later through the configurable
+  architecture, not as hard-coded TACATDP or finance-project routes.
+
+Current implementation guidance:
+
+- Update only the visible menu label from `Projects / Loans` to
+  `Finance Projects` in the next UX slice.
+- Do not implement a full `Operational Initiatives` module yet.
+- If a placeholder is added, keep it non-promissory and visibly marked as
+  planned/future.
+- After beneficiary entity implementation, baseline import, and minimal KPI
+  projection visualisation, revisit configurable architecture so finance
+  projects and operational initiatives are both configured programme/activity
+  types under the same MEL platform model.
+
 Top operational group:
 
 - Dashboard

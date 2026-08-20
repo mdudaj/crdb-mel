@@ -76,6 +76,25 @@ pac pages upload \
   --forceUploadAll
 ```
 
+Before upload, and again after a fresh post-upload download, verify the staged
+Vite assets by Power Pages `adx_partialurl` and content hash:
+
+```bash
+node scripts/verify-powerpages-spa-assets.mjs
+```
+
+Run the same check from this package with:
+
+```bash
+npm run test:powerpages-assets
+```
+
+This check is stricter than local filename comparison. PAC can export duplicate
+Power Pages web-file records using suffixed local filenames even when the
+browser-facing `adx_partialurl` is unchanged. A deployment is valid only if every
+built asset has at least one matching web-file record and binary for the expected
+browser URL.
+
 After upload, restart or sync the site in Power Pages if needed, then open the site while signed in and confirm assigned forms render through ODK Web Forms.
 
 For submit troubleshooting, first confirm the hosted page shows the expected build marker. If it does not, clear Power Pages server-side cache from `/_services/about` or Power Pages preview, then retest. After clicking ODK Send, use the visible diagnostics to distinguish stale cache, ODK validation blocking submit, ODK event delivery, and Dataverse `/_api` write failures.

@@ -1,9 +1,12 @@
 append: false
-appendto: false
+appendto: true
 create: false
 delete: false
 entitylogicalname: mp_project
 entityname: mp_project
+entitypermission_webrole:
+- 1bb3051d-e53f-44e0-b226-d6c7050632b0
+- eee16194-79d2-4e30-9fb9-ea55b3b25e3e
 id: 46ebf3cf-b47b-f111-ab0e-7c1e523612eb
 read: true
 scope: 756150000

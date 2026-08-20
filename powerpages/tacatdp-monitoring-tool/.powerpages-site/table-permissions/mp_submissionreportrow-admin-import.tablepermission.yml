@@ -1,0 +1,13 @@
+adx_append: true
+adx_appendto: true
+adx_create: true
+adx_delete: false
+adx_entitylogicalname: mp_submissionreportrow
+adx_entityname: mp_submissionreportrow Admin Import
+adx_entitypermission_webrole:
+- eee16194-79d2-4e30-9fb9-ea55b3b25e3e
+adx_entitypermissionid: 211f0ebb-6b04-4a01-8a3b-faeee5498e37
+adx_parententitypermission:
+adx_read: true
+adx_scope: 756150000
+adx_write: true

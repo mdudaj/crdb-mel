@@ -9,6 +9,9 @@
     "build:mshirika-access": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true VITE_TACATDP_ODK_RUNTIME_ENABLED=false vite build",
     "build:mshirika-runtime": "vue-tsc --noEmit && VITE_TACATDP_ACCESS_WRITE_ACTIONS_ENABLED=true VITE_TACATDP_ACCESS_ASSIGN_FORM_WRITE_ENABLED=true VITE_TACATDP_ACCESS_ONBOARDING_AUTOMATION_ENABLED=true vite build",
     "preview": "vite preview",
+    "test:visual": "node ../../scripts/validate-dashboard-visual-spacing.mjs",
+    "test:material": "node ../../scripts/validate-dashboard-visual-spacing.mjs && node ../../scripts/validate-beneficiaries-material-list.mjs && node ../../scripts/validate-material-ui-abstractions.mjs && node ../../scripts/validate-users-material-list.mjs && node ../../scripts/validate-users-detail-material-surface.mjs && node ../../scripts/validate-projects-material-list.mjs && node ../../scripts/validate-project-detail-material-surface.mjs && node ../../scripts/validate-secondary-material-surfaces.mjs && node ../../scripts/validate-reporting-material-list.mjs && node ../../scripts/validate-system-activity-material-surface.mjs && node ../../scripts/validate-route-card-accent-scope.mjs && node ../../scripts/validate-dashboard-beneficiary-drillthrough.mjs && node ../../scripts/validate-beneficiary-detail-refinement.mjs",
+    "test:powerpages-assets": "node ../../scripts/validate-baseline-tracked-entity-entityset.mjs && node ../../scripts/verify-powerpages-spa-assets.mjs && python3 ../../scripts/validate-powerpages-package-hygiene.py",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
@@ -16,7 +19,9 @@
     "@getodk/xforms-engine": "1.0.0",
     "@lucide/vue": "^1.24.0",
     "@vuepic/vue-datepicker": "^14.0.0",
-    "vue": "3.5.39"
+    "echarts": "^6.1.0",
+    "vue": "3.5.39",
+    "vue-echarts": "^8.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "6.0.7",

@@ -1,0 +1,4 @@
+id: af2fc212-5441-5fd9-b995-4364929de4c1
+name: Webapi/mp_entityidentifier/fields
+source: 0
+value: mp_trackedentity,mp_identifiertype,mp_identifiervalue,mp_status

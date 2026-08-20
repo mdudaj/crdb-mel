@@ -22,7 +22,9 @@ from typing import Any
 
 WEB_API_TABLES = [
     # metadata reads
-    {"logical": "mp_project", "name": "TACATDP Projects", "read": True, "create": False, "write": False, "delete": False, "append": False, "appendto": False},
+    # Baseline import creates tracked entities that bind to an existing project.
+    # Power Pages requires Append To on the referenced table for that association.
+    {"logical": "mp_project", "name": "TACATDP Projects", "read": True, "create": False, "write": False, "delete": False, "append": False, "appendto": True},
     {"logical": "mp_form", "name": "TACATDP Forms", "read": True, "create": False, "write": False, "delete": False, "append": False, "appendto": False},
     # FormVersions remain read-only to portal users, but submission create binds
     # mp_submission.mp_FormVersion to an existing form version. Power Pages
@@ -42,6 +44,17 @@ WEB_API_TABLES = [
     {"logical": "mp_exportsetting", "name": "TACATDP ExportSettings", "read": True, "create": True, "write": True, "delete": False, "append": True, "appendto": True},
 ]
 ACCESS_WRITE_TABLES = [
+    {
+        "logical": "mp_project",
+        "name": "TACATDP Projects Admin Import",
+        "read": True,
+        "create": False,
+        "write": False,
+        "delete": False,
+        "append": False,
+        "appendto": True,
+        "fields": "*",
+    },
     {
         "logical": "contact",
         "name": "TACATDP Contacts Admin Onboarding",

@@ -1,0 +1,14 @@
+adx_append: true
+adx_appendto: true
+adx_create: true
+adx_delete: false
+adx_entitylogicalname: mp_trackedentity
+adx_entityname: mp_trackedentity Admin Import
+adx_entitypermission_webrole:
+- 1bb3051d-e53f-44e0-b226-d6c7050632b0
+- eee16194-79d2-4e30-9fb9-ea55b3b25e3e
+adx_entitypermissionid: a7916805-7b99-5c60-acbf-097a7ee4db87
+adx_parententitypermission:
+adx_read: true
+adx_scope: 756150000
+adx_write: true
