@@ -218,6 +218,7 @@ Delivered review artifacts:
 
 - `schemas/dataverse/indicator-evidence-schema.json`
 - `schemas/dataverse/indicator-evidence-schema.md`
+- `docs/powerpages-odk-webforms/indicator-evidence-dataverse-implementation-runbook-20260820.md`
 
 Implementation boundary:
 
@@ -279,6 +280,7 @@ Run:
 node scripts/validate-prototype-model-design.mjs
 node scripts/validate-beneficiary-entity-schema.mjs
 node scripts/validate-indicator-evidence-schema.mjs
+node scripts/validate-indicator-evidence-runbook.mjs
 npm run test:powerpages-assets
 ```
 
@@ -287,4 +289,5 @@ Expected result:
 - Model-design validator passes.
 - Beneficiary schema validator confirms tracked-entity extension rules.
 - Indicator/evidence schema validator confirms the review-only indicator, observation, evidence, source-mapping, and result contract.
+- Indicator/evidence runbook validator confirms the implementation readiness gate, Microsoft-specific constraints, permission boundaries, and rollback checks.
 - Power Pages asset/package tests remain green.
