@@ -148,6 +148,70 @@ mp_IndicatorResult
 
 For prototype delivery, this can remain documented until the team approves the next Dataverse schema slice. The dashboard should continue using `tacatdpBaselineProjection.ts` as a transparent temporary indicator engine.
 
+## Enterprise model starter
+
+The scalable model should be configured for CRDB Sustainable Finance programmes, not built as a TACATDP-only schema. TACATDP remains the first configured programme and the proof-of-concept dataset.
+
+### Core configuration objects
+
+| Object | Purpose | Prototype relationship |
+|---|---|---|
+| `mp_Programme` / `mp_Project` | Defines a programme, project, scheme, grant, facility, or operational MEL scope. | Current `mp_Project` represents TACATDP. |
+| `mp_ResultFramework` | Groups outcomes, outputs, activities, and reporting logic for a configured programme. | Documented only; not required for current import. |
+| `mp_ResultNode` | Stores configurable hierarchy nodes such as outcome, output, activity, or custom terminology. | Future replacement for hard-coded dashboard sections. |
+| `mp_IndicatorDefinition` | Defines code, name, unit, formula, source mapping, frequency, disaggregation, and verification method. | Next schema-review candidate. |
+| `mp_IndicatorTarget` | Stores baseline, target, reporting period, geography, and target owner. | Needed before formal target tracking. |
+| `mp_IndicatorResult` | Stores calculated or reported indicator facts with method and verification status. | Future server-side replacement for browser KPI calculations. |
+| `mp_DataSourceMapping` | Maps a form field, imported file column, Dataverse table, or integration field to an indicator input. | Prevents dashboard formulas from depending on page code. |
+| `mp_Evidence` | Links GPS, photo, document, submission, verifier, and timestamp evidence to an observation or result. | Extends current submission/attachment lineage. |
+
+### Core operational objects
+
+| Object | Purpose | Rule |
+|---|---|---|
+| `mp_TrackedEntity` | General monitored party or asset: farmer, group, AMCOS, SACCOS, organisation, facility, operational unit, or future monitored subject. | Do not rename into TACATDP-only beneficiary identity. |
+| `mp_EntityIdentifier` | Stores approved identifiers such as customer ID, phone identifier, source UUID, or external reference. | Treat identifiers as sensitive; do not print in logs or public docs. |
+| `mp_Participation` | Links a tracked entity to a programme/project with role, dates, partner, and status. | Lets one beneficiary participate in more than one programme. |
+| `mp_Intervention` | Configurable catalogue of financed/adopted technologies, practices, services, insurance, guarantees, or capacity-building support. | TACATDP technologies are catalogue records, not code branches. |
+| `mp_InterventionInstance` | Records that a tracked entity received, financed, adopted, installed, or was trained on an intervention. | Supports longitudinal follow-up and verification. |
+| `mp_Assessment` | Represents a baseline, follow-up, seasonal, verification, evaluation, or audit data-collection event. | Current baseline import can map to one baseline assessment batch. |
+| `mp_Observation` | Atomic measured/reported value with source, period, entity, geography, and evidence link. | Feeds future indicator calculations. |
+
+### Indicator pipeline target
+
+```text
+Form / import / integration source
+  -> canonical submission or source event
+  -> normalized observations
+  -> indicator calculation
+  -> indicator result
+  -> dashboard, report, Power BI semantic model
+```
+
+This keeps dashboards, Power BI, and reports downstream from governed indicator facts instead of each surface recalculating its own version of the truth.
+
+### Microsoft-first implementation boundary
+
+The enterprise model should still fit the CRDB Microsoft tenant direction:
+
+- Dataverse owns operational MEL configuration, current workflow state, security roles, and auditable records.
+- Power Pages remains the current review/field-facing prototype host while the enterprise target UI is reviewed.
+- Power Automate or approved server-side Dataverse automation should own scheduled projection/indicator refresh once service ownership is approved.
+- Power BI should read projection/indicator result tables or a governed semantic model, not raw canonical submission XML.
+- Microsoft Entra identity and environment security roles govern access; the browser must not carry client secrets or privileged Dataverse credentials.
+
+### First model-design slice to implement after dashboard cleanup
+
+Create review-only schema artifacts for:
+
+1. `mp_IndicatorDefinition`
+2. `mp_IndicatorResult`
+3. `mp_DataSourceMapping`
+4. `mp_Observation`
+5. `mp_Evidence`
+
+Do not deploy these tables until SFU and CRDB platform administrators approve the object names, ownership, security roles, and environment-write path.
+
 ## Recommended next implementation sequence
 
 1. Finalize the beneficiary bridge model as the current prototype identity model:

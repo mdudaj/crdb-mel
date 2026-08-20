@@ -82,15 +82,19 @@ if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashbo
 
 for (const fragment of [
   'Live projection:',
-  'Baseline Records',
-  'Rows',
+  'Baseline Rows',
+  'Report rows',
+  'Beneficiaries',
+  'Profiles',
   'Loan Amount',
-  'Baseline loans',
+  'TZS baseline',
+  'Loan Status',
+  'Core banking',
   'Farmers Trained',
   'Baseline',
   'tCO₂e Avoided',
-  'Projection',
-  'Verify',
+  'Baseline estimate',
+  'Verify method',
   "changeDirection: 'neutral'",
   'Demo data: dashboard visual design only',
   'flex-wrap: wrap;',
@@ -217,6 +221,14 @@ if (!kpiCardSource.includes('line-height: 1.25;') || !kpiCardSource.includes('li
 
 if (!kpiCardSource.includes('flex: 1 1 auto;') || !kpiCardSource.includes('flex: 0 0 44px;')) {
   throw new Error('KpiCard content must reserve more horizontal space by using flexible text content and compact icon sizing.');
+}
+
+if (dashboardPageSource.includes('TZS ${formatBillions(amount)}B') || dashboardPageSource.includes('Reported Amount')) {
+  throw new Error('Loan amount KPI must keep the currency unit in helper text so the compact six-card row does not clip the value.');
+}
+
+if (!dashboardPageSource.includes("value: amount > 0 ? `${formatBillions(amount)}B` : 'Awaiting'")) {
+  throw new Error('Loan amount KPI must display the compact billions value and move TZS to helper text.');
 }
 
 if (dashboardPageSource.includes('Training Sessions') || dashboardPageSource.includes('<strong>192</strong>') || dashboardPageSource.includes('Prototype pending')) {

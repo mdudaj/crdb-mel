@@ -143,23 +143,23 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
   if (!hasLiveKpiProjection.value) return metric;
 
   if (metric.id === 'active-loans') {
-    return { ...metric, label: 'Baseline Records', value: formatLiveCount(liveReportRowCount.value), change: 'Rows', changeDirection: 'neutral' };
+    return { ...metric, label: 'Baseline Rows', value: formatLiveCount(liveReportRowCount.value), change: 'Report rows', changeDirection: 'neutral' };
   }
   if (metric.id === 'active-borrowers') {
-    return { ...metric, label: 'Beneficiaries', value: formatLiveCount(liveBeneficiaryCount.value), change: 'Registry', changeDirection: 'neutral' };
+    return { ...metric, label: 'Beneficiaries', value: formatLiveCount(liveBeneficiaryCount.value), change: 'Profiles', changeDirection: 'neutral' };
   }
   if (metric.id === 'total-disbursed') {
     const amount = liveBaselineProjection.value.finance.reportedLoanAmountTzs;
     return {
       ...metric,
       label: 'Loan Amount',
-      value: amount > 0 ? `TZS ${formatBillions(amount)}B` : 'Awaiting',
-      change: amount > 0 ? 'Baseline loans' : 'Not imported',
+      value: amount > 0 ? `${formatBillions(amount)}B` : 'Awaiting',
+      change: amount > 0 ? 'TZS baseline' : 'Not imported',
       changeDirection: 'neutral',
     };
   }
   if (metric.id === 'repayment-rate') {
-    return { ...metric, label: 'Latest Update', value: liveLatestUpdateLabel.value, change: 'Projected', changeDirection: 'neutral' };
+    return { ...metric, label: 'Loan Status', value: 'Pending', change: 'Core banking', changeDirection: 'neutral' };
   }
   if (metric.id === 'farmers-trained') {
     const farmersTrained = liveBaselineProjection.value.training.farmersTrained;
@@ -177,7 +177,7 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
       ...metric,
       label: 'tCO₂e Avoided',
       value: annualTco2eAvoided > 0 ? formatWholeNumber(annualTco2eAvoided) : 'Pending',
-      change: annualTco2eAvoided > 0 ? 'Projection' : 'Verify',
+      change: annualTco2eAvoided > 0 ? 'Baseline estimate' : 'Verify method',
       changeDirection: 'neutral',
     };
   }

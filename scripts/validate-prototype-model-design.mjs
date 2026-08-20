@@ -33,6 +33,21 @@ for (const fragment of [
   'do not auto-merge',
   'method and verification status',
   'Power BI should read reporting/indicator projection tables',
+  'Enterprise model starter',
+  'TACATDP remains the first configured programme',
+  'mp_ResultFramework',
+  'mp_ResultNode',
+  'mp_DataSourceMapping',
+  'mp_Evidence',
+  'mp_Participation',
+  'mp_Intervention',
+  'mp_InterventionInstance',
+  'mp_Assessment',
+  'mp_Observation',
+  'Indicator pipeline target',
+  'Microsoft-first implementation boundary',
+  'Power Automate or approved server-side Dataverse automation',
+  'Do not deploy these tables until SFU and CRDB platform administrators approve',
 ]) {
   assertIncludes(fragment, `Prototype model design is missing required fragment: ${fragment}`);
 }
