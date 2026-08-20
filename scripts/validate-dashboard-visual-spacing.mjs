@@ -88,6 +88,9 @@ for (const fragment of [
   'Baseline loan',
   'Farmers Trained',
   'Baseline',
+  'Youth Trained',
+  'youthTrained',
+  'Baseline estimate',
   'tCO₂e Avoided',
   'Projection',
   'Verify',
@@ -181,6 +184,10 @@ if (!kpiCardSource.includes("changeDirection?: 'up' | 'neutral'") || !kpiCardSou
 
 if (!kpiCardSource.includes('text-overflow: ellipsis;') || !kpiCardSource.includes(':title="change"')) {
   throw new Error('KpiCard helper text must fail safely with ellipsis and full hover/title context instead of visibly clipping partial words.');
+}
+
+if (dashboardPageSource.includes('Training Sessions') || dashboardPageSource.includes('<strong>192</strong>') || dashboardPageSource.includes('Prototype pending')) {
+  throw new Error('Training & Capacity Building card must not show unsupported prototype training sessions after baseline import projection exists.');
 }
 
 console.log('Dashboard visual spacing validation passed.');

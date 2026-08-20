@@ -662,9 +662,9 @@ function regionNameFromSubmission(regionLabel: string) {
             <small>{{ liveBaselineProjection.training.records > 0 ? `${formatWholeNumber(liveBaselineProjection.training.records)} records` : 'Not imported' }}</small>
           </div>
           <div>
-            <span>Training Sessions</span>
-            <strong>192</strong>
-            <small>Prototype pending</small>
+            <span>Youth Trained</span>
+            <strong>{{ liveBaselineProjection.training.youthTrained > 0 ? formatWholeNumber(liveBaselineProjection.training.youthTrained) : 'Awaiting' }}</strong>
+            <small>{{ liveBaselineProjection.training.youthTrained > 0 ? 'Baseline estimate' : 'Not imported' }}</small>
           </div>
         </div>
         <template #footer>
