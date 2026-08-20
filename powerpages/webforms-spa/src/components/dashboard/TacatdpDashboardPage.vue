@@ -12,9 +12,10 @@ import {
   TrendingUp,
   Users,
 } from '@lucide/vue';
-import { computed, defineAsyncComponent, type Component } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, type Component } from 'vue';
 import programImpactFarmer from '../../assets/dashboard/program-impact-farmer.png';
 import tanzaniaAdm1 from '../../assets/maps/tanzania-adm1.json';
+import { PowerPagesApiClient } from '../../powerpages-api/client';
 import { buildDisbursementTrendOption, type DashboardChartOption } from './chartOptions';
 import DashboardCard from './DashboardCard.vue';
 import DashboardPage from './DashboardPage.vue';
@@ -92,8 +93,61 @@ const DashboardChart = defineAsyncComponent(async () => {
   return vueECharts.default as Component;
 });
 
+const api = new PowerPagesApiClient();
+const liveBeneficiaryCount = ref<number | null>(null);
+const liveReportRowCount = ref<number | null>(null);
+const liveDashboardLoading = ref(false);
+const liveDashboardError = ref('');
+
 const selectedRegion = regionalMetrics.find((region) => region.name === 'Morogoro') ?? regionalMetrics[0];
 const regionData = regionalMetrics.map((region) => ({ name: region.name, value: region.disbursed }));
+
+const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) => {
+  if (metric.id === 'active-borrowers' && liveBeneficiaryCount.value !== null) {
+    return {
+      ...metric,
+      label: 'Beneficiaries',
+      value: liveBeneficiaryCount.value.toLocaleString(),
+      change: 'Live baseline registry',
+    };
+  }
+  return metric;
+}));
+
+const liveDashboardSummary = computed(() => {
+  if (liveDashboardLoading.value) return 'Loading live baseline registry counts…';
+  if (liveDashboardError.value) return `Live registry read unavailable: ${liveDashboardError.value}`;
+  if (liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null) {
+    const parts = [];
+    if (liveBeneficiaryCount.value !== null) parts.push(`${liveBeneficiaryCount.value.toLocaleString()} beneficiary profiles`);
+    if (liveReportRowCount.value !== null) parts.push(`${liveReportRowCount.value.toLocaleString()} submission report rows`);
+    return `Live baseline registry: ${parts.join(' · ')}`;
+  }
+  return 'Live baseline registry not yet queried.';
+});
+
+async function loadDashboardLiveCounts() {
+  liveDashboardLoading.value = true;
+  liveDashboardError.value = '';
+  try {
+    const [beneficiaries, reportRows] = await Promise.all([
+      api.listBeneficiaries(),
+      api.listSubmissionReportRows({ page: 1, pageSize: 1 }),
+    ]);
+    liveBeneficiaryCount.value = beneficiaries.length;
+    liveReportRowCount.value = reportRows.total;
+  } catch (caught) {
+    liveBeneficiaryCount.value = null;
+    liveReportRowCount.value = null;
+    liveDashboardError.value = caught instanceof Error ? caught.message : 'Unable to load live registry counts.';
+  } finally {
+    liveDashboardLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  void loadDashboardLiveCounts();
+});
 
 function openBeneficiaries(filters: Record<string, string>) {
   const params = new URLSearchParams({ source: 'dashboard', ...filters });
@@ -325,11 +379,14 @@ function regionNameFromSubmission(regionLabel: string) {
       </div>
     </header>
 
-    <p class="dashboard-demo-note">Prototype dashboard using demonstration data for TACATDP visualisation design. Figures are not official CRDB Bank or Green Climate Fund statistics.</p>
+    <div class="dashboard-status-strip" role="status" aria-live="polite">
+      <p class="dashboard-demo-note">Prototype dashboard using demonstration data for TACATDP visualisation design. Figures are not official CRDB Bank or Green Climate Fund statistics.</p>
+      <p class="dashboard-live-note" :class="{ 'dashboard-live-note--warning': liveDashboardError }">{{ liveDashboardSummary }}</p>
+    </div>
 
     <section class="kpi-row" aria-label="TACATDP KPI summary">
       <KpiCard
-        v-for="metric in dashboardKpis"
+        v-for="metric in dashboardKpiRows"
         :key="metric.id"
         :label="metric.label"
         :value="metric.value"
@@ -563,11 +620,33 @@ function regionNameFromSubmission(regionLabel: string) {
   outline-offset: 3px;
 }
 
+.dashboard-status-strip {
+  display: grid;
+  gap: var(--dash-space-2);
+}
+
 .dashboard-demo-note {
   padding: var(--dash-space-2) var(--dash-space-3);
   border: 1px solid rgba(245, 158, 11, 0.28);
   border-radius: 10px;
   background: rgba(245, 158, 11, 0.08);
+}
+
+.dashboard-live-note {
+  margin: 0;
+  padding: var(--dash-space-2) var(--dash-space-3);
+  border: 1px solid #B7D6BF;
+  border-radius: 10px;
+  background: #EAF7EE;
+  color: var(--dash-dark);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.dashboard-live-note--warning {
+  border-color: #F6D58D;
+  background: #FFF8E8;
+  color: #7A4D00;
 }
 
 .kpi-row {

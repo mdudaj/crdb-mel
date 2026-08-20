@@ -231,6 +231,7 @@ const baselineImportError = ref('');
 const baselineImportMessage = ref('');
 const baselineImportProgress = ref<BaselineBridgeImportProgress | null>(null);
 const baselineImportResult = ref<BaselineBridgeImportResult | null>(null);
+const baselineProjectionRunning = ref(false);
 const baselineDiagnosticRunning = ref(false);
 const baselineDiagnosticResults = ref<BaselineImportDiagnosticStep[]>([]);
 const baselineDiagnosticError = ref('');
@@ -1323,12 +1324,47 @@ async function runBaselineImport(limit?: number) {
       },
     });
     baselineImportResult.value = result;
+    baselineImportProgress.value = {
+      processedRows: result.rowsProcessed,
+      totalRows: Math.min(limit ?? baselineImportAsset.value.rows.length, baselineImportAsset.value.rows.length),
+      message: 'Refreshing reporting projection',
+    };
+    submissions.value = await api.listSavedSubmissions();
+    savedPage.value = 1;
+    await loadReportingData();
     const modeLabel = result.mode === 'append' ? 'Appended' : 'Replaced matching';
-    baselineImportMessage.value = `${modeLabel} ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} through Power Pages Web API.`;
+    baselineImportMessage.value = `${modeLabel} ${result.rowsProcessed.toLocaleString()} row${result.rowsProcessed === 1 ? '' : 's'} and refreshed the reporting projection.`;
   } catch (caught) {
     baselineImportError.value = sanitizeBaselineImportError(caught);
   } finally {
     baselineImportRunning.value = false;
+  }
+}
+
+async function runBaselineProjectionRepair(limit?: number) {
+  baselineProjectionRunning.value = true;
+  baselineImportError.value = '';
+  baselineImportMessage.value = '';
+  baselineImportProgress.value = {
+    processedRows: 0,
+    totalRows: limit ?? 0,
+    message: 'Starting baseline report row projection',
+  };
+  try {
+    const result = await api.rebuildBaselineReportRowsFromCanonical({
+      limit,
+      onProgress(progress) {
+        baselineImportProgress.value = progress;
+      },
+    });
+    baselineImportResult.value = result;
+    baselineImportMessage.value = `Built or updated ${result.counts.mp_SubmissionReportRow?.toLocaleString() ?? '0'} report row${result.counts.mp_SubmissionReportRow === 1 ? '' : 's'} from canonical baseline submissions.`;
+    submissions.value = await api.listSavedSubmissions();
+    await loadReportingData();
+  } catch (caught) {
+    baselineImportError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    baselineProjectionRunning.value = false;
   }
 }
 
@@ -3965,14 +4001,32 @@ onUnmounted(() => {
           </div>
         </section>
 
+        <section class="material-surface baseline-import-panel" aria-labelledby="baseline-projection-repair-title">
+          <div>
+            <p class="eyebrow">Step 4</p>
+            <h2 id="baseline-projection-repair-title">Build report rows</h2>
+            <p>Use this after a baseline import if the project summary or Data tab does not show the imported submissions. It creates one reporting row per canonical baseline submission without re-importing the workbook.</p>
+          </div>
+          <div class="baseline-import-actions">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineProjectionRunning || baselineImportRunning" @click="runBaselineProjectionRepair(5)">
+              <Check class="action-icon" aria-hidden="true" />
+              Build 5-row projection smoke
+            </button>
+            <button class="icon-action" type="button" :disabled="baselineProjectionRunning || baselineImportRunning" @click="runBaselineProjectionRepair()">
+              <Database class="action-icon" aria-hidden="true" />
+              Build all report rows
+            </button>
+          </div>
+        </section>
+
         <section class="material-surface baseline-import-panel" aria-labelledby="baseline-import-diagnostics-title">
           <div>
             <p class="eyebrow">Diagnostics</p>
             <h2 id="baseline-import-diagnostics-title">Tracked entity Web API checks</h2>
-            <p>Use this only when the import fails at mp_TrackedEntity. It checks project lookup, tracked-entity reads, FetchXML, and two synthetic create variants.</p>
+            <p>Use this only when the import fails at mp_TrackedEntity. It checks project lookup, tracked-entity reads, FetchXML, and the MVP create path without a project lookup bind.</p>
           </div>
           <div class="baseline-import-actions">
-            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineDiagnosticRunning || baselineImportRunning" @click="runBaselineTrackedEntityDiagnostics">
+            <button class="icon-action icon-action--secondary" type="button" :disabled="baselineDiagnosticRunning || baselineImportRunning || baselineProjectionRunning" @click="runBaselineTrackedEntityDiagnostics">
               <Activity class="action-icon" aria-hidden="true" />
               Run tracked-entity diagnostics
             </button>

@@ -1,0 +1,13 @@
+adx_append: false
+adx_appendto: true
+adx_create: false
+adx_delete: false
+adx_entitylogicalname: mp_project
+adx_entityname: mp_project Admin Import
+adx_entitypermission_webrole:
+- eee16194-79d2-4e30-9fb9-ea55b3b25e3e
+adx_entitypermissionid: 75b1e6e8-f29f-480d-aa7b-59775ef24cb6
+adx_parententitypermission:
+adx_read: true
+adx_scope: 756150000
+adx_write: false

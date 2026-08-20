@@ -9,10 +9,16 @@ const repoRoot = resolve(scriptDir, '..');
 const schemaPath = resolve(repoRoot, 'schemas/dataverse/beneficiary-entity-extension-schema.json');
 const planPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/beneficiary-dataverse-schema-plan-20260811.md');
 const prototypePath = resolve(repoRoot, 'powerpages/webforms-spa/src/prototype/beneficiaries.ts');
+const clientPath = resolve(repoRoot, 'powerpages/webforms-spa/src/powerpages-api/client.ts');
+const viewPath = resolve(repoRoot, 'powerpages/webforms-spa/src/views/BeneficiariesView.vue');
+const uploadSiteSettingsPath = resolve(repoRoot, 'powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool/sitesetting.yml');
 
 const schemaSource = readFileSync(schemaPath, 'utf8');
 const planSource = readFileSync(planPath, 'utf8');
 const prototypeSource = readFileSync(prototypePath, 'utf8');
+const clientSource = readFileSync(clientPath, 'utf8');
+const viewSource = readFileSync(viewPath, 'utf8');
+const uploadSiteSettingsSource = readFileSync(uploadSiteSettingsPath, 'utf8');
 const schema = JSON.parse(schemaSource);
 
 function fail(message) {
@@ -102,6 +108,19 @@ assertIncludes(planSource, 'mp_BeneficiaryLocationHistory', 'Plan must document 
 assertIncludes(planSource, 'Do not auto-merge beneficiary records from fuzzy matching alone', 'Plan must reject silent fuzzy-match merging.');
 assertIncludes(planSource, 'Open questions before environment write', 'Plan must record pre-write open questions.');
 assertIncludes(planSource, 'Do not run `dataverse-schema-deploy.py`', 'Plan must preserve the deployment approval gate.');
+
+
+assertIncludes(clientSource, 'async listBeneficiaries(): Promise<BeneficiaryListItem[]>', 'Power Pages client must expose live beneficiary list reads.');
+assertIncludes(clientSource, '/_api/mp_beneficiaryprofiles', 'Live beneficiary read must use mp_beneficiaryprofiles.');
+assertIncludes(clientSource, '/_api/mp_entityidentifiers', 'Live beneficiary read must include entity identifiers.');
+assertIncludes(clientSource, '/_api/mp_beneficiarysubmissionlinks', 'Live beneficiary read must include submission linkage.');
+assertIncludes(uploadSiteSettingsSource, 'Webapi/mp_beneficiarysubmissionlink/fields', 'Power Pages Web API must expose beneficiary submission link fields.');
+assertIncludes(uploadSiteSettingsSource, '_mp_trackedentity_value', 'Beneficiary submission link Web API fields must expose _mp_trackedentity_value for live joins.');
+assertIncludes(uploadSiteSettingsSource, '_mp_submission_value', 'Beneficiary submission link Web API fields must expose _mp_submission_value for live lineage.');
+assertIncludes(viewSource, 'paginatedBeneficiaries', 'Beneficiaries route must render paginated rows.');
+assertIncludes(viewSource, 'beneficiary-pagination', 'Beneficiaries route must include Material-style pagination controls.');
+assertIncludes(viewSource, 'Rows per page', 'Beneficiaries pagination must expose rows-per-page control.');
+assertIncludes(viewSource, 'beneficiaryDataSource', 'Beneficiaries route must distinguish live Dataverse from prototype fallback.');
 
 assertIncludes(prototypeSource, "table: 'mp_TrackedEntity + beneficiary extension tables'", 'Prototype mapping must point to the tracked-entity extension plan.');
 assert(!prototypeSource.includes("table: 'mp_beneficiary'"), 'Prototype mapping must not continue to point to mp_beneficiary.');

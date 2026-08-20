@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Eye, Filter, Search, SlidersHorizontal, Users, X } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Filter, RefreshCw, Search, SlidersHorizontal, Users, X } from '@lucide/vue';
 import SurfaceCard from '../components/ui/SurfaceCard.vue';
-import { beneficiaryRecords, type BeneficiaryRecord } from '../prototype/beneficiaries';
+import { beneficiaryRecords } from '../prototype/beneficiaries';
+import { PowerPagesApiClient } from '../powerpages-api/client';
+import type { BeneficiaryListItem } from '../powerpages-api/types';
+
+const api = new PowerPagesApiClient();
+const liveBeneficiaries = ref<BeneficiaryListItem[]>([]);
+const beneficiariesLoading = ref(false);
+const beneficiariesError = ref('');
+const beneficiaryPage = ref(1);
+const beneficiaryPageSize = ref(25);
+const pageSizeOptions = [10, 25, 50, 100];
 
 const searchTerm = ref('');
 const activeRegion = ref('All regions');
@@ -16,14 +26,21 @@ const selectedBeneficiaryId = ref('');
 const beneficiaryActionNotice = ref('');
 const suppressHashSync = ref(false);
 
-const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryRecords.map((record) => record.region))).sort()]);
+const beneficiaryDataSource = computed(() => liveBeneficiaries.value.length > 0 ? 'dataverse' : 'prototype');
+const beneficiaryDataset = computed<BeneficiaryListItem[]>(() => (
+  liveBeneficiaries.value.length > 0
+    ? liveBeneficiaries.value
+    : beneficiaryRecords.map((record) => ({ ...record, source: 'prototype' as const }))
+));
+
+const regions = computed(() => ['All regions', ...Array.from(new Set(beneficiaryDataset.value.map((record) => record.region))).sort()]);
 const verificationStatuses = ['All statuses', 'Verified', 'Under review', 'Incomplete'];
 const borrowerStatuses = ['All borrower statuses', 'Active borrower', 'Training only', 'Pending verification'];
 const trainingStates = ['All training states', 'Trained', 'Not yet trained'];
 const submissionStatuses = ['All submission states', 'Submitted', 'Under review', 'Returned', 'Awaiting submission'];
 const technologies = computed(() => [
   'All technologies',
-  ...Array.from(new Set(beneficiaryRecords.flatMap((record) => [
+  ...Array.from(new Set(beneficiaryDataset.value.flatMap((record) => [
     record.technology,
     ...record.technologiesFinanced.map((technology) => technology.name),
   ]))).sort(),
@@ -50,7 +67,7 @@ function setIfAllowed(target: typeof activeRegion, value: string | null, allowed
   target.value = value && allowedValues.includes(value) ? value : fallback;
 }
 
-function technologyMatches(record: BeneficiaryRecord, technologyFilter: string) {
+function technologyMatches(record: BeneficiaryListItem, technologyFilter: string) {
   if (technologyFilter === 'All technologies') return true;
   const requested = normaliseFilterValue(technologyFilter);
   const candidates = [
@@ -62,7 +79,7 @@ function technologyMatches(record: BeneficiaryRecord, technologyFilter: string) 
 
 const filteredBeneficiaries = computed(() => {
   const search = searchTerm.value.trim().toLowerCase();
-  return beneficiaryRecords.filter((record) => {
+  return beneficiaryDataset.value.filter((record) => {
     const matchesSearch = !search || [
       record.id,
       record.name,
@@ -91,15 +108,16 @@ const filteredBeneficiaries = computed(() => {
 });
 
 const selectedBeneficiary = computed(() => (
-  beneficiaryRecords.find((record) => record.id === selectedBeneficiaryId.value) ?? null
+  beneficiaryDataset.value.find((record) => record.id === selectedBeneficiaryId.value) ?? null
 ));
 
 const summaryMetrics = computed(() => {
-  const activeBorrowers = beneficiaryRecords.filter((record) => record.borrowerStatus === 'Active borrower').length;
-  const trained = beneficiaryRecords.filter((record) => record.trained).length;
-  const verified = beneficiaryRecords.filter((record) => record.verificationStatus === 'Verified').length;
+  const rows = beneficiaryDataset.value;
+  const activeBorrowers = rows.filter((record) => record.borrowerStatus === 'Active borrower').length;
+  const trained = rows.filter((record) => record.trained).length;
+  const verified = rows.filter((record) => record.verificationStatus === 'Verified').length;
   return [
-    { label: 'Beneficiary records', value: beneficiaryRecords.length.toLocaleString(), detail: 'Prototype list limit' },
+    { label: 'Beneficiary records', value: rows.length.toLocaleString(), detail: beneficiaryDataSource.value === 'dataverse' ? 'Live Dataverse profiles' : 'Prototype fallback' },
     { label: 'Active borrowers', value: activeBorrowers.toLocaleString(), detail: 'Linked to finance' },
     { label: 'Training reached', value: trained.toLocaleString(), detail: 'Capacity-building flag' },
     { label: 'Verified records', value: verified.toLocaleString(), detail: 'Ready for reporting' },
@@ -118,6 +136,38 @@ const activeFilters = computed(() => [
 
 const hasDashboardContext = computed(() => drillthroughSource.value === 'dashboard');
 const filterSummary = computed(() => activeFilters.value.map((filter) => filter.label).join(' · '));
+const paginatedBeneficiaries = computed(() => {
+  const start = (beneficiaryPage.value - 1) * beneficiaryPageSize.value;
+  return filteredBeneficiaries.value.slice(start, start + beneficiaryPageSize.value);
+});
+const beneficiaryTotalPages = computed(() => Math.max(1, Math.ceil(filteredBeneficiaries.value.length / beneficiaryPageSize.value)));
+const beneficiaryPageStart = computed(() => filteredBeneficiaries.value.length === 0 ? 0 : ((beneficiaryPage.value - 1) * beneficiaryPageSize.value) + 1);
+const beneficiaryPageEnd = computed(() => Math.min(beneficiaryPage.value * beneficiaryPageSize.value, filteredBeneficiaries.value.length));
+
+async function loadBeneficiaries() {
+  beneficiariesLoading.value = true;
+  beneficiariesError.value = '';
+  try {
+    liveBeneficiaries.value = await api.listBeneficiaries();
+    beneficiaryPage.value = 1;
+  } catch (caught) {
+    liveBeneficiaries.value = [];
+    beneficiariesError.value = caught instanceof Error ? caught.message : 'Unable to load live beneficiary records.';
+  } finally {
+    beneficiariesLoading.value = false;
+  }
+}
+
+function setBeneficiaryPage(page: number) {
+  beneficiaryPage.value = Math.min(Math.max(1, page), beneficiaryTotalPages.value);
+}
+
+function setBeneficiaryPageSize(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  beneficiaryPageSize.value = Number(target.value) || 25;
+  beneficiaryPage.value = 1;
+}
+
 
 function syncBeneficiaryHashFilters() {
   if (suppressHashSync.value || window.location.hash.split('?')[0].replace(/^#\/?/, '') !== 'beneficiaries') return;
@@ -167,6 +217,7 @@ function clearFilter(key: string) {
   if (key === 'submissionStatus') activeSubmissionStatus.value = 'All submission states';
   if (key === 'search') searchTerm.value = '';
   if (key !== 'search') syncBeneficiaryHashFilters();
+  beneficiaryPage.value = 1;
 }
 
 function clearAllFilters() {
@@ -179,6 +230,7 @@ function clearAllFilters() {
   activeSubmissionStatus.value = 'All submission states';
   drillthroughSource.value = '';
   syncBeneficiaryHashFilters();
+  beneficiaryPage.value = 1;
 }
 
 function openAllBeneficiaries() {
@@ -189,7 +241,7 @@ function backToDashboard() {
   window.location.hash = '#/dashboard';
 }
 
-function openBeneficiary(record: BeneficiaryRecord) {
+function openBeneficiary(record: BeneficiaryListItem) {
   selectedBeneficiaryId.value = record.id;
   beneficiaryActionNotice.value = '';
 }
@@ -215,16 +267,23 @@ function showBeneficiaryExportPlanned() {
   });
 }
 
-function statusTone(status: BeneficiaryRecord['verificationStatus']) {
+function statusTone(status: BeneficiaryListItem['verificationStatus']) {
   if (status === 'Verified') return 'success';
   if (status === 'Under review') return 'warning';
   return 'error';
 }
 
+watch([activeRegion, activeVerification, activeBorrowerStatus, activeTraining, activeTechnology, activeSubmissionStatus, searchTerm], () => {
+  beneficiaryPage.value = 1;
+});
 watch([activeRegion, activeVerification, activeBorrowerStatus, activeTraining, activeTechnology, activeSubmissionStatus], syncBeneficiaryHashFilters);
+watch([filteredBeneficiaries, beneficiaryPageSize], () => {
+  setBeneficiaryPage(beneficiaryPage.value);
+});
 
 onMounted(() => {
   readBeneficiaryHashFilters();
+  void loadBeneficiaries();
   window.addEventListener('hashchange', readBeneficiaryHashFilters);
 });
 
@@ -240,7 +299,7 @@ onUnmounted(() => {
         <p class="beneficiaries-eyebrow">Beneficiary registry</p>
         <h1 id="beneficiaries-title">Beneficiaries</h1>
         <p>
-          Demonstration records for modelling TACATDP farmers, groups, and institutions as reusable monitored entities.
+          Live Dataverse beneficiary profiles from the baseline import, with prototype fallback when the portal cannot read beneficiary tables.
         </p>
       </div>
       <span class="beneficiaries-hero__icon" aria-hidden="true">
@@ -260,7 +319,7 @@ onUnmounted(() => {
       <header class="material-surface-header beneficiary-list__header">
         <div>
           <h2 id="beneficiary-list-title">Beneficiary records</h2>
-          <p>Prototype data only. These figures are not official CRDB Bank or Green Climate Fund statistics.</p>
+          <p>{{ beneficiaryDataSource === 'dataverse' ? 'Live Dataverse records from the baseline beneficiary registry.' : 'Prototype data only. These figures are not official CRDB Bank or Green Climate Fund statistics.' }}</p>
         </div>
         <span class="material-count-chip beneficiary-list__count">{{ filteredBeneficiaries.length }} shown</span>
       </header>
@@ -330,6 +389,18 @@ onUnmounted(() => {
         </button>
       </div>
 
+      <div v-if="beneficiariesError" class="beneficiary-live-status beneficiary-live-status--warning" role="status">
+        <span>Live Dataverse beneficiary read failed. Showing prototype fallback.</span>
+        <button class="beneficiary-row-action" type="button" :disabled="beneficiariesLoading" @click="loadBeneficiaries">
+          <RefreshCw aria-hidden="true" />
+          Retry live read
+        </button>
+      </div>
+
+      <div v-if="beneficiariesLoading" class="beneficiary-live-status" role="status" aria-live="polite">
+        <span>Loading live beneficiary profiles…</span>
+      </div>
+
       <div v-if="filteredBeneficiaries.length === 0" class="beneficiary-empty-state" role="status">
         <SlidersHorizontal aria-hidden="true" />
         <strong>No data for the selected filters</strong>
@@ -358,7 +429,7 @@ onUnmounted(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="record in filteredBeneficiaries" :key="record.id" class="material-row" tabindex="0" @dblclick="openBeneficiary(record)">
+            <tr v-for="record in paginatedBeneficiaries" :key="record.id" class="material-row" tabindex="0" @dblclick="openBeneficiary(record)">
               <td>
                 <strong>{{ record.name }}</strong>
                 <span>{{ record.id }} · {{ record.category }}</span>
@@ -388,8 +459,33 @@ onUnmounted(() => {
         </table>
       </div>
 
+      <nav v-if="filteredBeneficiaries.length > 0" class="beneficiary-pagination" aria-label="Beneficiary pagination">
+        <label class="beneficiary-pagination__rows">
+          <span>Rows per page</span>
+          <select :value="beneficiaryPageSize" @change="setBeneficiaryPageSize">
+            <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </label>
+        <span class="beneficiary-pagination__range">{{ beneficiaryPageStart }}-{{ beneficiaryPageEnd }} of {{ filteredBeneficiaries.length }}</span>
+        <div class="beneficiary-pagination__controls">
+          <button class="beneficiary-pagination__button" type="button" :disabled="beneficiaryPage <= 1" aria-label="First page" @click="setBeneficiaryPage(1)">
+            <ChevronsLeft aria-hidden="true" />
+          </button>
+          <button class="beneficiary-pagination__button" type="button" :disabled="beneficiaryPage <= 1" aria-label="Previous page" @click="setBeneficiaryPage(beneficiaryPage - 1)">
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <span class="beneficiary-pagination__page">Page {{ beneficiaryPage }} of {{ beneficiaryTotalPages }}</span>
+          <button class="beneficiary-pagination__button" type="button" :disabled="beneficiaryPage >= beneficiaryTotalPages" aria-label="Next page" @click="setBeneficiaryPage(beneficiaryPage + 1)">
+            <ChevronRight aria-hidden="true" />
+          </button>
+          <button class="beneficiary-pagination__button" type="button" :disabled="beneficiaryPage >= beneficiaryTotalPages" aria-label="Last page" @click="setBeneficiaryPage(beneficiaryTotalPages)">
+            <ChevronsRight aria-hidden="true" />
+          </button>
+        </div>
+      </nav>
+
       <div class="beneficiary-card-list" aria-label="Beneficiary records mobile list">
-        <article v-for="record in filteredBeneficiaries" :key="`card:${record.id}`" class="material-row beneficiary-record-card" tabindex="0">
+        <article v-for="record in paginatedBeneficiaries" :key="`card:${record.id}`" class="material-row beneficiary-record-card" tabindex="0">
           <div>
             <strong>{{ record.name }}</strong>
             <span>{{ record.id }} · {{ record.category }}</span>
@@ -958,6 +1054,8 @@ onUnmounted(() => {
 .beneficiary-filter-button:focus-visible,
 .beneficiary-active-filters button:focus-visible,
 .beneficiary-empty-state__actions button:focus-visible,
+.beneficiary-pagination__button:focus-visible,
+.beneficiary-pagination__rows select:focus-visible,
 .beneficiary-table tbody tr:focus-visible,
 .beneficiary-row-action:focus-visible,
 .beneficiary-detail-close:focus-visible {
@@ -1002,6 +1100,27 @@ onUnmounted(() => {
   font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+
+.beneficiary-live-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #B7D6BF;
+  border-radius: 14px;
+  background: #EAF7EE;
+  color: var(--m3-primary-dark);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.beneficiary-live-status--warning {
+  border-color: #F6D58D;
+  background: #FFF8E8;
+  color: #7A4D00;
 }
 
 .beneficiary-table-wrap {
@@ -1055,6 +1174,70 @@ onUnmounted(() => {
 .beneficiary-table td strong,
 .beneficiary-table td span {
   display: block;
+}
+
+
+.beneficiary-pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 4px 0;
+  color: var(--m3-on-surface-variant);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.beneficiary-pagination__rows,
+.beneficiary-pagination__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.beneficiary-pagination__rows select {
+  min-height: 36px;
+  padding: 0 30px 0 12px;
+  border: 1px solid var(--m3-outline-strong);
+  border-radius: 10px;
+  background: var(--m3-surface);
+  color: var(--m3-on-surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.beneficiary-pagination__range,
+.beneficiary-pagination__page {
+  color: var(--m3-on-surface);
+  white-space: nowrap;
+}
+
+.beneficiary-pagination__button {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--m3-outline);
+  border-radius: 999px;
+  background: var(--m3-surface);
+  color: var(--m3-primary-dark);
+  cursor: pointer;
+}
+
+.beneficiary-pagination__button:hover:not(:disabled) {
+  background: #EAF7EE;
+}
+
+.beneficiary-pagination__button:disabled {
+  color: #A4B3AA;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.beneficiary-pagination__button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .beneficiary-row-action {
@@ -1513,13 +1696,25 @@ onUnmounted(() => {
   }
 
   .beneficiary-drillthrough-context,
-  .beneficiary-detail-context {
+  .beneficiary-detail-context,
+  .beneficiary-live-status {
     display: grid;
     justify-items: start;
   }
 
   .beneficiary-table-wrap {
     display: none;
+  }
+
+  .beneficiary-pagination {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .beneficiary-pagination__controls {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .beneficiary-card-list {
