@@ -111,3 +111,32 @@ For CRDB deployments, treat duplicate partial URLs as two separate checks:
    - Use this to decide whether duplicates are unmanaged cleanup candidates or managed-blocked residue.
 
 For the current state, deployment safety passed, but server hygiene remains managed-blocked.
+
+## Revalidation on 2026-08-20
+
+The CRDB site was downloaded again from `TACATDP-CRDB-Dev` using the enhanced-model Power Pages download path and verified against the current SPA build.
+
+Fresh download evidence:
+
+| Check | Result |
+| --- | ---: |
+| Downloaded web-file metadata records | 315 |
+| Duplicate partial URLs | 17 |
+| Current SPA duplicate partial URLs | 3 |
+| Current SPA asset count | 32 |
+| Missing current SPA assets | 0 |
+| Mismatched current SPA assets | 0 |
+
+Current duplicate partial URLs remain:
+
+- `strings_es-C8xkQaZj-KYNBMnTd.mjs` — 8 records
+- `strings_fr-C0vLmCzP-Bi34LuTN.mjs` — 8 records
+- `strings_id-BE0G3I_d-B0dO9nQF.mjs` — 8 records
+
+The live ownership classifier again returned the same current-build pattern:
+
+| Scope | Records classified | Managed-blocked | Unmanaged current delete candidates | Unmanaged stale delete candidates |
+| --- | ---: | ---: | ---: | ---: |
+| Current Vite dist duplicates only | 24 | 15 | 9 | 0 |
+
+Decision: no delete was performed. The 9 unmanaged records all match the current SPA binary and are therefore not proven unused. The stale current-build records are managed. Deleting only unmanaged records would still leave duplicate partial URLs and could remove valid current binary copies. Cleanup must remain a CRDB solution-lifecycle or Power Pages component-management action with the owning administrator.
