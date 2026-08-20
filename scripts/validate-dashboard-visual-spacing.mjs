@@ -169,6 +169,29 @@ if (!apiClientSource.includes('parsed.root') || !apiClientSource.includes('build
 }
 
 for (const fragment of [
+  'Number of MALE farmers trained',
+  'Number of FEMALE farmers trained',
+  'Number of MALE Youth farmers trained',
+  'Number of FEMALE Youth farmers trained',
+]) {
+  if (!projectionSource.includes(fragment)) {
+    throw new Error(`Training projection must match imported XLSX label payloads, not only XLSForm technical names: missing ${fragment}.`);
+  }
+}
+
+if (projectionSource.includes('/farmers?.*trained/i') || projectionSource.includes('/youth.*trained/i')) {
+  throw new Error('Training projection must not use broad trained regexes; they can read male/female fields as total fields.');
+}
+
+if (dashboardPageSource.includes('May 1 – May 31, 2025')) {
+  throw new Error('Dashboard must not show the old prototype May 2025 date range once live baseline projection is enabled.');
+}
+
+if (!dashboardPageSource.includes('Reporting period awaiting live data')) {
+  throw new Error('Dashboard must show a neutral reporting-period awaiting state until real reporting-period metadata exists.');
+}
+
+for (const fragment of [
   '__dashboardAggregates',
   'buildBaselineDashboardAggregates',
   'loan_repeat',

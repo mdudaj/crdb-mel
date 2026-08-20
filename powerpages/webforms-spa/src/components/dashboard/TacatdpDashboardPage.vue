@@ -539,7 +539,7 @@ function regionNameFromSubmission(regionLabel: string) {
       <div class="tacatdp-dashboard__header-actions" aria-label="Dashboard controls">
         <button class="dashboard-control" type="button">
           <CalendarDays aria-hidden="true" />
-          May 1 – May 31, 2025
+          Reporting period awaiting live data
           <ChevronDown aria-hidden="true" />
         </button>
         <button class="dashboard-control" type="button">

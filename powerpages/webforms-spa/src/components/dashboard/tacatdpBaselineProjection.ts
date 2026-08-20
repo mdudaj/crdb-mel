@@ -196,16 +196,18 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
 
     const explicitFarmersTrained = readNumber(answers, [
       /(?:^|\/)total_trained$/i,
-      /total.*trained/i,
-      /farmers?.*trained/i,
+      /^total farmers trained/i,
+      /total.*farmers.*trained/i,
     ]);
     const maleTrained = sumNumbers(answers, [
       /(?:^|\/)male_trained$/i,
+      /^Number of MALE farmers trained$/i,
       /(?:^|\/)training_dm$/i,
       /(?:^|\/)training_im$/i,
     ]);
     const femaleTrained = sumNumbers(answers, [
       /(?:^|\/)female_trained$/i,
+      /^Number of FEMALE farmers trained$/i,
       /(?:^|\/)training_df$/i,
       /(?:^|\/)training_if$/i,
     ]);
@@ -223,11 +225,16 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     const explicitYouthTrained = readNumber(answers, [
       /(?:^|\/)total_youth_trained$/i,
       /(?:^|\/)total_youth$/i,
-      /youth.*trained/i,
+      /^total youth farmers trained/i,
+      /total.*youth.*trained/i,
     ]);
     const youthTrained = isUsableNumber(explicitYouthTrained)
       ? explicitYouthTrained
       : sumNumbers(answers, [
+        /(?:^|\/)male_youth_trained$/i,
+        /(?:^|\/)female_youth_trained$/i,
+        /^Number of MALE Youth farmers trained/i,
+        /^Number of FEMALE Youth farmers trained$/i,
         /(?:^|\/)training_dy$/i,
         /(?:^|\/)training_iy$/i,
       ]);

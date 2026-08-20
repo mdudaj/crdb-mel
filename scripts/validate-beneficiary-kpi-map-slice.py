@@ -81,7 +81,7 @@ def validate_dashboard_component() -> None:
         "Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.",
         "program-impact-farmer.png",
         "Prototype dashboard using demonstration data",
-        "May 1 – May 31, 2025",
+        "Reporting period awaiting live data",
     ):
         require_text(DASHBOARD, expected)
     for forbidden in (
