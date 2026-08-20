@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import time
 import uuid
+from collections.abc import Iterable
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -80,6 +81,7 @@ def stage_assets() -> None:
     if not DIST_ASSETS.exists():
         fail("missing Vite build assets; run npm run build:mshirika-runtime first")
     WEB_FILES.mkdir(parents=True, exist_ok=True)
+    prune_untracked_obsolete_source_spa_assets(current_dist_assets())
     for asset in sorted(path for path in DIST_ASSETS.iterdir() if path.is_file() and not path.name.endswith(".map")):
         target = WEB_FILES / asset.name
         shutil.copy2(asset, target)
@@ -160,11 +162,7 @@ def sync_upload_manifest_to_target_environment() -> None:
 
 
 def prune_upload_spa_assets(upload_web_files: Path) -> None:
-    current_assets = {
-        asset.name
-        for asset in DIST_ASSETS.iterdir()
-        if asset.is_file() and not asset.name.endswith(".map")
-    }
+    current_assets = current_dist_assets()
     if not current_assets:
         fail("missing deployable Vite assets; run npm run build:mshirika-runtime first")
 
@@ -181,6 +179,42 @@ def prune_upload_spa_assets(upload_web_files: Path) -> None:
             continue
         if path.name not in current_assets:
             path.unlink()
+
+
+def current_dist_assets() -> set[str]:
+    return {
+        asset.name
+        for asset in DIST_ASSETS.iterdir()
+        if asset.is_file() and not asset.name.endswith(".map")
+    }
+
+
+def prune_untracked_obsolete_source_spa_assets(current_assets: set[str]) -> None:
+    for path in list_untracked_source_webfiles(WEB_FILES):
+        if not is_generated_spa_asset(path.name):
+            continue
+        asset_name = path.name[: -len(".webfile.yml")] if path.name.endswith(".webfile.yml") else path.name
+        if asset_name not in current_assets:
+            path.unlink()
+
+
+def list_untracked_source_webfiles(web_files: Path) -> Iterable[Path]:
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "--", str(web_files.relative_to(ROOT))],
+            cwd=ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.SubprocessError:
+        return []
+    return (ROOT / line for line in result.stdout.splitlines() if line.strip())
+
+
+def is_generated_spa_asset(filename: str) -> bool:
+    asset_name = filename[: -len(".webfile.yml")] if filename.endswith(".webfile.yml") else filename
+    return bool(re.match(r".+-[A-Za-z0-9_-]{6,}(?:\.[A-Za-z0-9_-]+)?\.(?:mjs|css|png|svg|woff2)$", asset_name))
 
 
 def repair_and_validate_upload_package() -> None:

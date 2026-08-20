@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 from urllib.parse import urlparse
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,7 +23,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PACKAGE = ROOT / "powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool"
+SOURCE_SITE = ROOT / "powerpages/tacatdp-monitoring-tool/.powerpages-site"
+DIST_ASSETS = ROOT / "powerpages/webforms-spa/dist/assets"
 ASSET_REF_RE = re.compile(r"""(?:href|src)=["']/assets/([^"'?#]+)(?:[?#][^"']*)?["']""")
+GENERATED_SPA_ASSET_RE = re.compile(r""".+-[A-Za-z0-9_-]{6,}(?:\.[A-Za-z0-9_-]+)?\.(?:mjs|css|png|svg|woff2)(?:\.webfile\.yml)?$""")
 
 
 @dataclass(frozen=True)
@@ -274,6 +278,46 @@ def find_source_map_issues(package: Path) -> list[str]:
     ]
 
 
+def current_dist_assets() -> set[str]:
+    if not DIST_ASSETS.exists():
+        return set()
+    return {
+        asset.name
+        for asset in DIST_ASSETS.iterdir()
+        if asset.is_file() and not asset.name.endswith(".map")
+    }
+
+
+def find_untracked_source_spa_asset_issues() -> list[str]:
+    web_files = SOURCE_SITE / "web-files"
+    if not web_files.exists():
+        return []
+
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "--", str(web_files.relative_to(ROOT))],
+            cwd=ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.SubprocessError:
+        return []
+
+    current_assets = current_dist_assets()
+    issues: list[str] = []
+    for line in result.stdout.splitlines():
+        path = ROOT / line
+        if not path.is_file() or not GENERATED_SPA_ASSET_RE.match(path.name):
+            continue
+        asset_name = path.name[: -len(".webfile.yml")] if path.name.endswith(".webfile.yml") else path.name
+        if asset_name not in current_assets:
+            issues.append(
+                f"{path.relative_to(ROOT)} is an untracked obsolete generated SPA asset; rerun stage-powerpages-spa-build.py or remove it"
+            )
+    return issues
+
+
 def home_fragment_paths(package: Path) -> list[Path]:
     candidates = [
         package / "web-pages/home/Home.webpage.copy.html",
@@ -413,8 +457,9 @@ def main() -> None:
     environment_issues = find_environment_manifest_issues(package, args.environment_url)
     delete_intent_issues = find_manifest_delete_intent_issues(package)
     source_map_issues = find_source_map_issues(package)
+    untracked_source_spa_asset_issues = find_untracked_source_spa_asset_issues()
     asset_issues = find_home_asset_reference_issues(package)
-    if conflicts or section_issues or environment_issues or delete_intent_issues or source_map_issues or asset_issues:
+    if conflicts or section_issues or environment_issues or delete_intent_issues or source_map_issues or untracked_source_spa_asset_issues or asset_issues:
         for conflict in conflicts:
             print(f"Deleted-present conflict: {conflict}")
         for issue in section_issues:
@@ -425,6 +470,8 @@ def main() -> None:
             print(f"Manifest delete intent issue: {issue}")
         for issue in source_map_issues:
             print(f"Source map issue: {issue}")
+        for issue in untracked_source_spa_asset_issues:
+            print(f"Source package issue: {issue}")
         for issue in asset_issues:
             print(f"Asset reference issue: {issue}")
         fail("Power Pages package hygiene validation failed")
