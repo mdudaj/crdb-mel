@@ -105,6 +105,7 @@ const liveDashboardLoading = ref(false);
 const liveDashboardError = ref('');
 
 const liveBaselineProjection = computed(() => calculateTacatdpBaselineProjection(liveReportRows.value));
+const hasCalculatedBaselineProjection = computed(() => liveBaselineProjection.value.rowsWithAnswers > 0);
 const dashboardRegionMetrics = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.regions.length > 0
     ? liveBaselineProjection.value.regions
@@ -126,6 +127,16 @@ const dashboardRecentSubmissions = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.recentSubmissions.length > 0
     ? liveBaselineProjection.value.recentSubmissions
     : recentSubmissions
+));
+const dashboardLoanPortfolio = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.loanPortfolio.length > 0
+    ? liveBaselineProjection.value.loanPortfolio
+    : loanPortfolio
+));
+const loanPortfolioTitle = computed(() => (
+  hasCalculatedBaselineProjection.value && liveBaselineProjection.value.loanPortfolio.length > 0
+    ? 'Loan Financing by Stage'
+    : 'Loan Portfolio by Type'
 ));
 
 const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) => {
@@ -172,8 +183,6 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
   }
   return metric;
 }));
-
-const hasCalculatedBaselineProjection = computed(() => liveBaselineProjection.value.rowsWithAnswers > 0);
 
 const dashboardClimateOutcomes = computed<OutcomeMetric[]>(() => {
   if (!hasLiveKpiProjection.value || liveBaselineProjection.value.rowsWithAnswers === 0) return climateOutcomes;
@@ -301,10 +310,16 @@ function formatBillions(value: number) {
   return (value / 1_000_000_000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
+function chartColorForIndex(index: number) {
+  return ['#16A34A', '#2563EB', '#F59E0B', '#7C3AED', '#0F766E', '#DC2626'][index % 6];
+}
+
 const loanPortfolioOption = computed<DashboardChartOption>(() => ({
   title: {
     text: 'Total',
-    subtext: '12,458',
+    subtext: hasCalculatedBaselineProjection.value && liveBaselineProjection.value.finance.reportedLoanCount > 0
+      ? formatWholeNumber(liveBaselineProjection.value.finance.reportedLoanCount)
+      : '12,458',
     left: '28%',
     top: '34%',
     textAlign: 'center',
@@ -316,8 +331,9 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
     trigger: 'item',
     formatter: (params: unknown) => {
       const itemParams = chartParam(params);
-      const row = loanPortfolio.find((item) => item.name === itemParams.name);
-      return `${itemParams.name}<br>${itemParams.value.toLocaleString()} loans (${itemParams.percent}%)<br>${row?.amount ?? 'Prototype amount'} disbursed`;
+      const row = dashboardLoanPortfolio.value.find((item) => item.name === itemParams.name);
+      const unit = hasCalculatedBaselineProjection.value ? 'stage selections' : 'loans';
+      return `${itemParams.name}<br>${itemParams.value.toLocaleString()} ${unit} (${itemParams.percent}%)<br>${row?.amount ?? 'Prototype amount'} reported`;
     },
   },
   legend: {
@@ -329,7 +345,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
     itemGap: 12,
     textStyle: { color: '#64706A', fontSize: 11 },
     formatter: (name: string) => {
-      const item = loanPortfolio.find((entry) => entry.name === name);
+      const item = dashboardLoanPortfolio.value.find((entry) => entry.name === name);
       return item ? `${item.name}\n${item.value.toLocaleString()} (${item.percent}%)` : name;
     },
   },
@@ -338,7 +354,11 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
     radius: ['39%', '62%'],
     center: ['28%', '44%'],
     avoidLabelOverlap: false,
-    data: loanPortfolio.map((item) => ({ name: item.name, value: item.value, itemStyle: { color: item.color } })),
+    data: dashboardLoanPortfolio.value.map((item, index) => ({
+      name: item.name,
+      value: item.value,
+      itemStyle: { color: item.color ?? chartColorForIndex(index) },
+    })),
     label: { show: false, position: 'center' },
     labelLine: { show: false },
   }],
@@ -539,7 +559,7 @@ function regionNameFromSubmission(regionLabel: string) {
     </section>
 
     <section class="analytics-grid" aria-label="TACATDP analytics">
-      <DashboardCard :span="3" title="Loan Portfolio by Type">
+      <DashboardCard :span="3" :title="loanPortfolioTitle">
         <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
         <template #footer>
           <a href="#reporting">View full report →</a>

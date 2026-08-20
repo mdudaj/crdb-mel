@@ -9,6 +9,7 @@ export interface TacatdpBaselineProjection {
     reportedLoanCount: number;
     rowsWithLoanAmount: number;
   };
+  loanPortfolio: NamedValue[];
   regions: RegionMetric[];
   technologies: NamedValue[];
   disbursementTrend: TrendPoint[];
@@ -70,6 +71,7 @@ type DashboardAggregate = {
 const ACRE_TO_HECTARE = 0.404686;
 const DIESEL_KG_CO2E_PER_LITRE = 2.68;
 const DASHBOARD_AGGREGATES_KEY = '__dashboardAggregates';
+const LOAN_STAGE_ROOT_PREFIX = 'In which agricultural value chain stages did you invest your TACATDP loan(s)?/';
 const TECHNOLOGY_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
   { name: 'Climate-smart seeds', pattern: /TACATDP ARA Technology Deployed\/.+Climate-smart seeds|drought-resistant|drought tolerant/i },
   { name: 'Organic inputs', pattern: /TACATDP ARA Technology Deployed\/.+Organic inputs|organic fertilizer|bio-?fertili[sz]er|compost/i },
@@ -92,6 +94,7 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
       reportedLoanCount: 0,
       rowsWithLoanAmount: 0,
     },
+    loanPortfolio: [],
     regions: [],
     technologies: [],
     disbursementTrend: [],
@@ -133,6 +136,7 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
 
   const simpleYieldChanges: number[] = [];
   const waterEfficiencyValues: number[] = [];
+  const loanStageAccumulators = new Map<string, CategoryAccumulator>();
   const regionAccumulators = new Map<string, RegionAccumulator>();
   const technologyAccumulators = new Map<string, CategoryAccumulator>();
   const trendAmountsByYear = new Map<string, number>();
@@ -167,6 +171,17 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
       if (loan.year && loan.amountTzs && loan.amountTzs > 0) {
         trendAmountsByYear.set(loan.year, (trendAmountsByYear.get(loan.year) ?? 0) + loan.amountTzs);
       }
+    }
+
+    const aggregateLoans = aggregate.loans ?? [];
+    const loanStages = aggregateLoans.some((loan) => loan.stages?.length)
+      ? aggregateLoans.flatMap((loan) => loan.stages ?? []).filter(Boolean)
+      : readSelectedLoanStages(answers);
+    const allocatedStageAmount = loanStages.length > 0 ? reportedLoanAmount / loanStages.length : 0;
+    for (const stage of loanStages) {
+      const category = getCategoryAccumulator(loanStageAccumulators, simplifyLoanStageName(stage));
+      category.value += 1;
+      category.amountTzs += allocatedStageAmount;
     }
 
     const farmersTrained = readNumber(answers, [
@@ -282,6 +297,7 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
   }
   projection.yield.medianSimpleChangePct = median(simpleYieldChanges);
   projection.water.medianEfficiencyPct = median(waterEfficiencyValues);
+  projection.loanPortfolio = buildLoanPortfolioValues(loanStageAccumulators);
   projection.regions = buildRegions(regionAccumulators);
   projection.technologies = buildTechnologyValues(technologyAccumulators);
   projection.disbursementTrend = buildTrend(trendAmountsByYear);
@@ -356,6 +372,24 @@ function classifyTechnologies(answers: RootAnswers): string[] {
     .map(({ name }) => name);
 }
 
+function readSelectedLoanStages(answers: RootAnswers): string[] {
+  return Object.entries(answers)
+    .filter(([key, value]) => key.startsWith(LOAN_STAGE_ROOT_PREFIX) && isTruthyAnswer(value))
+    .map(([key]) => key.slice(LOAN_STAGE_ROOT_PREFIX.length))
+    .filter(Boolean);
+}
+
+function simplifyLoanStageName(stage: string): string {
+  return stage
+    .replace(/^\s+|\s+$/g, '')
+    .replace('Weeding / Field Management Stage', 'Field Management')
+    .replace('Pre-harvest / Pest Control Stage', 'Pest Control')
+    .replace('Storage / Warehousing Stage', 'Warehousing')
+    .replace('Value Addition / Processing Stage', 'Processing')
+    .replace('Marketing / Trading Stage', 'Trading')
+    .replace(/\s+Stage$/i, '');
+}
+
 function getRegionAccumulator(regions: Map<string, RegionAccumulator>, name: string): RegionAccumulator {
   const normalizedName = name.trim() || 'Not recorded';
   const existing = regions.get(normalizedName);
@@ -412,6 +446,20 @@ function buildTechnologyValues(categories: Map<string, CategoryAccumulator>): Na
       value: item.value,
       percent: Math.round((item.value / total) * 100),
       amount: `TZS ${formatBillions(item.amountTzs)}B reported`,
+    }));
+}
+
+function buildLoanPortfolioValues(categories: Map<string, CategoryAccumulator>): NamedValue[] {
+  const total = [...categories.values()].reduce((sum, item) => sum + item.value, 0);
+  if (total === 0) return [];
+  return [...categories.values()]
+    .sort((left, right) => right.value - left.value || right.amountTzs - left.amountTzs)
+    .slice(0, 3)
+    .map((item) => ({
+      name: item.name,
+      value: item.value,
+      percent: Math.round((item.value / total) * 100),
+      amount: `TZS ${formatBillions(item.amountTzs)}B allocated`,
     }));
 }
 
