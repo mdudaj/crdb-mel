@@ -986,8 +986,8 @@ a,
   z-index: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
+  object-fit: fill;
+  object-position: center center;
   opacity: 0.98;
   pointer-events: none;
 }

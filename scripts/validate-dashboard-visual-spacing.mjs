@@ -60,16 +60,16 @@ if (/axisLabel:\s*{[\s\S]*formatter:\s*['"`]{value}B['"`]/.test(source)) {
   throw new Error('Disbursement Trend y-axis must not repeat B on every tick; use the unit label instead.');
 }
 
-if (!dashboardPageSource.includes('object-fit: contain;')) {
-  throw new Error('Program Impact Goal illustration must use object-fit: contain so the supplied farmer image is not cropped.');
+if (!dashboardPageSource.includes('object-fit: fill;')) {
+  throw new Error('Program Impact Goal illustration must fill the full card background plane so it does not render as a small contained image.');
 }
 
 if (dashboardPageSource.includes('object-fit: cover;')) {
   throw new Error('Program Impact Goal illustration must not use object-fit: cover; it crops the supplied farmer image.');
 }
 
-if (!dashboardPageSource.includes('object-position: center bottom;')) {
-  throw new Error('Program Impact Goal illustration must stay anchored to the card bottom.');
+if (!dashboardPageSource.includes('object-position: center center;')) {
+  throw new Error('Program Impact Goal illustration must stay centered when filling the card background plane.');
 }
 
 if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashboardPageSource)) {
