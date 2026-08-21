@@ -2623,7 +2623,7 @@ export class PowerPagesApiClient {
       mp_denominator: definition.denominator || undefined,
       mp_reportingfrequency: INDICATOR_REPORTING_FREQUENCY_CODES[definition.reporting_frequency],
       mp_disaggregationjson: JSON.stringify(definition.disaggregation ?? []),
-      mp_datasourcemappingjson: JSON.stringify(definition.mappings),
+      mp_datasourcemappingjson: this.compactDataSourceMappingSummary(definition.mappings),
       mp_verificationmethod: definition.verification_method || undefined,
       mp_responsibleunit: definition.responsible_unit || undefined,
       mp_reportingframework: definition.reporting_framework || undefined,
@@ -2684,6 +2684,14 @@ export class PowerPagesApiClient {
       'mp_IndicatorDefinition@odata.bind': `/mp_indicatordefinitions(${definitionId})`,
     });
     return this.writeDataSourceMappingForSeed(existing?.mp_datasourcemappingid, payload, true, true);
+  }
+
+  private compactDataSourceMappingSummary(mappings: IndicatorEvidenceSeedMapping[]): string {
+    const summary = mappings.map((mapping) => mapping.mapping_key).join('; ');
+    if (summary.length <= 200) {
+      return summary;
+    }
+    return `${summary.slice(0, 197)}...`;
   }
 
   private async writeDataSourceMappingForSeed(

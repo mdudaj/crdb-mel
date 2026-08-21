@@ -39,6 +39,8 @@ for (const fragment of [
   'isPowerPagesAssociationPermissionError',
   'Project lookup bind was skipped',
   'Power Pages blocked mp_project association',
+  'compactDataSourceMappingSummary',
+  'summary.length <= 200',
   "mp_code eq '${this.escapeODataString(definition.code)}'",
   "mp_mappingkey eq '${this.escapeODataString(mapping.mapping_key)}'",
   'LOCAL_YES_NO_CODES',
@@ -53,6 +55,7 @@ for (const forbidden of [
   'new Entity("mp_observation")',
   'pac package deploy',
   'az account',
+  'mp_datasourcemappingjson: JSON.stringify(definition.mappings)',
 ]) {
   assert(!client.includes(forbidden), `Power Pages browser seed client contains forbidden fragment: ${forbidden}`);
 }

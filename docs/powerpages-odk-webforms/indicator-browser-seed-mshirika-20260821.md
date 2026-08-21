@@ -62,6 +62,12 @@ Runtime association fallback:
 - This fallback is intentional for the prototype browser path because `mp_project Admin Import` already has `Append To`, but the hosted runtime can still reject the association.
 - The durable service-owned path should restore project association through an approved Dataverse service principal, application user, Power Automate owner, or Windows Package Deployer path.
 
+Mapping summary constraint:
+
+- `mp_indicatordefinition.mp_datasourcemappingjson` is a short review field and is configured with a 200-character maximum in the current Dataverse table.
+- Do not write the full `definition.mappings` JSON into this column from the browser seed.
+- Store the full mapping details in `mp_DataSourceMapping` rows, and write only a compact mapping-key summary into `mp_datasourcemappingjson`.
+
 ## Power Pages enablement
 
 The site source package includes:
@@ -77,7 +83,7 @@ The browser implementation uses:
 
 - `/_api/mp_indicatordefinitions`
 - `/_api/mp_datasourcemappings`
-- FetchXML lookup for `mp_indicatordefinition` by `mp_project` and `mp_code`
+- OData lookup for `mp_indicatordefinition` by stable `mp_code`
 - OData lookup bind names `mp_Project@odata.bind` and `mp_IndicatorDefinition@odata.bind`
 
 ## Verification
