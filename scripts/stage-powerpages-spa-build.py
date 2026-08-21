@@ -27,6 +27,16 @@ UPLOAD_HOME_TARGETS = [
     UPLOAD / "web-pages/home/Home.webpage.copy.html",
     UPLOAD / "web-pages/home/content-pages/Home.en-US.webpage.copy.html",
 ]
+INDICATOR_BROWSER_SEED_SITE_SETTINGS = [
+    "Webapi-mp_indicatordefinition-enabled.sitesetting.yml",
+    "Webapi-mp_indicatordefinition-fields.sitesetting.yml",
+    "Webapi-mp_datasourcemapping-enabled.sitesetting.yml",
+    "Webapi-mp_datasourcemapping-fields.sitesetting.yml",
+]
+INDICATOR_BROWSER_SEED_TABLE_PERMISSIONS = [
+    "mp_indicatordefinition-admin-import.tablepermission.yml",
+    "mp_datasourcemapping-admin-import.tablepermission.yml",
+]
 PARENT_PAGE_ID = "60efc37d-aded-4014-912d-8a1cdefa876d"
 PUBLISHING_STATE_ID = "357decb2-7d20-468f-9898-1da7459f66b9"
 WEBFILE_NAMESPACE = uuid.UUID("b3107b66-8078-4bfe-bd96-e84ad7e46111")
@@ -132,6 +142,7 @@ def refresh_upload_mirror() -> None:
             fail(f"fresh upload package is missing {target.parent.relative_to(ROOT)}")
         shutil.copy2(home, target)
 
+    sync_indicator_browser_seed_artifacts()
     prune_upload_spa_assets(upload_web_files)
 
     for asset in sorted(path for path in DIST_ASSETS.iterdir() if path.is_file() and not path.name.endswith(".map")):
@@ -159,6 +170,69 @@ def sync_upload_manifest_to_target_environment() -> None:
     generic_manifest = portal_config / "manifest.yml"
     if target_manifest.exists():
         shutil.copy2(target_manifest, generic_manifest)
+
+
+def sync_indicator_browser_seed_artifacts() -> None:
+    sync_indicator_browser_seed_site_settings()
+    sync_indicator_browser_seed_table_permissions()
+
+
+def sync_indicator_browser_seed_site_settings() -> None:
+    source_dir = SITE / "site-settings"
+    upload_file = UPLOAD / "sitesetting.yml"
+    if not upload_file.exists():
+        fail(f"fresh upload package is missing {upload_file.relative_to(ROOT)}")
+
+    text = upload_file.read_text()
+    for filename in INDICATOR_BROWSER_SEED_SITE_SETTINGS:
+        source = parse_source_site_setting(source_dir / filename)
+        text = remove_upload_site_setting(text, source["name"])
+        text = text.rstrip() + "\n" + upload_site_setting_block(source)
+    upload_file.write_text(text)
+
+
+def parse_source_site_setting(path: Path) -> dict[str, str]:
+    if not path.exists():
+        fail(f"missing source site setting {path.relative_to(ROOT)}")
+    parsed: dict[str, str] = {}
+    for line in path.read_text().splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        parsed[key.strip()] = value.strip()
+    for key in ["id", "name", "source", "value"]:
+        if key not in parsed:
+            fail(f"source site setting {path.relative_to(ROOT)} missing {key}")
+    return parsed
+
+
+def remove_upload_site_setting(text: str, name: str) -> str:
+    pattern = re.compile(
+        rf"(?ms)^- adx_name: {re.escape(name)}\n(?:  .*\n?)*?(?=^- adx_name: |\Z)",
+    )
+    return pattern.sub("", text).rstrip() + "\n"
+
+
+def upload_site_setting_block(source: dict[str, str]) -> str:
+    return "\n".join([
+        f"- adx_name: {source['name']}",
+        f"  adx_sitesettingid: {source['id']}",
+        f"  adx_source: {source['source']}",
+        f"  adx_value: {source['value']}",
+        "",
+    ])
+
+
+def sync_indicator_browser_seed_table_permissions() -> None:
+    source_dir = SITE / "table-permissions"
+    upload_dir = UPLOAD / "table-permissions"
+    if not upload_dir.exists():
+        fail(f"fresh upload package is missing {upload_dir.relative_to(ROOT)}")
+    for filename in INDICATOR_BROWSER_SEED_TABLE_PERMISSIONS:
+        source = source_dir / filename
+        if not source.exists():
+            fail(f"missing source table permission {source.relative_to(ROOT)}")
+        shutil.copy2(source, upload_dir / filename)
 
 
 def prune_upload_spa_assets(upload_web_files: Path) -> None:

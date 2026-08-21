@@ -73,6 +73,53 @@ export interface BaselineImportDiagnosticStep {
   detail: string;
 }
 
+export interface IndicatorEvidenceSeedAsset {
+  seed_name: 'tacatdp_indicator_evidence_seed';
+  target_environment: string;
+  target_project_code: string;
+  writes_only: string[];
+  indicator_definitions: IndicatorEvidenceSeedDefinition[];
+}
+
+export interface IndicatorEvidenceSeedDefinition {
+  code: string;
+  name: string;
+  description?: string;
+  indicator_type: 'Financial' | 'Output' | 'Outcome' | 'ClimateImpactEstimate' | 'OperationalDataQuality';
+  result_level: 'Programme' | 'Component' | 'Outcome' | 'Output' | 'Activity' | 'Operational';
+  unit: string;
+  formula?: string;
+  numerator?: string;
+  denominator?: string;
+  reporting_frequency: 'OnDemand' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Seasonal' | 'Annual' | 'Baseline' | 'Endline';
+  disaggregation?: string[];
+  verification_method?: string;
+  responsible_unit?: string;
+  reporting_framework?: string;
+  status: 'Draft' | 'Active' | 'Retired';
+  mappings: IndicatorEvidenceSeedMapping[];
+}
+
+export interface IndicatorEvidenceSeedMapping {
+  mapping_key: string;
+  source_type: 'XFormField' | 'ImportedFileColumn' | 'DataverseTable' | 'PowerAutomateFlow' | 'PowerBIModel' | 'ExternalIntegration';
+  source_table?: string;
+  source_column?: string;
+  source_path?: string;
+  transform_rule?: string;
+  required: boolean;
+  active: boolean;
+  notes?: string;
+}
+
+export interface IndicatorEvidenceSeedResult {
+  status: 'validated' | 'executed';
+  definitionsProcessed: number;
+  mappingsProcessed: number;
+  counts: Record<string, number>;
+  messages: string[];
+}
+
 export interface FormAssignmentRow {
   mp_formassignmentid: string;
   mp_assignmentkey: string;

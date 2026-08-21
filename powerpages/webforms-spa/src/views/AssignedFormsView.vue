@@ -46,6 +46,8 @@ import type {
   BaselineBridgeImportResult,
   ExportSettingRow,
   FormAssignmentSummary,
+  IndicatorEvidenceSeedAsset,
+  IndicatorEvidenceSeedResult,
   MailboxReadinessStatus,
   NotificationDeliveryMode,
   NotificationDeliverySetting,
@@ -235,6 +237,13 @@ const baselineProjectionRunning = ref(false);
 const baselineDiagnosticRunning = ref(false);
 const baselineDiagnosticResults = ref<BaselineImportDiagnosticStep[]>([]);
 const baselineDiagnosticError = ref('');
+const indicatorSeedAsset = ref<IndicatorEvidenceSeedAsset | null>(null);
+const indicatorSeedFileName = ref('');
+const indicatorSeedLoading = ref(false);
+const indicatorSeedRunning = ref(false);
+const indicatorSeedMessage = ref('');
+const indicatorSeedError = ref('');
+const indicatorSeedResult = ref<IndicatorEvidenceSeedResult | null>(null);
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -1381,6 +1390,51 @@ async function runBaselineTrackedEntityDiagnostics() {
   }
 }
 
+async function handleIndicatorSeedFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  indicatorSeedError.value = '';
+  indicatorSeedMessage.value = '';
+  indicatorSeedResult.value = null;
+  indicatorSeedAsset.value = null;
+  indicatorSeedFileName.value = file?.name ?? '';
+  if (!file) {
+    return;
+  }
+
+  indicatorSeedLoading.value = true;
+  try {
+    const parsed = JSON.parse(await file.text()) as IndicatorEvidenceSeedAsset;
+    const validation = await api.seedIndicatorEvidenceDefinitions(parsed, { dryRun: true });
+    indicatorSeedAsset.value = parsed;
+    indicatorSeedResult.value = validation;
+    indicatorSeedMessage.value = `Validated ${validation.definitionsProcessed.toLocaleString()} indicator definitions and ${validation.mappingsProcessed.toLocaleString()} data-source mappings.`;
+  } catch (caught) {
+    indicatorSeedError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    indicatorSeedLoading.value = false;
+  }
+}
+
+async function runIndicatorEvidenceSeed() {
+  if (!indicatorSeedAsset.value) {
+    indicatorSeedError.value = 'Select the generated indicator evidence seed JSON file first.';
+    return;
+  }
+  indicatorSeedRunning.value = true;
+  indicatorSeedError.value = '';
+  indicatorSeedMessage.value = '';
+  try {
+    const result = await api.seedIndicatorEvidenceDefinitions(indicatorSeedAsset.value);
+    indicatorSeedResult.value = result;
+    indicatorSeedMessage.value = `Seeded ${result.definitionsProcessed.toLocaleString()} indicator definitions and ${result.mappingsProcessed.toLocaleString()} data-source mappings.`;
+  } catch (caught) {
+    indicatorSeedError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    indicatorSeedRunning.value = false;
+  }
+}
+
 function sanitizeBaselineImportError(caught: unknown): string {
   const message = caught instanceof Error ? caught.message : 'Baseline import failed.';
   return message
@@ -1388,6 +1442,8 @@ function sanitizeBaselineImportError(caught: unknown): string {
     .replace(/mp_instanceid eq '[^']*'/g, "mp_instanceid eq '<redacted>'")
     .replace(/mp_entitykey eq '[^']*'/g, "mp_entitykey eq '<redacted>'")
     .replace(/mp_linkkey eq '[^']*'/g, "mp_linkkey eq '<redacted>'")
+    .replace(/mp_mappingkey eq '[^']*'/g, "mp_mappingkey eq '<redacted>'")
+    .replace(/mp_code eq '[^']*'/g, "mp_code eq '<redacted>'")
     .slice(0, 900);
 }
 
@@ -4016,6 +4072,40 @@ onUnmounted(() => {
               <Database class="action-icon" aria-hidden="true" />
               Build all report rows
             </button>
+          </div>
+        </section>
+
+        <section class="material-surface baseline-import-panel" aria-labelledby="indicator-seed-title">
+          <div>
+            <p class="eyebrow">Step 5</p>
+            <h2 id="indicator-seed-title">Seed indicator definitions</h2>
+            <p>Select `schemas/dataverse/indicator-evidence-seed.json` to upsert the first governed KPI definitions and source mappings. This writes only indicator metadata; it does not create observations, evidence, or calculated results.</p>
+          </div>
+          <label class="baseline-import-file-picker" :class="{ 'baseline-import-file-picker--disabled': indicatorSeedLoading || indicatorSeedRunning }">
+            <input type="file" accept="application/json,.json" :disabled="indicatorSeedLoading || indicatorSeedRunning" @change="handleIndicatorSeedFileChange" />
+            <span class="baseline-import-file-picker__icon" aria-hidden="true">
+              <NotepadText class="action-icon" />
+            </span>
+            <span class="baseline-import-file-picker__body">
+              <strong>Indicator evidence seed JSON</strong>
+              <small>{{ indicatorSeedFileName || 'Choose .json file' }}</small>
+            </span>
+            <span class="baseline-import-file-picker__action">Browse</span>
+          </label>
+          <p v-if="indicatorSeedFileName" class="baseline-import-selected-file">Selected: {{ indicatorSeedFileName }}</p>
+          <div class="baseline-import-actions">
+            <button class="icon-action" type="button" :disabled="!indicatorSeedAsset || indicatorSeedRunning || indicatorSeedLoading" @click="runIndicatorEvidenceSeed">
+              <Database class="action-icon" aria-hidden="true" />
+              Run indicator seed
+            </button>
+          </div>
+          <p v-if="indicatorSeedMessage" class="status-banner status-banner--success" aria-live="polite">{{ indicatorSeedMessage }}</p>
+          <p v-if="indicatorSeedError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorSeedError }}</p>
+          <div v-if="indicatorSeedResult" class="baseline-import-counts" aria-label="Indicator seed rows by Dataverse table">
+            <article v-for="(count, table) in indicatorSeedResult.counts" :key="table">
+              <strong>{{ count.toLocaleString() }}</strong>
+              <span>{{ table }}</span>
+            </article>
           </div>
         </section>
 

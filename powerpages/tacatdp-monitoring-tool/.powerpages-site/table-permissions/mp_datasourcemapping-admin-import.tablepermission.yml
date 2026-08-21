@@ -1,0 +1,13 @@
+adx_append: true
+adx_appendto: true
+adx_create: true
+adx_delete: false
+adx_entitylogicalname: mp_datasourcemapping
+adx_entityname: mp_datasourcemapping Admin Import
+adx_entitypermission_webrole:
+- eee16194-79d2-4e30-9fb9-ea55b3b25e3e
+adx_entitypermissionid: 89552527-230b-4d1d-86d7-002967041575
+adx_parententitypermission:
+adx_read: true
+adx_scope: 756150000
+adx_write: true

@@ -9,6 +9,10 @@ import type {
   BaselineImportDiagnosticStep,
   BaselineBridgeImportOptions,
   BaselineBridgeImportResult,
+  IndicatorEvidenceSeedAsset,
+  IndicatorEvidenceSeedDefinition,
+  IndicatorEvidenceSeedMapping,
+  IndicatorEvidenceSeedResult,
   AccessWriteAction,
   AccessWriteCommand,
   AccessWritePreview,
@@ -78,6 +82,48 @@ const BENEFICIARY_CATEGORY_INDIVIDUAL_FARMER = 100000000;
 const BENEFICIARY_VERIFICATION_UNDER_REVIEW = 100000000;
 const SUBMISSION_LINK_RELATIONSHIP_BASELINE = 100000000;
 const SUBMISSION_LINK_REVIEW_UNDER_REVIEW = 100000000;
+const INDICATOR_TYPE_CODES: Record<IndicatorEvidenceSeedDefinition['indicator_type'], number> = {
+  Financial: 100000000,
+  Output: 100000001,
+  Outcome: 100000002,
+  ClimateImpactEstimate: 100000003,
+  OperationalDataQuality: 100000004,
+};
+const INDICATOR_RESULT_LEVEL_CODES: Record<IndicatorEvidenceSeedDefinition['result_level'], number> = {
+  Programme: 100000000,
+  Component: 100000001,
+  Outcome: 100000002,
+  Output: 100000003,
+  Activity: 100000004,
+  Operational: 100000005,
+};
+const INDICATOR_REPORTING_FREQUENCY_CODES: Record<IndicatorEvidenceSeedDefinition['reporting_frequency'], number> = {
+  OnDemand: 100000000,
+  Weekly: 100000001,
+  Monthly: 100000002,
+  Quarterly: 100000003,
+  Seasonal: 100000004,
+  Annual: 100000005,
+  Baseline: 100000006,
+  Endline: 100000007,
+};
+const INDICATOR_STATUS_CODES: Record<IndicatorEvidenceSeedDefinition['status'], number> = {
+  Draft: 100000000,
+  Active: 100000001,
+  Retired: 100000002,
+};
+const INDICATOR_SOURCE_TYPE_CODES: Record<IndicatorEvidenceSeedMapping['source_type'], number> = {
+  XFormField: 100000000,
+  ImportedFileColumn: 100000001,
+  DataverseTable: 100000002,
+  PowerAutomateFlow: 100000003,
+  PowerBIModel: 100000004,
+  ExternalIntegration: 100000005,
+};
+const LOCAL_YES_NO_CODES: Record<'false' | 'true', number> = {
+  false: 100000000,
+  true: 100000001,
+};
 const EXPORT_FORMAT_CSV = 100000000;
 const EXPORT_SCOPE_CURRENT_FILTERS = 100000000;
 const ACCESS_ADMIN_POWERPAGES_ROLES = ['Administrators', 'Platform Administrator'];
@@ -459,6 +505,51 @@ export class PowerPagesApiClient {
       message: `Imported ${result.rowsProcessed} rows`,
     });
     result.messages.push(`${mode === 'append' ? 'Appended' : 'Replaced matching'} ${result.rowsProcessed} rows through Power Pages Web API.`);
+    return result;
+  }
+
+  async seedIndicatorEvidenceDefinitions(
+    asset: IndicatorEvidenceSeedAsset,
+    options: { dryRun?: boolean } = {},
+  ): Promise<IndicatorEvidenceSeedResult> {
+    if (!this.isCurrentUserAccessAdmin()) {
+      throw new Error('Indicator seed requires the Platform Administrator web role.');
+    }
+    this.validateIndicatorEvidenceSeedAsset(asset);
+
+    const definitions = asset.indicator_definitions;
+    const mappings = definitions.flatMap((definition) => definition.mappings);
+    const result: IndicatorEvidenceSeedResult = {
+      status: options.dryRun ? 'validated' : 'executed',
+      definitionsProcessed: options.dryRun ? definitions.length : 0,
+      mappingsProcessed: options.dryRun ? mappings.length : 0,
+      counts: options.dryRun
+        ? { mp_IndicatorDefinition: definitions.length, mp_DataSourceMapping: mappings.length }
+        : {},
+      messages: [
+        `Indicator seed validated for project ${asset.target_project_code}.`,
+        'Writes are limited to mp_IndicatorDefinition and mp_DataSourceMapping.',
+      ],
+    };
+
+    if (options.dryRun) {
+      return result;
+    }
+
+    const projectId = await this.requireProjectId(asset.target_project_code);
+    for (const definition of definitions) {
+      const definitionId = await this.upsertIndicatorDefinitionForSeed(definition, projectId);
+      this.bumpIndicatorSeedCount(result, 'mp_IndicatorDefinition');
+      result.definitionsProcessed += 1;
+
+      for (const mapping of definition.mappings) {
+        await this.upsertDataSourceMappingForSeed(mapping, projectId, definitionId);
+        this.bumpIndicatorSeedCount(result, 'mp_DataSourceMapping');
+        result.mappingsProcessed += 1;
+      }
+    }
+
+    result.messages.push(`Seeded ${result.definitionsProcessed} indicator definitions and ${result.mappingsProcessed} data-source mappings.`);
     return result;
   }
 
@@ -2447,6 +2538,127 @@ export class PowerPagesApiClient {
     return submissions.value[0] ?? null;
   }
 
+  private validateIndicatorEvidenceSeedAsset(asset: IndicatorEvidenceSeedAsset): void {
+    if (asset.seed_name !== 'tacatdp_indicator_evidence_seed') {
+      throw new Error('Selected file is not the TACATDP indicator evidence seed asset.');
+    }
+    if (asset.target_project_code !== 'TACATDP') {
+      throw new Error(`Unsupported indicator seed project code: ${asset.target_project_code || '<empty>'}.`);
+    }
+    const writesOnly = new Set(asset.writes_only ?? []);
+    const allowedWrites = ['mp_IndicatorDefinition', 'mp_DataSourceMapping'];
+    if (writesOnly.size !== allowedWrites.length || allowedWrites.some((table) => !writesOnly.has(table))) {
+      throw new Error('Indicator seed must declare writes_only as mp_IndicatorDefinition and mp_DataSourceMapping only.');
+    }
+    if (!Array.isArray(asset.indicator_definitions) || asset.indicator_definitions.length === 0) {
+      throw new Error('Indicator seed has no indicator_definitions array.');
+    }
+    const definitionCodes = new Set<string>();
+    const mappingKeys = new Set<string>();
+    for (const definition of asset.indicator_definitions) {
+      this.requireSeedText(definition.code, 'indicator definition code');
+      this.requireSeedText(definition.name, `indicator ${definition.code} name`);
+      this.requireSeedText(definition.unit, `indicator ${definition.code} unit`);
+      this.requireSeedChoice(INDICATOR_TYPE_CODES, definition.indicator_type, `indicator ${definition.code} type`);
+      this.requireSeedChoice(INDICATOR_RESULT_LEVEL_CODES, definition.result_level, `indicator ${definition.code} result level`);
+      this.requireSeedChoice(INDICATOR_REPORTING_FREQUENCY_CODES, definition.reporting_frequency, `indicator ${definition.code} reporting frequency`);
+      this.requireSeedChoice(INDICATOR_STATUS_CODES, definition.status, `indicator ${definition.code} status`);
+      if (definitionCodes.has(definition.code)) {
+        throw new Error(`Duplicate indicator definition code in seed: ${definition.code}.`);
+      }
+      definitionCodes.add(definition.code);
+      if (!Array.isArray(definition.mappings) || definition.mappings.length === 0) {
+        throw new Error(`Indicator definition ${definition.code} has no mappings array.`);
+      }
+      for (const mapping of definition.mappings) {
+        this.requireSeedText(mapping.mapping_key, `mapping key for ${definition.code}`);
+        this.requireSeedChoice(INDICATOR_SOURCE_TYPE_CODES, mapping.source_type, `mapping ${mapping.mapping_key} source type`);
+        if (mappingKeys.has(mapping.mapping_key)) {
+          throw new Error(`Duplicate data-source mapping key in seed: ${mapping.mapping_key}.`);
+        }
+        mappingKeys.add(mapping.mapping_key);
+      }
+    }
+  }
+
+  private requireSeedText(value: string | undefined, label: string): void {
+    if (!value || !value.trim()) {
+      throw new Error(`Required seed value missing: ${label}.`);
+    }
+  }
+
+  private requireSeedChoice<T extends string>(choices: Record<T, number>, value: T | undefined, label: string): void {
+    if (!value || choices[value] === undefined) {
+      throw new Error(`Invalid seed choice for ${label}: ${value || '<empty>'}.`);
+    }
+  }
+
+  private async upsertIndicatorDefinitionForSeed(definition: IndicatorEvidenceSeedDefinition, projectId: string): Promise<string> {
+    const existing = await this.findOneByFetchXml<{ mp_indicatordefinitionid: string }>(
+      '/_api/mp_indicatordefinitions',
+      'mp_indicatordefinition',
+      ['mp_indicatordefinitionid', 'mp_code'],
+      [
+        ['mp_project', 'eq', projectId],
+        ['mp_code', 'eq', definition.code],
+      ],
+    );
+    const payload = this.omitUndefined({
+      mp_code: definition.code,
+      mp_name: definition.name,
+      mp_description: definition.description || undefined,
+      mp_indicatortype: INDICATOR_TYPE_CODES[definition.indicator_type],
+      mp_resultlevel: INDICATOR_RESULT_LEVEL_CODES[definition.result_level],
+      mp_unit: definition.unit,
+      mp_formula: definition.formula || undefined,
+      mp_numerator: definition.numerator || undefined,
+      mp_denominator: definition.denominator || undefined,
+      mp_reportingfrequency: INDICATOR_REPORTING_FREQUENCY_CODES[definition.reporting_frequency],
+      mp_disaggregationjson: JSON.stringify(definition.disaggregation ?? []),
+      mp_datasourcemappingjson: JSON.stringify(definition.mappings),
+      mp_verificationmethod: definition.verification_method || undefined,
+      mp_responsibleunit: definition.responsible_unit || undefined,
+      mp_reportingframework: definition.reporting_framework || undefined,
+      mp_status: INDICATOR_STATUS_CODES[definition.status],
+      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+    });
+    if (existing?.mp_indicatordefinitionid) {
+      await this.send(`/_api/mp_indicatordefinitions(${encodeURIComponent(existing.mp_indicatordefinitionid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_indicatordefinitionid;
+    }
+    return this.createRecord('/_api/mp_indicatordefinitions', payload);
+  }
+
+  private async upsertDataSourceMappingForSeed(
+    mapping: IndicatorEvidenceSeedMapping,
+    projectId: string,
+    definitionId: string,
+  ): Promise<string> {
+    const existing = await this.findOne<{ mp_datasourcemappingid: string }>(
+      '/_api/mp_datasourcemappings',
+      'mp_datasourcemappingid,mp_mappingkey',
+      `mp_mappingkey eq '${this.escapeODataString(mapping.mapping_key)}'`,
+    );
+    const payload = this.omitUndefined({
+      mp_mappingkey: mapping.mapping_key,
+      mp_sourcetype: INDICATOR_SOURCE_TYPE_CODES[mapping.source_type],
+      mp_sourcetable: mapping.source_table || undefined,
+      mp_sourcecolumn: mapping.source_column || undefined,
+      mp_sourcepath: mapping.source_path || undefined,
+      mp_transformrule: mapping.transform_rule || undefined,
+      mp_required: LOCAL_YES_NO_CODES[String(Boolean(mapping.required)) as 'false' | 'true'],
+      mp_active: LOCAL_YES_NO_CODES[String(Boolean(mapping.active)) as 'false' | 'true'],
+      mp_notes: mapping.notes || undefined,
+      'mp_Project@odata.bind': `/mp_projects(${projectId})`,
+      'mp_IndicatorDefinition@odata.bind': `/mp_indicatordefinitions(${definitionId})`,
+    });
+    if (existing?.mp_datasourcemappingid) {
+      await this.send(`/_api/mp_datasourcemappings(${encodeURIComponent(existing.mp_datasourcemappingid)})`, { method: 'PATCH', body: payload });
+      return existing.mp_datasourcemappingid;
+    }
+    return this.createRecord('/_api/mp_datasourcemappings', payload);
+  }
+
   private async requireProjectId(projectCode: string): Promise<string> {
     const result = await this.get<DataverseCollection<{ mp_projectid: string }>>(
       `/_api/mp_projects?$select=mp_projectid,mp_projectcode&$filter=mp_projectcode eq '${this.escapeODataString(projectCode)}'&$top=1`,
@@ -2750,6 +2962,10 @@ export class PowerPagesApiClient {
     result.counts[key] = (result.counts[key] ?? 0) + 1;
   }
 
+  private bumpIndicatorSeedCount(result: IndicatorEvidenceSeedResult, key: string): void {
+    result.counts[key] = (result.counts[key] ?? 0) + 1;
+  }
+
   private async runBaselineImportStep<T>(rowNumber: number, step: string, action: () => Promise<T>): Promise<T> {
     try {
       return await action();
@@ -2868,6 +3084,8 @@ export class PowerPagesApiClient {
       .replace(/mp_instanceid eq '[^']*'/g, "mp_instanceid eq '<redacted>'")
       .replace(/mp_entitykey eq '[^']*'/g, "mp_entitykey eq '<redacted>'")
       .replace(/mp_linkkey eq '[^']*'/g, "mp_linkkey eq '<redacted>'")
+      .replace(/mp_mappingkey eq '[^']*'/g, "mp_mappingkey eq '<redacted>'")
+      .replace(/mp_code eq '[^']*'/g, "mp_code eq '<redacted>'")
       .replace(/kobo:[0-9a-f-]{36}/gi, 'kobo:<redacted>')
       .replace(/uuid:[0-9a-f-]{36}/gi, 'uuid:<redacted>')
       .slice(0, 700);

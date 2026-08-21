@@ -1,0 +1,4 @@
+id: 810789ed-f863-4bb5-9408-7228dfe90bb1
+name: Webapi/mp_datasourcemapping/fields
+source: 0
+value: mp_datasourcemappingid,mp_mappingkey,mp_project,_mp_project_value,mp_Project,mp_indicatordefinition,_mp_indicatordefinition_value,mp_IndicatorDefinition,mp_sourcetype,mp_sourcetable,mp_sourcecolumn,mp_sourcepath,mp_transformrule,mp_required,mp_active,mp_notes

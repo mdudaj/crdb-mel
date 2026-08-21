@@ -7,11 +7,13 @@ const runbookPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-ev
 const deploymentPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-evidence-mshirika-deployment-20260820.md');
 const modelDocPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/prototype-model-design-20260820.md');
 const seedPackagePath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-definition-seed-package-20260821.md');
+const browserSeedPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-browser-seed-mshirika-20260821.md');
 
 const runbook = readFileSync(runbookPath, 'utf8');
 const deployment = readFileSync(deploymentPath, 'utf8');
 const modelDoc = readFileSync(modelDocPath, 'utf8');
 const seedPackage = readFileSync(seedPackagePath, 'utf8');
+const browserSeed = readFileSync(browserSeedPath, 'utf8');
 
 function assert(condition, message) {
   if (!condition) {
@@ -121,6 +123,37 @@ for (const fragment of [
   'No live Dataverse seed writes were performed',
 ]) {
   assertIncludes(seedPackage, fragment, `Seed package note missing required fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  'Status: implemented for Linux-compatible delivery and Mshirika preview',
+  'PAC authentication and Power Pages upload work here',
+  '`pac package deploy --package-type dataverse` requires the Windows Package Deployer runtime',
+  'Writes allowed',
+  '`mp_IndicatorDefinition`',
+  '`mp_DataSourceMapping`',
+  '`mp_Observation`',
+  '`mp_Evidence`',
+  '`mp_IndicatorResult`',
+  'schemas/dataverse/indicator-evidence-seed.json',
+  'TAC-BEN-001',
+  'TAC-FIN-001',
+  'TAC-REG-001',
+  'TAC-TEC-001',
+  'TAC-TRN-001',
+  'Step 5',
+  'Run indicator seed',
+  'idempotent',
+  '`/_api/mp_indicatordefinitions`',
+  '`/_api/mp_datasourcemappings`',
+  'FetchXML lookup',
+  'mp_Project@odata.bind',
+  'mp_IndicatorDefinition@odata.bind',
+  'node scripts/validate-indicator-browser-seed.mjs',
+  'Do not use Azure CLI for this path',
+  'Do not retry the Linux Package Deployer failure',
+]) {
+  assertIncludes(browserSeed, fragment, `Browser seed note missing required fragment: ${fragment}`);
 }
 
 console.log('Indicator/evidence implementation runbook validation passed.');

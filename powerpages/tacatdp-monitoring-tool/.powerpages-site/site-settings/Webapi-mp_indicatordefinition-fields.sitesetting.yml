@@ -1,0 +1,4 @@
+id: 34246da0-4fe6-4682-9f9c-50aa9c038e44
+name: Webapi/mp_indicatordefinition/fields
+source: 0
+value: mp_indicatordefinitionid,mp_project,_mp_project_value,mp_Project,mp_code,mp_name,mp_description,mp_indicatortype,mp_resultlevel,mp_unit,mp_formula,mp_numerator,mp_denominator,mp_reportingfrequency,mp_disaggregationjson,mp_datasourcemappingjson,mp_verificationmethod,mp_responsibleunit,mp_reportingframework,mp_status
