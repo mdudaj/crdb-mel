@@ -1,0 +1,191 @@
+{
+  "seed_name": "tacatdp_indicator_evidence_seed",
+  "generated_on": "2026-08-20",
+  "target_environment": "Mshirika development",
+  "target_project_code": "TACATDP",
+  "writes_only": [
+    "mp_IndicatorDefinition",
+    "mp_DataSourceMapping"
+  ],
+  "notes": [
+    "Idempotent seed for the first governed KPI definitions and source mappings.",
+    "Does not write observations, evidence records, or indicator results.",
+    "Does not change Power Pages site settings, table permissions, or dashboard data sources."
+  ],
+  "indicator_definitions": [
+    {
+      "code": "TAC-BEN-001",
+      "name": "Beneficiary profiles imported",
+      "description": "Count of TACATDP beneficiary profiles available in Dataverse after approved baseline import.",
+      "indicator_type": "Output",
+      "result_level": "Programme",
+      "unit": "count",
+      "formula": "COUNT(mp_BeneficiaryProfile) filtered by project and active imported baseline records.",
+      "numerator": "Beneficiary profile rows linked to the TACATDP project.",
+      "denominator": "",
+      "reporting_frequency": "OnDemand",
+      "disaggregation": [
+        "region",
+        "district",
+        "beneficiary_category",
+        "verification_status"
+      ],
+      "verification_method": "Reconcile against approved baseline import summary and beneficiary profile read-back counts before treating as official.",
+      "responsible_unit": "Sustainable Finance Unit",
+      "reporting_framework": "TACATDP prototype",
+      "status": "Active",
+      "mappings": [
+        {
+          "mapping_key": "TAC-BEN-001:dataverse:mp_beneficiaryprofile",
+          "source_type": "DataverseTable",
+          "source_table": "mp_beneficiaryprofile",
+          "source_column": "mp_beneficiaryprofileid",
+          "source_path": "",
+          "transform_rule": "Count project-scoped beneficiary profile rows.",
+          "required": true,
+          "active": true,
+          "notes": "Uses the minimal beneficiary entity created from the baseline import."
+        }
+      ]
+    },
+    {
+      "code": "TAC-FIN-001",
+      "name": "Reported baseline loan amount",
+      "description": "Baseline-reported financing amount captured from the imported TACATDP baseline workbook.",
+      "indicator_type": "Financial",
+      "result_level": "Programme",
+      "unit": "TZS",
+      "formula": "SUM(reported loan amount) from imported baseline projection rows where numeric value is available.",
+      "numerator": "Sum of baseline loan amount values.",
+      "denominator": "",
+      "reporting_frequency": "OnDemand",
+      "disaggregation": [
+        "region",
+        "district",
+        "loan_product",
+        "borrower_type"
+      ],
+      "verification_method": "Treat as imported baseline value until reconciled with CRDB authoritative finance or core banking records.",
+      "responsible_unit": "Sustainable Finance Unit",
+      "reporting_framework": "TACATDP prototype",
+      "status": "Active",
+      "mappings": [
+        {
+          "mapping_key": "TAC-FIN-001:projection:baseline-loan-amount",
+          "source_type": "DataverseTable",
+          "source_table": "mp_submissionreportrow",
+          "source_column": "loan amount / baseline projection numeric field",
+          "source_path": "submissionJson.root",
+          "transform_rule": "Parse numeric loan amount from imported baseline payload and sum valid values.",
+          "required": true,
+          "active": true,
+          "notes": "Prototype value is not an official disbursement figure."
+        }
+      ]
+    },
+    {
+      "code": "TAC-REG-001",
+      "name": "Regions represented in baseline",
+      "description": "Number of Tanzania mainland regions represented by imported TACATDP baseline beneficiary records.",
+      "indicator_type": "OperationalDataQuality",
+      "result_level": "Programme",
+      "unit": "count",
+      "formula": "COUNT_DISTINCT(region) from beneficiary profiles or imported baseline projection rows.",
+      "numerator": "Distinct non-empty region names in imported baseline records.",
+      "denominator": "",
+      "reporting_frequency": "OnDemand",
+      "disaggregation": [
+        "region",
+        "data_source"
+      ],
+      "verification_method": "Review region vocabulary normalization and exclude non-mainland or unmapped values before official reporting.",
+      "responsible_unit": "Sustainable Finance Unit",
+      "reporting_framework": "TACATDP prototype",
+      "status": "Active",
+      "mappings": [
+        {
+          "mapping_key": "TAC-REG-001:dataverse:beneficiary-region",
+          "source_type": "DataverseTable",
+          "source_table": "mp_beneficiaryprofile",
+          "source_column": "mp_region",
+          "source_path": "",
+          "transform_rule": "Normalize region labels, exclude empty values, and count distinct mainland regions.",
+          "required": true,
+          "active": true,
+          "notes": "Supports the regional map and data coverage checks."
+        }
+      ]
+    },
+    {
+      "code": "TAC-TEC-001",
+      "name": "Climate-smart technologies reported",
+      "description": "Count of TACATDP-supported climate-smart technology or practice selections reported in the baseline data.",
+      "indicator_type": "Output",
+      "result_level": "Output",
+      "unit": "count",
+      "formula": "Count selected TACATDP technology/practice categories from imported baseline payload fields.",
+      "numerator": "Selected technology/practice responses mapped to the approved TACATDP intervention catalogue.",
+      "denominator": "",
+      "reporting_frequency": "OnDemand",
+      "disaggregation": [
+        "technology",
+        "region",
+        "district",
+        "crop"
+      ],
+      "verification_method": "Confirm field-to-intervention mapping and review duplicate/multiple selections before official reporting.",
+      "responsible_unit": "Sustainable Finance Unit",
+      "reporting_framework": "TACATDP prototype",
+      "status": "Active",
+      "mappings": [
+        {
+          "mapping_key": "TAC-TEC-001:xform:adaptation-technologies",
+          "source_type": "XFormField",
+          "source_table": "mp_submissionversion",
+          "source_column": "mp_submissionjson",
+          "source_path": "submissionJson.root.*technology*|submissionJson.root.*practice*",
+          "transform_rule": "Map baseline technology/practice fields to approved TACATDP intervention categories and count selections.",
+          "required": false,
+          "active": true,
+          "notes": "Exact field aliases depend on the latest XLSForm and baseline export headers."
+        }
+      ]
+    },
+    {
+      "code": "TAC-TRN-001",
+      "name": "Training participation reported",
+      "description": "Baseline-reported participation in TACATDP training or capacity-building support.",
+      "indicator_type": "Output",
+      "result_level": "Output",
+      "unit": "count",
+      "formula": "Count beneficiary records with a positive or affirmative training/capacity-building response.",
+      "numerator": "Beneficiaries reporting training or capacity-building support.",
+      "denominator": "Imported baseline beneficiary records with a usable training field response.",
+      "reporting_frequency": "OnDemand",
+      "disaggregation": [
+        "region",
+        "district",
+        "sex",
+        "youth",
+        "training_topic"
+      ],
+      "verification_method": "Treat as reported baseline data until verified against attendance records or approved training registers.",
+      "responsible_unit": "Sustainable Finance Unit",
+      "reporting_framework": "TACATDP prototype",
+      "status": "Active",
+      "mappings": [
+        {
+          "mapping_key": "TAC-TRN-001:xform:training-fields",
+          "source_type": "XFormField",
+          "source_table": "mp_submissionversion",
+          "source_column": "mp_submissionjson",
+          "source_path": "submissionJson.root.*training*|submissionJson.root.*capacity*",
+          "transform_rule": "Detect affirmative training/capacity-building responses and count beneficiary participation.",
+          "required": false,
+          "active": true,
+          "notes": "Women/youth disaggregation requires clean demographic responses in the imported baseline dataset."
+        }
+      ]
+    }
+  ]
+}

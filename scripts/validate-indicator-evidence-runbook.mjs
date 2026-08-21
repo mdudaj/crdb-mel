@@ -6,10 +6,12 @@ const repoRoot = resolve(import.meta.dirname, '..');
 const runbookPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-evidence-dataverse-implementation-runbook-20260820.md');
 const deploymentPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-evidence-mshirika-deployment-20260820.md');
 const modelDocPath = resolve(repoRoot, 'docs/powerpages-odk-webforms/prototype-model-design-20260820.md');
+const seedPackagePath = resolve(repoRoot, 'docs/powerpages-odk-webforms/indicator-definition-seed-package-20260821.md');
 
 const runbook = readFileSync(runbookPath, 'utf8');
 const deployment = readFileSync(deploymentPath, 'utf8');
 const modelDoc = readFileSync(modelDocPath, 'utf8');
+const seedPackage = readFileSync(seedPackagePath, 'utf8');
 
 function assert(condition, message) {
   if (!condition) {
@@ -101,6 +103,24 @@ for (const fragment of [
   'Do not switch the dashboard to read `mp_IndicatorResult` immediately',
 ]) {
   assertIncludes(deployment, fragment, `Deployment note missing required fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  'Status: packaged and validated; live Mshirika execution blocked by Linux PAC Package Deployer limitation',
+  'mp_IndicatorDefinition',
+  'mp_DataSourceMapping',
+  'TAC-BEN-001',
+  'TAC-FIN-001',
+  'TAC-REG-001',
+  'TAC-TEC-001',
+  'TAC-TRN-001',
+  'Tacatdp.IndicatorSeedPackage.1.0.0.pdpkg.zip',
+  'requires .NET Framework and is not available on this build',
+  'Windows `pac.exe`',
+  'This uses PAC authentication, not Azure CLI',
+  'No live Dataverse seed writes were performed',
+]) {
+  assertIncludes(seedPackage, fragment, `Seed package note missing required fragment: ${fragment}`);
 }
 
 console.log('Indicator/evidence implementation runbook validation passed.');
