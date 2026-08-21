@@ -537,15 +537,24 @@ export class PowerPagesApiClient {
     }
 
     const projectId = await this.requireProjectId(asset.target_project_code);
-    for (const definition of definitions) {
-      const definitionId = await this.upsertIndicatorDefinitionForSeed(definition, projectId);
+    for (const seedDefinition of definitions) {
+      const definition = await this.upsertIndicatorDefinitionForSeed(seedDefinition, projectId);
       this.bumpIndicatorSeedCount(result, 'mp_IndicatorDefinition');
       result.definitionsProcessed += 1;
+      if (!definition.projectBound) {
+        result.messages.push(`Project lookup bind was skipped for ${definition.code}; Power Pages blocked mp_project association. The indicator row was still upserted by code.`);
+      }
 
-      for (const mapping of definition.mappings) {
-        await this.upsertDataSourceMappingForSeed(mapping, projectId, definitionId);
+      for (const mapping of definition.seed.mappings) {
+        const mappingResult = await this.upsertDataSourceMappingForSeed(mapping, projectId, definition.id);
         this.bumpIndicatorSeedCount(result, 'mp_DataSourceMapping');
         result.mappingsProcessed += 1;
+        if (!mappingResult.projectBound) {
+          result.messages.push(`Project lookup bind was skipped for ${mapping.mapping_key}; Power Pages blocked mp_project association.`);
+        }
+        if (!mappingResult.definitionBound) {
+          result.messages.push(`Indicator-definition lookup bind was skipped for ${mapping.mapping_key}; Power Pages blocked mp_indicatordefinition association.`);
+        }
       }
     }
 
@@ -2593,15 +2602,14 @@ export class PowerPagesApiClient {
     }
   }
 
-  private async upsertIndicatorDefinitionForSeed(definition: IndicatorEvidenceSeedDefinition, projectId: string): Promise<string> {
-    const existing = await this.findOneByFetchXml<{ mp_indicatordefinitionid: string }>(
+  private async upsertIndicatorDefinitionForSeed(
+    definition: IndicatorEvidenceSeedDefinition,
+    projectId: string,
+  ): Promise<{ id: string; code: string; projectBound: boolean; seed: IndicatorEvidenceSeedDefinition }> {
+    const existing = await this.findOne<{ mp_indicatordefinitionid: string }>(
       '/_api/mp_indicatordefinitions',
-      'mp_indicatordefinition',
-      ['mp_indicatordefinitionid', 'mp_code'],
-      [
-        ['mp_project', 'eq', projectId],
-        ['mp_code', 'eq', definition.code],
-      ],
+      'mp_indicatordefinitionid,mp_code',
+      `mp_code eq '${this.escapeODataString(definition.code)}'`,
     );
     const payload = this.omitUndefined({
       mp_code: definition.code,
@@ -2622,18 +2630,41 @@ export class PowerPagesApiClient {
       mp_status: INDICATOR_STATUS_CODES[definition.status],
       'mp_Project@odata.bind': `/mp_projects(${projectId})`,
     });
-    if (existing?.mp_indicatordefinitionid) {
-      await this.send(`/_api/mp_indicatordefinitions(${encodeURIComponent(existing.mp_indicatordefinitionid)})`, { method: 'PATCH', body: payload });
-      return existing.mp_indicatordefinitionid;
+
+    try {
+      if (existing?.mp_indicatordefinitionid) {
+        await this.send(`/_api/mp_indicatordefinitions(${encodeURIComponent(existing.mp_indicatordefinitionid)})`, { method: 'PATCH', body: payload });
+        return { id: existing.mp_indicatordefinitionid, code: definition.code, projectBound: true, seed: definition };
+      }
+      return {
+        id: await this.createRecord('/_api/mp_indicatordefinitions', payload),
+        code: definition.code,
+        projectBound: true,
+        seed: definition,
+      };
+    } catch (caught) {
+      if (!this.isPowerPagesAssociationPermissionError(caught, 'mp_project')) {
+        throw caught;
+      }
+      const unboundPayload = this.withoutPayloadKeys(payload, ['mp_Project@odata.bind']);
+      if (existing?.mp_indicatordefinitionid) {
+        await this.send(`/_api/mp_indicatordefinitions(${encodeURIComponent(existing.mp_indicatordefinitionid)})`, { method: 'PATCH', body: unboundPayload });
+        return { id: existing.mp_indicatordefinitionid, code: definition.code, projectBound: false, seed: definition };
+      }
+      return {
+        id: await this.createRecord('/_api/mp_indicatordefinitions', unboundPayload),
+        code: definition.code,
+        projectBound: false,
+        seed: definition,
+      };
     }
-    return this.createRecord('/_api/mp_indicatordefinitions', payload);
   }
 
   private async upsertDataSourceMappingForSeed(
     mapping: IndicatorEvidenceSeedMapping,
     projectId: string,
     definitionId: string,
-  ): Promise<string> {
+  ): Promise<{ id: string; projectBound: boolean; definitionBound: boolean }> {
     const existing = await this.findOne<{ mp_datasourcemappingid: string }>(
       '/_api/mp_datasourcemappings',
       'mp_datasourcemappingid,mp_mappingkey',
@@ -2652,11 +2683,59 @@ export class PowerPagesApiClient {
       'mp_Project@odata.bind': `/mp_projects(${projectId})`,
       'mp_IndicatorDefinition@odata.bind': `/mp_indicatordefinitions(${definitionId})`,
     });
-    if (existing?.mp_datasourcemappingid) {
-      await this.send(`/_api/mp_datasourcemappings(${encodeURIComponent(existing.mp_datasourcemappingid)})`, { method: 'PATCH', body: payload });
-      return existing.mp_datasourcemappingid;
+    return this.writeDataSourceMappingForSeed(existing?.mp_datasourcemappingid, payload, true, true);
+  }
+
+  private async writeDataSourceMappingForSeed(
+    existingId: string | undefined,
+    payload: Record<string, unknown>,
+    projectBound: boolean,
+    definitionBound: boolean,
+  ): Promise<{ id: string; projectBound: boolean; definitionBound: boolean }> {
+    try {
+      if (existingId) {
+        await this.send(`/_api/mp_datasourcemappings(${encodeURIComponent(existingId)})`, { method: 'PATCH', body: payload });
+        return { id: existingId, projectBound, definitionBound };
+      }
+      return {
+        id: await this.createRecord('/_api/mp_datasourcemappings', payload),
+        projectBound,
+        definitionBound,
+      };
+    } catch (caught) {
+      if (projectBound && this.isPowerPagesAssociationPermissionError(caught, 'mp_project')) {
+        return this.writeDataSourceMappingForSeed(
+          existingId,
+          this.withoutPayloadKeys(payload, ['mp_Project@odata.bind']),
+          false,
+          definitionBound,
+        );
+      }
+      if (definitionBound && this.isPowerPagesAssociationPermissionError(caught, 'mp_indicatordefinition')) {
+        return this.writeDataSourceMappingForSeed(
+          existingId,
+          this.withoutPayloadKeys(payload, ['mp_IndicatorDefinition@odata.bind']),
+          projectBound,
+          false,
+        );
+      }
+      throw caught;
     }
-    return this.createRecord('/_api/mp_datasourcemappings', payload);
+  }
+
+  private isPowerPagesAssociationPermissionError(caught: unknown, tableLogicalName: string): boolean {
+    const message = caught instanceof Error ? caught.message : String(caught ?? '');
+    return message.includes('90040106')
+      && message.includes('EntityPermissionAppendToIsMissingDuringAssociationChange')
+      && message.includes(tableLogicalName);
+  }
+
+  private withoutPayloadKeys(payload: Record<string, unknown>, keys: string[]): Record<string, unknown> {
+    const copy = { ...payload };
+    for (const key of keys) {
+      delete copy[key];
+    }
+    return copy;
   }
 
   private async requireProjectId(projectCode: string): Promise<string> {

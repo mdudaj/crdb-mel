@@ -36,7 +36,10 @@ for (const fragment of [
   "'/_api/mp_datasourcemappings'",
   "'mp_Project@odata.bind'",
   "'mp_IndicatorDefinition@odata.bind'",
-  "'mp_project', 'eq', projectId",
+  'isPowerPagesAssociationPermissionError',
+  'Project lookup bind was skipped',
+  'Power Pages blocked mp_project association',
+  "mp_code eq '${this.escapeODataString(definition.code)}'",
   "mp_mappingkey eq '${this.escapeODataString(mapping.mapping_key)}'",
   'LOCAL_YES_NO_CODES',
 ]) {

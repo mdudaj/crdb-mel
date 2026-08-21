@@ -51,9 +51,16 @@ Seed contents:
 
 The operation is idempotent:
 
-- indicator definitions are matched by TACATDP project and `mp_code`;
+- indicator definitions are matched by `mp_code`;
 - data-source mappings are matched by `mp_mappingkey`;
 - repeated execution updates matching records instead of creating duplicates.
+
+Runtime association fallback:
+
+- The browser seed first validates that project `TACATDP` exists.
+- If Power Pages rejects `mp_Project@odata.bind` with `90040106` / `EntityPermissionAppendToIsMissingDuringAssociationChange`, the seed retries without the `mp_project` lookup bind.
+- This fallback is intentional for the prototype browser path because `mp_project Admin Import` already has `Append To`, but the hosted runtime can still reject the association.
+- The durable service-owned path should restore project association through an approved Dataverse service principal, application user, Power Automate owner, or Windows Package Deployer path.
 
 ## Power Pages enablement
 
@@ -141,3 +148,4 @@ Expected deployed components:
 - Do not use the VS Code-bundled PAC 2.11.2 for this Mshirika upload until its `System.InvalidOperationException` crash is resolved.
 - Do not broaden Web API permissions to `mp_Observation`, `mp_Evidence`, or `mp_IndicatorResult` until the service-owned calculation path is approved.
 - If lookup bind errors occur, inspect the Power Pages Web API site setting field list and table permission append/append-to flags before changing entity names.
+- If `mp_project` association still returns `90040106` after verified `Append To`, use the implemented no-bind browser fallback instead of repeatedly editing the same table permission.
