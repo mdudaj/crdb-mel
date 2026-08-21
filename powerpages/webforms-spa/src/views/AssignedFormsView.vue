@@ -4123,14 +4123,32 @@ onUnmounted(() => {
           </div>
           <p v-if="indicatorSeedMessage" class="status-banner status-banner--success" aria-live="polite">{{ indicatorSeedMessage }}</p>
           <p v-if="indicatorSeedError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorSeedError }}</p>
-          <p v-if="indicatorReadBackError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorReadBackError }}</p>
           <div v-if="indicatorSeedResult" class="baseline-import-counts" aria-label="Indicator seed rows by Dataverse table">
             <article v-for="(count, table) in indicatorSeedResult.counts" :key="table">
               <strong>{{ count.toLocaleString() }}</strong>
               <span>{{ table }}</span>
             </article>
           </div>
-          <div v-if="indicatorReadBackLoading" class="baseline-import-selected-file" aria-live="polite">Reading seeded indicator metadata from Dataverse…</div>
+        </section>
+
+        <section
+          v-if="indicatorReadBackLoading || indicatorReadBackError || indicatorReadBackResult"
+          class="material-surface indicator-readback-panel"
+          aria-labelledby="indicator-readback-title"
+        >
+          <div class="indicator-readback-panel__header">
+            <div>
+              <p class="eyebrow">Seed read-back</p>
+              <h2 id="indicator-readback-title">Loaded indicator metadata</h2>
+              <p>Read-back confirms the seeded indicator definitions and data-source mappings are readable through the current Power Pages session.</p>
+            </div>
+            <button class="icon-action icon-action--secondary" type="button" :disabled="indicatorReadBackLoading || indicatorSeedRunning" @click="verifyIndicatorEvidenceSeedReadBack">
+              <RefreshCw class="action-icon" aria-hidden="true" />
+              Refresh read-back
+            </button>
+          </div>
+          <p v-if="indicatorReadBackLoading" class="baseline-import-selected-file" aria-live="polite">Reading seeded indicator metadata from Dataverse…</p>
+          <p v-if="indicatorReadBackError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorReadBackError }}</p>
           <div v-if="indicatorReadBackResult" class="indicator-readback" aria-label="Seeded indicator metadata read-back">
             <div class="baseline-import-counts">
               <article>
@@ -4165,10 +4183,8 @@ onUnmounted(() => {
                 <h3 id="indicator-readback-definitions-title">Indicator definitions</h3>
                 <ul class="indicator-readback__list">
                   <li v-for="definition in indicatorReadBackResult.definitions" :key="definition.id || definition.code">
-                    <div>
-                      <strong>{{ definition.code }}</strong>
-                      <span>{{ definition.name }}</span>
-                    </div>
+                    <strong>{{ definition.code }}</strong>
+                    <span>{{ definition.name }}</span>
                     <small>{{ definition.unit || 'No unit' }} · {{ definition.statusLabel }}</small>
                   </li>
                 </ul>
@@ -4177,10 +4193,8 @@ onUnmounted(() => {
                 <h3 id="indicator-readback-mappings-title">Data-source mappings</h3>
                 <ul class="indicator-readback__list">
                   <li v-for="mapping in indicatorReadBackResult.mappings" :key="mapping.id || mapping.mappingKey">
-                    <div>
-                      <strong>{{ mapping.mappingKey }}</strong>
-                      <span>{{ mapping.sourceTable || 'No source table' }}</span>
-                    </div>
+                    <strong>{{ mapping.mappingKey }}</strong>
+                    <span>{{ mapping.sourceTable || 'No source table' }}</span>
                     <small>{{ mapping.sourceTypeLabel }} · {{ mapping.sourceColumn || 'No source column' }}</small>
                   </li>
                 </ul>
