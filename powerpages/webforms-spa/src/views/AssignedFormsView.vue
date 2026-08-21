@@ -46,6 +46,7 @@ import type {
   BaselineBridgeImportResult,
   ExportSettingRow,
   FormAssignmentSummary,
+  IndicatorEvidenceReadBackResult,
   IndicatorEvidenceSeedAsset,
   IndicatorEvidenceSeedResult,
   MailboxReadinessStatus,
@@ -244,6 +245,9 @@ const indicatorSeedRunning = ref(false);
 const indicatorSeedMessage = ref('');
 const indicatorSeedError = ref('');
 const indicatorSeedResult = ref<IndicatorEvidenceSeedResult | null>(null);
+const indicatorReadBackLoading = ref(false);
+const indicatorReadBackError = ref('');
+const indicatorReadBackResult = ref<IndicatorEvidenceReadBackResult | null>(null);
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -1396,6 +1400,7 @@ async function handleIndicatorSeedFileChange(event: Event) {
   indicatorSeedError.value = '';
   indicatorSeedMessage.value = '';
   indicatorSeedResult.value = null;
+  indicatorReadBackError.value = '';
   indicatorSeedAsset.value = null;
   indicatorSeedFileName.value = file?.name ?? '';
   if (!file) {
@@ -1428,10 +1433,23 @@ async function runIndicatorEvidenceSeed() {
     const result = await api.seedIndicatorEvidenceDefinitions(indicatorSeedAsset.value);
     indicatorSeedResult.value = result;
     indicatorSeedMessage.value = `Seeded ${result.definitionsProcessed.toLocaleString()} indicator definitions and ${result.mappingsProcessed.toLocaleString()} data-source mappings.`;
+    await verifyIndicatorEvidenceSeedReadBack();
   } catch (caught) {
     indicatorSeedError.value = sanitizeBaselineImportError(caught);
   } finally {
     indicatorSeedRunning.value = false;
+  }
+}
+
+async function verifyIndicatorEvidenceSeedReadBack() {
+  indicatorReadBackLoading.value = true;
+  indicatorReadBackError.value = '';
+  try {
+    indicatorReadBackResult.value = await api.readIndicatorEvidenceSeedBack();
+  } catch (caught) {
+    indicatorReadBackError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    indicatorReadBackLoading.value = false;
   }
 }
 
@@ -4098,14 +4116,77 @@ onUnmounted(() => {
               <Database class="action-icon" aria-hidden="true" />
               Run indicator seed
             </button>
+            <button class="icon-action icon-action--secondary" type="button" :disabled="indicatorReadBackLoading || indicatorSeedRunning" @click="verifyIndicatorEvidenceSeedReadBack">
+              <RefreshCw class="action-icon" aria-hidden="true" />
+              Verify seeded metadata
+            </button>
           </div>
           <p v-if="indicatorSeedMessage" class="status-banner status-banner--success" aria-live="polite">{{ indicatorSeedMessage }}</p>
           <p v-if="indicatorSeedError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorSeedError }}</p>
+          <p v-if="indicatorReadBackError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorReadBackError }}</p>
           <div v-if="indicatorSeedResult" class="baseline-import-counts" aria-label="Indicator seed rows by Dataverse table">
             <article v-for="(count, table) in indicatorSeedResult.counts" :key="table">
               <strong>{{ count.toLocaleString() }}</strong>
               <span>{{ table }}</span>
             </article>
+          </div>
+          <div v-if="indicatorReadBackLoading" class="baseline-import-selected-file" aria-live="polite">Reading seeded indicator metadata from Dataverse…</div>
+          <div v-if="indicatorReadBackResult" class="indicator-readback" aria-label="Seeded indicator metadata read-back">
+            <div class="baseline-import-counts">
+              <article>
+                <strong>{{ indicatorReadBackResult.definitions.length.toLocaleString() }} / {{ indicatorReadBackResult.expectedDefinitionCodes.length.toLocaleString() }}</strong>
+                <span>Indicator definitions readable</span>
+              </article>
+              <article>
+                <strong>{{ indicatorReadBackResult.mappings.length.toLocaleString() }} / {{ indicatorReadBackResult.expectedMappingKeys.length.toLocaleString() }}</strong>
+                <span>Data-source mappings readable</span>
+              </article>
+              <article>
+                <strong>{{ indicatorReadBackResult.missingDefinitionCodes.length.toLocaleString() }}</strong>
+                <span>Missing definition codes</span>
+              </article>
+              <article>
+                <strong>{{ indicatorReadBackResult.missingMappingKeys.length.toLocaleString() }}</strong>
+                <span>Missing mapping keys</span>
+              </article>
+            </div>
+            <p
+              v-if="indicatorReadBackResult.missingDefinitionCodes.length === 0 && indicatorReadBackResult.missingMappingKeys.length === 0"
+              class="status-banner status-banner--success"
+              aria-live="polite"
+            >
+              Read-back verified: all governed TACATDP indicator seed records are readable by this portal session.
+            </p>
+            <p v-else class="status-banner status-banner--warning" aria-live="polite">
+              Read-back found missing records. Missing definitions: {{ indicatorReadBackResult.missingDefinitionCodes.join(', ') || 'none' }}. Missing mappings: {{ indicatorReadBackResult.missingMappingKeys.join(', ') || 'none' }}.
+            </p>
+            <div class="indicator-readback__grid">
+              <section aria-labelledby="indicator-readback-definitions-title">
+                <h3 id="indicator-readback-definitions-title">Indicator definitions</h3>
+                <ul class="indicator-readback__list">
+                  <li v-for="definition in indicatorReadBackResult.definitions" :key="definition.id || definition.code">
+                    <div>
+                      <strong>{{ definition.code }}</strong>
+                      <span>{{ definition.name }}</span>
+                    </div>
+                    <small>{{ definition.unit || 'No unit' }} · {{ definition.statusLabel }}</small>
+                  </li>
+                </ul>
+              </section>
+              <section aria-labelledby="indicator-readback-mappings-title">
+                <h3 id="indicator-readback-mappings-title">Data-source mappings</h3>
+                <ul class="indicator-readback__list">
+                  <li v-for="mapping in indicatorReadBackResult.mappings" :key="mapping.id || mapping.mappingKey">
+                    <div>
+                      <strong>{{ mapping.mappingKey }}</strong>
+                      <span>{{ mapping.sourceTable || 'No source table' }}</span>
+                    </div>
+                    <small>{{ mapping.sourceTypeLabel }} · {{ mapping.sourceColumn || 'No source column' }}</small>
+                  </li>
+                </ul>
+              </section>
+            </div>
+            <p class="baseline-import-selected-file">Last read-back: {{ formatDate(indicatorReadBackResult.readAt) }} {{ formatTime(indicatorReadBackResult.readAt) }}</p>
           </div>
         </section>
 

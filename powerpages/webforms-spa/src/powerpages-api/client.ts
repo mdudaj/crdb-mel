@@ -12,6 +12,7 @@ import type {
   IndicatorEvidenceSeedAsset,
   IndicatorEvidenceSeedDefinition,
   IndicatorEvidenceSeedMapping,
+  IndicatorEvidenceReadBackResult,
   IndicatorEvidenceSeedResult,
   AccessWriteAction,
   AccessWriteCommand,
@@ -112,6 +113,9 @@ const INDICATOR_STATUS_CODES: Record<IndicatorEvidenceSeedDefinition['status'], 
   Active: 100000001,
   Retired: 100000002,
 };
+const INDICATOR_STATUS_LABELS: Record<number, string> = Object.fromEntries(
+  Object.entries(INDICATOR_STATUS_CODES).map(([label, value]) => [value, label]),
+) as Record<number, string>;
 const INDICATOR_SOURCE_TYPE_CODES: Record<IndicatorEvidenceSeedMapping['source_type'], number> = {
   XFormField: 100000000,
   ImportedFileColumn: 100000001,
@@ -120,6 +124,23 @@ const INDICATOR_SOURCE_TYPE_CODES: Record<IndicatorEvidenceSeedMapping['source_t
   PowerBIModel: 100000004,
   ExternalIntegration: 100000005,
 };
+const INDICATOR_SOURCE_TYPE_LABELS: Record<number, string> = Object.fromEntries(
+  Object.entries(INDICATOR_SOURCE_TYPE_CODES).map(([label, value]) => [value, label]),
+) as Record<number, string>;
+const INDICATOR_SEED_DEFINITION_CODES = [
+  'TAC-BEN-001',
+  'TAC-FIN-001',
+  'TAC-REG-001',
+  'TAC-TEC-001',
+  'TAC-TRN-001',
+];
+const INDICATOR_SEED_MAPPING_KEYS = [
+  'TAC-BEN-001:dataverse:mp_beneficiaryprofile',
+  'TAC-FIN-001:projection:baseline-loan-amount',
+  'TAC-REG-001:dataverse:beneficiary-region',
+  'TAC-TEC-001:xform:adaptation-technologies',
+  'TAC-TRN-001:xform:training-fields',
+];
 const LOCAL_YES_NO_CODES: Record<'false' | 'true', number> = {
   false: 100000000,
   true: 100000001,
@@ -254,6 +275,24 @@ interface AttachmentPayloadSummary {
 
 interface AttachmentPayload extends AttachmentPayloadSummary {
   file: File;
+}
+
+interface IndicatorDefinitionReadBackRow {
+  mp_indicatordefinitionid?: string;
+  mp_code?: string;
+  mp_name?: string;
+  mp_unit?: string;
+  mp_status?: number;
+  mp_datasourcemappingjson?: string;
+}
+
+interface DataSourceMappingReadBackRow {
+  mp_datasourcemappingid?: string;
+  mp_mappingkey?: string;
+  mp_sourcetype?: number;
+  mp_sourcetable?: string;
+  mp_sourcecolumn?: string;
+  _mp_indicatordefinition_value?: string;
 }
 
 interface OnboardingRequestRow {
@@ -560,6 +599,58 @@ export class PowerPagesApiClient {
 
     result.messages.push(`Seeded ${result.definitionsProcessed} indicator definitions and ${result.mappingsProcessed} data-source mappings.`);
     return result;
+  }
+
+  async readIndicatorEvidenceSeedBack(): Promise<IndicatorEvidenceReadBackResult> {
+    if (!this.isCurrentUserAccessAdmin()) {
+      throw new Error('Indicator seed read-back requires the Platform Administrator web role.');
+    }
+
+    const definitionFilter = this.buildODataEqualsAnyFilter('mp_code', INDICATOR_SEED_DEFINITION_CODES);
+    const mappingFilter = this.buildODataEqualsAnyFilter('mp_mappingkey', INDICATOR_SEED_MAPPING_KEYS);
+    const [definitionResult, mappingResult] = await Promise.all([
+      this.get<DataverseCollection<IndicatorDefinitionReadBackRow>>(
+        `/_api/mp_indicatordefinitions?$select=mp_indicatordefinitionid,mp_code,mp_name,mp_unit,mp_status,mp_datasourcemappingjson&$filter=${encodeURIComponent(definitionFilter)}&$orderby=mp_code asc`,
+      ),
+      this.get<DataverseCollection<DataSourceMappingReadBackRow>>(
+        `/_api/mp_datasourcemappings?$select=mp_datasourcemappingid,mp_mappingkey,mp_sourcetype,mp_sourcetable,mp_sourcecolumn,_mp_indicatordefinition_value&$filter=${encodeURIComponent(mappingFilter)}&$orderby=mp_mappingkey asc`,
+      ),
+    ]);
+
+    const definitions = definitionResult.value
+      .map((row) => ({
+        id: row.mp_indicatordefinitionid ?? '',
+        code: row.mp_code ?? '',
+        name: row.mp_name ?? 'Unnamed indicator',
+        unit: row.mp_unit,
+        statusLabel: INDICATOR_STATUS_LABELS[row.mp_status ?? -1] ?? 'Unknown',
+        mappingSummary: row.mp_datasourcemappingjson,
+      }))
+      .filter((definition) => definition.code)
+      .sort((left, right) => left.code.localeCompare(right.code));
+    const mappings = mappingResult.value
+      .map((row) => ({
+        id: row.mp_datasourcemappingid ?? '',
+        mappingKey: row.mp_mappingkey ?? '',
+        sourceTypeLabel: INDICATOR_SOURCE_TYPE_LABELS[row.mp_sourcetype ?? -1] ?? 'Unknown',
+        sourceTable: row.mp_sourcetable,
+        sourceColumn: row.mp_sourcecolumn,
+        indicatorDefinitionId: row._mp_indicatordefinition_value,
+      }))
+      .filter((mapping) => mapping.mappingKey)
+      .sort((left, right) => left.mappingKey.localeCompare(right.mappingKey));
+    const presentCodes = new Set(definitions.map((definition) => definition.code));
+    const presentMappingKeys = new Set(mappings.map((mapping) => mapping.mappingKey));
+
+    return {
+      definitions,
+      mappings,
+      expectedDefinitionCodes: INDICATOR_SEED_DEFINITION_CODES,
+      missingDefinitionCodes: INDICATOR_SEED_DEFINITION_CODES.filter((code) => !presentCodes.has(code)),
+      expectedMappingKeys: INDICATOR_SEED_MAPPING_KEYS,
+      missingMappingKeys: INDICATOR_SEED_MAPPING_KEYS.filter((key) => !presentMappingKeys.has(key)),
+      readAt: new Date().toISOString(),
+    };
   }
 
   async rebuildBaselineReportRowsFromCanonical(options: { limit?: number; onProgress?: (progress: BaselineBridgeImportProgress) => void } = {}): Promise<BaselineBridgeImportResult> {
@@ -3438,6 +3529,12 @@ export class PowerPagesApiClient {
 
   private escapeODataString(value: string): string {
     return value.replaceAll("'", "''");
+  }
+
+  private buildODataEqualsAnyFilter(column: string, values: string[]): string {
+    return values
+      .map((value) => `${column} eq '${this.escapeODataString(value)}'`)
+      .join(' or ');
   }
 
   private getPowerPagesRoles(): string[] {

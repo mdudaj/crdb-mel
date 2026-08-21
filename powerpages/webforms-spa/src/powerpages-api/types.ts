@@ -120,6 +120,34 @@ export interface IndicatorEvidenceSeedResult {
   messages: string[];
 }
 
+export interface IndicatorEvidenceReadBackDefinition {
+  id: string;
+  code: string;
+  name: string;
+  unit?: string;
+  statusLabel: string;
+  mappingSummary?: string;
+}
+
+export interface IndicatorEvidenceReadBackMapping {
+  id: string;
+  mappingKey: string;
+  sourceTypeLabel: string;
+  sourceTable?: string;
+  sourceColumn?: string;
+  indicatorDefinitionId?: string;
+}
+
+export interface IndicatorEvidenceReadBackResult {
+  definitions: IndicatorEvidenceReadBackDefinition[];
+  mappings: IndicatorEvidenceReadBackMapping[];
+  expectedDefinitionCodes: string[];
+  missingDefinitionCodes: string[];
+  expectedMappingKeys: string[];
+  missingMappingKeys: string[];
+  readAt: string;
+}
+
 export interface FormAssignmentRow {
   mp_formassignmentid: string;
   mp_assignmentkey: string;
