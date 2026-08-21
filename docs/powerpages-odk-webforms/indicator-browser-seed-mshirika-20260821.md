@@ -97,9 +97,47 @@ Runtime smoke:
 5. Run the seed.
 6. Confirm the result counts and no writes to non-seed tables.
 
+## Mshirika upload command
+
+Use the existing .NET global PAC 2.10.1 executable for this upload path:
+
+```bash
+source scripts/use-powerplatform-env.sh mshirika >/dev/null
+/home/jmduda/.dotnet/tools/pac pages upload \
+  --path powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool \
+  --modelVersion Enhanced \
+  --forceUploadAll
+```
+
+Reason:
+
+- VS Code-bundled PAC 2.11.2 repeatedly crashed on this package with `System.InvalidOperationException`.
+- The already-installed .NET global PAC 2.10.1 completed the same upload successfully.
+- When run from the managed Codex sandbox, PAC may fail to access the named profile token lockfile under `/home/jmduda/.tacatdp-powerplatform/...`; run the PAC command outside the sandbox or with approved escalation.
+
+Post-upload verification:
+
+```bash
+source scripts/use-powerplatform-env.sh mshirika >/dev/null
+/home/jmduda/.dotnet/tools/pac pages list
+/home/jmduda/.dotnet/tools/pac org fetch --xml "<fetch count='10'><entity name='powerpagecomponent'><attribute name='powerpagecomponentid'/><attribute name='name'/><attribute name='powerpagecomponenttype'/><filter><condition attribute='name' operator='like' value='Webapi/mp_indicatordefinition%'/></filter></entity></fetch>"
+/home/jmduda/.dotnet/tools/pac org fetch --xml "<fetch count='10'><entity name='powerpagecomponent'><attribute name='powerpagecomponentid'/><attribute name='name'/><attribute name='powerpagecomponenttype'/><filter><condition attribute='name' operator='like' value='Webapi/mp_datasourcemapping%'/></filter></entity></fetch>"
+/home/jmduda/.dotnet/tools/pac org fetch --xml "<fetch count='20'><entity name='powerpagecomponent'><attribute name='powerpagecomponentid'/><attribute name='name'/><attribute name='powerpagecomponenttype'/><filter type='or'><condition attribute='name' operator='eq' value='mp_indicatordefinition Admin Import'/><condition attribute='name' operator='eq' value='mp_datasourcemapping Admin Import'/></filter></entity></fetch>"
+```
+
+Expected deployed components:
+
+- `Webapi/mp_indicatordefinition/enabled`
+- `Webapi/mp_indicatordefinition/fields`
+- `Webapi/mp_datasourcemapping/enabled`
+- `Webapi/mp_datasourcemapping/fields`
+- `mp_indicatordefinition Admin Import`
+- `mp_datasourcemapping Admin Import`
+
 ## Risk notes
 
 - Do not use Azure CLI for this path.
 - Do not retry the Linux Package Deployer failure; it is a platform limitation, not a missing package in this repository.
+- Do not use the VS Code-bundled PAC 2.11.2 for this Mshirika upload until its `System.InvalidOperationException` crash is resolved.
 - Do not broaden Web API permissions to `mp_Observation`, `mp_Evidence`, or `mp_IndicatorResult` until the service-owned calculation path is approved.
 - If lookup bind errors occur, inspect the Power Pages Web API site setting field list and table permission append/append-to flags before changing entity names.

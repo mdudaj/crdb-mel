@@ -123,6 +123,44 @@ The PAC diagnostic log path was:
 
 No successful Mshirika upload was confirmed for this task.
 
+Follow-up deployment on 2026-08-21:
+
+- VS Code-bundled PAC 2.11.2 remained the failing path for `pac pages upload`.
+- Existing .NET global PAC 2.10.1 at `/home/jmduda/.dotnet/tools/pac` connected to the same named Mshirika profile when run with token-cache filesystem access.
+- PAC 2.10.1 completed:
+
+```bash
+source scripts/use-powerplatform-env.sh mshirika >/dev/null
+/home/jmduda/.dotnet/tools/pac pages upload \
+  --path powerpages/tacatdp-monitoring-tool-upload/tacatdp-monitoring-tool \
+  --modelVersion Enhanced \
+  --forceUploadAll
+```
+
+Result:
+
+```text
+Power Pages website upload succeeded in 110.23 secs.
+```
+
+Non-fatal warnings:
+
+- PAC reported many stale `powerpagecomponent` delete failures with `Object reference not set to an instance of an object`.
+- PAC reported one update failure for missing `powerpagecomponent` id `ca928def-2b04-4948-bc22-1cb12a0c24a0`.
+- The command still exited `0` and reported upload success.
+
+Post-upload verification passed:
+
+- `pac pages list` returned website `fccc0cc6-7f5e-4885-aeb8-2272e68130a3`, `TACATDP Monitoring Tool`.
+- `powerpagecomponent` read-back found:
+  - `Webapi/mp_indicatordefinition/enabled`
+  - `Webapi/mp_indicatordefinition/fields`
+  - `Webapi/mp_datasourcemapping/enabled`
+  - `Webapi/mp_datasourcemapping/fields`
+  - `mp_indicatordefinition Admin Import`
+  - `mp_datasourcemapping Admin Import`
+- HTTP check to `https://tacatdp.powerappsportals.com/` returned a redirect to Microsoft sign-in, which is expected for the authenticated/private site.
+
 ## Artifact readiness
 
 Ready:
@@ -136,11 +174,11 @@ Ready:
 
 Blocked:
 
-- live Mshirika upload due repeated PAC `pages upload` crash.
+- Browser execution of Step 5 still requires an authenticated Platform Administrator session in the portal.
 
 Next action:
 
-1. Retry `pac pages upload` after PAC CLI/session issue is resolved, or use a known-good PAC version.
-2. Open `#/baseline-import`.
-3. Select `schemas/dataverse/indicator-evidence-seed.json`.
-4. Run Step 5 indicator seed.
+1. Open `#/baseline-import` as a Platform Administrator.
+2. Select `schemas/dataverse/indicator-evidence-seed.json`.
+3. Run Step 5 indicator seed.
+4. Verify the result shows 5 indicator definitions and 5 data-source mappings.
