@@ -31,6 +31,7 @@ import {
 } from '@lucide/vue';
 import { computed, defineAsyncComponent, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import TacatdpDashboardPage from '../components/dashboard/TacatdpDashboardPage.vue';
+import { calculateTacatdpBaselineProjection } from '../components/dashboard/tacatdpBaselineProjection';
 import { draftStore, type LocalDraft } from '../offline/drafts';
 import { PowerPagesApiClient } from '../powerpages-api/client';
 import BeneficiariesView from './BeneficiariesView.vue';
@@ -116,6 +117,30 @@ interface OnboardingTimelineItem {
   id: string;
   label: string;
   state: OnboardingTimelineState;
+}
+
+type IndicatorProjectionStatus = 'ready' | 'partial' | 'blocked';
+
+interface IndicatorProjectionReadinessRow {
+  code: string;
+  name: string;
+  value: string;
+  sourceRows: number;
+  verificationStatus: string;
+  status: IndicatorProjectionStatus;
+  gap: string;
+}
+
+interface IndicatorProjectionReadinessResult {
+  rows: IndicatorProjectionReadinessRow[];
+  beneficiaryProfiles: number;
+  reportRows: number;
+  calculatedReportRows: number;
+  metadataDefinitions: number;
+  metadataMappings: number;
+  missingMetadata: string[];
+  builtAt: string;
+  note: string;
 }
 
 interface ProjectWorkspace {
@@ -248,6 +273,9 @@ const indicatorSeedResult = ref<IndicatorEvidenceSeedResult | null>(null);
 const indicatorReadBackLoading = ref(false);
 const indicatorReadBackError = ref('');
 const indicatorReadBackResult = ref<IndicatorEvidenceReadBackResult | null>(null);
+const indicatorProjectionLoading = ref(false);
+const indicatorProjectionError = ref('');
+const indicatorProjectionResult = ref<IndicatorProjectionReadinessResult | null>(null);
 const exportName = ref('');
 const exportLoading = ref(false);
 const exportMessage = ref('');
@@ -1451,6 +1479,100 @@ async function verifyIndicatorEvidenceSeedReadBack() {
   } finally {
     indicatorReadBackLoading.value = false;
   }
+}
+
+async function buildIndicatorProjectionReadiness() {
+  indicatorProjectionLoading.value = true;
+  indicatorProjectionError.value = '';
+  try {
+    const [readBack, beneficiaries, reportRows] = await Promise.all([
+      api.readIndicatorEvidenceSeedBack(),
+      api.listBeneficiaries(),
+      api.listDashboardSubmissionReportRows({ maxRows: 1000 }),
+    ]);
+    indicatorReadBackResult.value = readBack;
+    const projection = calculateTacatdpBaselineProjection(reportRows);
+    const distinctRegions = new Set(
+      [
+        ...beneficiaries.map((beneficiary) => beneficiary.region?.trim()),
+        ...projection.regions.map((region) => region.name),
+      ].filter((region): region is string => Boolean(region && region !== 'Not recorded')),
+    );
+    const metadataMissing = [...readBack.missingDefinitionCodes, ...readBack.missingMappingKeys];
+    const technologySelections = projection.technologies.reduce((total, item) => total + item.value, 0);
+
+    indicatorProjectionResult.value = {
+      beneficiaryProfiles: beneficiaries.length,
+      reportRows: reportRows.length,
+      calculatedReportRows: projection.rowsWithAnswers,
+      metadataDefinitions: readBack.definitions.length,
+      metadataMappings: readBack.mappings.length,
+      missingMetadata: metadataMissing,
+      builtAt: new Date().toISOString(),
+      note: 'Read-only prototype projection. No mp_IndicatorResult rows are written by this browser path.',
+      rows: [
+        {
+          code: 'TAC-BEN-001',
+          name: 'Beneficiary profiles imported',
+          value: beneficiaries.length > 0 ? beneficiaries.length.toLocaleString() : 'Awaiting',
+          sourceRows: beneficiaries.length,
+          verificationStatus: beneficiaries.length > 0 ? 'baseline imported' : 'needs import',
+          status: beneficiaries.length > 0 ? 'ready' : 'blocked',
+          gap: beneficiaries.length > 0 ? 'None for prototype count. Official reporting still needs steward approval.' : 'No beneficiary profiles are readable.',
+        },
+        {
+          code: 'TAC-FIN-001',
+          name: 'Reported baseline loan amount',
+          value: projection.finance.reportedLoanAmountTzs > 0 ? formatTzs(projection.finance.reportedLoanAmountTzs) : 'Awaiting',
+          sourceRows: projection.finance.rowsWithLoanAmount,
+          verificationStatus: projection.finance.reportedLoanAmountTzs > 0 ? 'baseline reported' : 'needs source field',
+          status: projection.finance.reportedLoanAmountTzs > 0 ? 'partial' : 'blocked',
+          gap: projection.finance.reportedLoanAmountTzs > 0 ? 'Use as imported baseline value only; reconcile with authoritative CRDB finance/core banking before official reporting.' : 'No numeric loan amount found in readable baseline projection rows.',
+        },
+        {
+          code: 'TAC-REG-001',
+          name: 'Regions represented in baseline',
+          value: distinctRegions.size > 0 ? distinctRegions.size.toLocaleString() : 'Awaiting',
+          sourceRows: projection.rowsWithAnswers || beneficiaries.length,
+          verificationStatus: distinctRegions.size > 0 ? 'baseline imported' : 'needs location data',
+          status: distinctRegions.size > 0 ? 'ready' : 'blocked',
+          gap: distinctRegions.size > 0 ? 'Normalize region vocabulary before official reporting.' : 'No readable region values found.',
+        },
+        {
+          code: 'TAC-TEC-001',
+          name: 'Climate-smart technologies reported',
+          value: technologySelections > 0 ? technologySelections.toLocaleString() : 'Awaiting',
+          sourceRows: technologySelections,
+          verificationStatus: technologySelections > 0 ? 'baseline reported' : 'needs field mapping',
+          status: technologySelections > 0 ? 'partial' : 'blocked',
+          gap: technologySelections > 0 ? 'Confirm field-to-intervention mapping and multi-select treatment before official reporting.' : 'No supported technology/practice selections matched the current mapping patterns.',
+        },
+        {
+          code: 'TAC-TRN-001',
+          name: 'Training participation reported',
+          value: projection.training.farmersTrained > 0 ? projection.training.farmersTrained.toLocaleString() : 'Awaiting',
+          sourceRows: projection.training.records,
+          verificationStatus: projection.training.farmersTrained > 0 ? 'baseline reported' : 'needs training fields',
+          status: projection.training.farmersTrained > 0 ? 'partial' : 'blocked',
+          gap: projection.training.farmersTrained > 0 ? 'Women/youth disaggregation depends on clean demographic training fields.' : 'No positive training/capacity-building response found in readable projection rows.',
+        },
+      ],
+    };
+  } catch (caught) {
+    indicatorProjectionError.value = sanitizeBaselineImportError(caught);
+  } finally {
+    indicatorProjectionLoading.value = false;
+  }
+}
+
+function formatTzs(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `TZS ${(value / 1_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 })}B`;
+  }
+  if (value >= 1_000_000) {
+    return `TZS ${(value / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 })}M`;
+  }
+  return `TZS ${Math.round(value).toLocaleString()}`;
 }
 
 function sanitizeBaselineImportError(caught: unknown): string {
@@ -4201,6 +4323,79 @@ onUnmounted(() => {
               </section>
             </div>
             <p class="baseline-import-selected-file">Last read-back: {{ formatDate(indicatorReadBackResult.readAt) }} {{ formatTime(indicatorReadBackResult.readAt) }}</p>
+          </div>
+        </section>
+
+        <section class="material-surface indicator-projection-panel" aria-labelledby="indicator-projection-title">
+          <div class="indicator-readback-panel__header">
+            <div>
+              <p class="eyebrow">Step 6</p>
+              <h2 id="indicator-projection-title">Build indicator projection readiness</h2>
+              <p>Calculate the five governed MVP indicators from readable beneficiary profiles, baseline report rows, and seeded indicator metadata. This is a read-only readiness check; it does not write indicator results.</p>
+            </div>
+            <button class="icon-action" type="button" :disabled="indicatorProjectionLoading || indicatorSeedRunning || baselineImportRunning || baselineProjectionRunning" @click="buildIndicatorProjectionReadiness">
+              <BarChart3 class="action-icon" aria-hidden="true" />
+              Build indicator projection
+            </button>
+          </div>
+          <p v-if="indicatorProjectionLoading" class="baseline-import-selected-file" aria-live="polite">Calculating indicator readiness from Dataverse baseline projection…</p>
+          <p v-if="indicatorProjectionError" class="status-banner status-banner--error" aria-live="polite">{{ indicatorProjectionError }}</p>
+          <div v-if="indicatorProjectionResult" class="indicator-projection" aria-label="Indicator projection readiness result">
+            <div class="baseline-import-counts">
+              <article>
+                <strong>{{ indicatorProjectionResult.beneficiaryProfiles.toLocaleString() }}</strong>
+                <span>Beneficiary profiles</span>
+              </article>
+              <article>
+                <strong>{{ indicatorProjectionResult.reportRows.toLocaleString() }}</strong>
+                <span>Report rows read</span>
+              </article>
+              <article>
+                <strong>{{ indicatorProjectionResult.calculatedReportRows.toLocaleString() }}</strong>
+                <span>Rows with answers</span>
+              </article>
+              <article>
+                <strong>{{ indicatorProjectionResult.metadataDefinitions.toLocaleString() }} / {{ indicatorProjectionResult.metadataMappings.toLocaleString() }}</strong>
+                <span>Definitions / mappings</span>
+              </article>
+            </div>
+            <p
+              class="status-banner"
+              :class="indicatorProjectionResult.missingMetadata.length === 0 ? 'status-banner--success' : 'status-banner--warning'"
+              aria-live="polite"
+            >
+              {{ indicatorProjectionResult.missingMetadata.length === 0
+                ? 'Indicator metadata is readable. Projection values below are calculated from baseline data and remain prototype/readiness values.'
+                : `Missing seeded metadata: ${indicatorProjectionResult.missingMetadata.join(', ')}.` }}
+            </p>
+            <div class="responsive-table material-table indicator-projection-table" role="region" aria-label="Indicator projection readiness table" tabindex="0">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Indicator</th>
+                    <th scope="col">Current value</th>
+                    <th scope="col">Source rows</th>
+                    <th scope="col">Verification</th>
+                    <th scope="col">Gap / next check</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in indicatorProjectionResult.rows" :key="row.code">
+                    <td>
+                      <strong>{{ row.code }}</strong>
+                      <span>{{ row.name }}</span>
+                    </td>
+                    <td>{{ row.value }}</td>
+                    <td>{{ row.sourceRows.toLocaleString() }}</td>
+                    <td>
+                      <span class="state-chip" :class="`state-chip--${row.status === 'ready' ? 'success' : row.status === 'partial' ? 'warning' : 'error'}`">{{ row.verificationStatus }}</span>
+                    </td>
+                    <td>{{ row.gap }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="baseline-import-selected-file">{{ indicatorProjectionResult.note }} Built: {{ formatDate(indicatorProjectionResult.builtAt) }} {{ formatTime(indicatorProjectionResult.builtAt) }}</p>
           </div>
         </section>
 
