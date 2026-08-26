@@ -11,6 +11,7 @@ powerpages/webforms-spa/.powerpages-site/
 powerpages/tacatdp-monitoring-tool-upload/
 artifacts/xforms/
 artifacts/exports/
+artifacts/import-assets/local/
 .~lock.*#
 
 .env

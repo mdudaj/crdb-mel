@@ -1,0 +1,331 @@
+{
+  "aggregates": {
+    "ara_training_no": 665,
+    "ara_training_yes": 581,
+    "beneficiary_rows": 1246,
+    "cost_child_rows": 7585,
+    "cost_subtotal_sum_unverified": 148974088894119.0,
+    "districts": 130,
+    "gps_rows": 1246,
+    "land_after_acres": 22891.95,
+    "land_baseline_acres": 15983.95,
+    "land_delta_acres": 6908.0,
+    "loan_child_amount_total": 51615913500.0,
+    "loan_child_rows": 1484,
+    "loan_count_sum": 1481.0,
+    "regions": 29,
+    "root_total_loan_amount": 51615913500.0,
+    "total_trained_sum": 141594.0,
+    "wards": 415
+  },
+  "assetType": "tacatdp-baseline-bridge-import",
+  "counts": {
+    "customerIdIdentifiers": 1235,
+    "duplicateReviewGroups": 15,
+    "duplicateReviewRows": 39,
+    "phoneIdentifiers": 1246,
+    "rows": 1246,
+    "sourceUuidIdentifiers": 1246
+  },
+  "distributions": {
+    "ageGroup": [
+      {
+        "count": 1005,
+        "value": "36-64 years: Senior Adults"
+      },
+      {
+        "count": 157,
+        "value": "18-35 years: Youth"
+      },
+      {
+        "count": 84,
+        "value": "65+ years: Elders"
+      }
+    ],
+    "araTraining": [
+      {
+        "count": 665,
+        "value": "No"
+      },
+      {
+        "count": 581,
+        "value": "Yes"
+      }
+    ],
+    "districts": [
+      {
+        "count": 104,
+        "value": "Mbarali"
+      },
+      {
+        "count": 90,
+        "value": "Igunga"
+      },
+      {
+        "count": 87,
+        "value": "Wanging'ombe"
+      },
+      {
+        "count": 76,
+        "value": "Kyerwa"
+      },
+      {
+        "count": 75,
+        "value": "Kakonko"
+      },
+      {
+        "count": 51,
+        "value": "Kasulu"
+      },
+      {
+        "count": 43,
+        "value": "Babati"
+      },
+      {
+        "count": 27,
+        "value": "Mji wa Nzega"
+      },
+      {
+        "count": 25,
+        "value": "Sengerema"
+      },
+      {
+        "count": 22,
+        "value": "Karatu"
+      },
+      {
+        "count": 21,
+        "value": "Iringa"
+      },
+      {
+        "count": 21,
+        "value": "Mvomero"
+      }
+    ],
+    "gender": [
+      {
+        "count": 980,
+        "value": "Male"
+      },
+      {
+        "count": 266,
+        "value": "Female"
+      }
+    ],
+    "loanYear": [
+      {
+        "count": 28,
+        "value": "15apr2026"
+      },
+      {
+        "count": 26,
+        "value": "05mar2026"
+      },
+      {
+        "count": 24,
+        "value": "09feb2026"
+      },
+      {
+        "count": 21,
+        "value": "10feb2026"
+      },
+      {
+        "count": 20,
+        "value": "12feb2026"
+      },
+      {
+        "count": 17,
+        "value": "01mar2026"
+      },
+      {
+        "count": 16,
+        "value": "16feb2026"
+      },
+      {
+        "count": 14,
+        "value": "15jun2026"
+      },
+      {
+        "count": 14,
+        "value": "15jul2026"
+      },
+      {
+        "count": 14,
+        "value": "09mar2026"
+      },
+      {
+        "count": 14,
+        "value": "01feb2026"
+      },
+      {
+        "count": 13,
+        "value": "18feb2026"
+      }
+    ],
+    "regions": [
+      {
+        "count": 160,
+        "value": "Kagera"
+      },
+      {
+        "count": 138,
+        "value": "Kigoma"
+      },
+      {
+        "count": 130,
+        "value": "Tabora"
+      },
+      {
+        "count": 116,
+        "value": "Mbeya"
+      },
+      {
+        "count": 106,
+        "value": "Njombe"
+      },
+      {
+        "count": 79,
+        "value": "Mwanza"
+      },
+      {
+        "count": 78,
+        "value": "Manyara"
+      },
+      {
+        "count": 58,
+        "value": "Ruvuma"
+      },
+      {
+        "count": 49,
+        "value": "Arusha"
+      },
+      {
+        "count": 47,
+        "value": "Pwani"
+      },
+      {
+        "count": 46,
+        "value": "Morogoro"
+      },
+      {
+        "count": 35,
+        "value": "Dar es Salaam"
+      }
+    ],
+    "valueChainStage": [
+      {
+        "count": 161,
+        "value": "14"
+      },
+      {
+        "count": 98,
+        "value": "1 2 3 4 5 6"
+      },
+      {
+        "count": 50,
+        "value": "2"
+      },
+      {
+        "count": 43,
+        "value": "1 2 3 4 5 6 7"
+      },
+      {
+        "count": 38,
+        "value": "3"
+      },
+      {
+        "count": 38,
+        "value": "18"
+      },
+      {
+        "count": 31,
+        "value": "1"
+      },
+      {
+        "count": 31,
+        "value": "3 4"
+      },
+      {
+        "count": 29,
+        "value": "1 2 3 4 5"
+      },
+      {
+        "count": 27,
+        "value": "1 2 3 4"
+      },
+      {
+        "count": 27,
+        "value": "1 2 3 4 6"
+      },
+      {
+        "count": 26,
+        "value": "11"
+      }
+    ]
+  },
+  "duplicatePolicy": "review_only_no_auto_merge",
+  "formId": "tacatdp_impact_evaluation",
+  "formVersion": "2608130924",
+  "generatedAt": "2026-08-26T16:58:25+00:00",
+  "importPlan": {
+    "loanValueChainRows": "preserved_in_submission_json_repeats",
+    "recommendedMode": "replace",
+    "rootRows": "ready",
+    "valueChainCostRows": "deferred_until_pid_mapping_is_verified"
+  },
+  "projectCode": "TACATDP",
+  "quality": {
+    "childLinkage": {
+      "cost_link_status": "deferred_pid_mapping_required",
+      "cost_pid_non_empty": 7585,
+      "cost_pid_unique": 1176,
+      "cost_rows": 7585,
+      "cost_rows_matching_root_uuid": 0,
+      "loan_link_status": "ready",
+      "loan_rows": 1484,
+      "loan_rows_matching_root_uuid": 1484,
+      "loan_uuid_non_empty": 1484,
+      "loan_uuid_unique": 1246
+    },
+    "identifiers": {
+      "Customer_ID": {
+        "column": "Customer_ID",
+        "duplicate_groups": 11,
+        "duplicate_rows": 31,
+        "identifier_type": "customer_id",
+        "non_empty": 1235,
+        "unique": 1215
+      },
+      "Farmer_Phone": {
+        "column": "Farmer_Phone",
+        "duplicate_groups": 4,
+        "duplicate_rows": 8,
+        "identifier_type": "phone",
+        "non_empty": 1246,
+        "unique": 1242
+      },
+      "_uuid": {
+        "column": "_uuid",
+        "duplicate_groups": 0,
+        "duplicate_rows": 0,
+        "identifier_type": "source_uuid",
+        "non_empty": 1246,
+        "unique": 1246
+      }
+    }
+  },
+  "rows": "omitted_in_dry_run",
+  "safety": {
+    "dataverse_writes_performed": false,
+    "raw_payload_rows_in_output": false,
+    "raw_pii_in_output": false
+  },
+  "source": {
+    "loanValueChainFile": "Loan and value chains invested in.dta",
+    "rootFile": "TACATDP_Impact_Data_Tracking_for_Financed_Beneficiarie_Dataset.dta",
+    "sourceFormat": "stata_dta_cleaned_dap",
+    "summaryWorkbook": "DAP_TACADPT_share.xlsx",
+    "valueChainCostFile": "Stages of Value Chain Cost Quantification Dataset.dta"
+  },
+  "status": "dry_run_no_write"
+}
