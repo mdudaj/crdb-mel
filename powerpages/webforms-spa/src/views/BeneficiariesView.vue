@@ -27,6 +27,7 @@ const beneficiaryActionNotice = ref('');
 const suppressHashSync = ref(false);
 
 const beneficiaryDataSource = computed(() => liveBeneficiaries.value.length > 0 ? 'dataverse' : 'prototype');
+const hasLiveBeneficiaryProfiles = computed(() => liveBeneficiaries.value.length > 0);
 const beneficiaryDataset = computed<BeneficiaryListItem[]>(() => (
   liveBeneficiaries.value.length > 0
     ? liveBeneficiaries.value
@@ -112,15 +113,33 @@ const selectedBeneficiary = computed(() => (
 ));
 
 const summaryMetrics = computed(() => {
-  const rows = beneficiaryDataset.value;
+  if (beneficiariesLoading.value) {
+    return [
+      { label: 'Beneficiary records', value: 'Loading', detail: 'Reading live Dataverse profiles' },
+      { label: 'Active borrowers', value: 'Pending', detail: 'Awaiting finance link' },
+      { label: 'Training reached', value: 'Pending', detail: 'Awaiting training projection' },
+      { label: 'Verified records', value: 'Pending', detail: 'Awaiting review status' },
+    ];
+  }
+
+  if (!hasLiveBeneficiaryProfiles.value) {
+    return [
+      { label: 'Beneficiary records', value: beneficiariesError.value ? 'Unavailable' : 'Awaiting', detail: beneficiariesError.value ? 'Check table access' : 'Awaiting live baseline import' },
+      { label: 'Active borrowers', value: 'Pending', detail: 'Awaiting finance link' },
+      { label: 'Training reached', value: 'Pending', detail: 'Awaiting training projection' },
+      { label: 'Verified records', value: 'Pending', detail: 'Awaiting review status' },
+    ];
+  }
+
+  const rows = liveBeneficiaries.value;
   const activeBorrowers = rows.filter((record) => record.borrowerStatus === 'Active borrower').length;
   const trained = rows.filter((record) => record.trained).length;
   const verified = rows.filter((record) => record.verificationStatus === 'Verified').length;
   return [
-    { label: 'Beneficiary records', value: rows.length.toLocaleString(), detail: beneficiaryDataSource.value === 'dataverse' ? 'Live Dataverse profiles' : 'Prototype fallback' },
-    { label: 'Active borrowers', value: activeBorrowers.toLocaleString(), detail: 'Linked to finance' },
-    { label: 'Training reached', value: trained.toLocaleString(), detail: 'Capacity-building flag' },
-    { label: 'Verified records', value: verified.toLocaleString(), detail: 'Ready for reporting' },
+    { label: 'Beneficiary records', value: rows.length.toLocaleString(), detail: 'Live Dataverse profiles' },
+    { label: 'Active borrowers', value: activeBorrowers > 0 ? activeBorrowers.toLocaleString() : 'Awaiting', detail: 'Awaiting finance link' },
+    { label: 'Training reached', value: trained > 0 ? trained.toLocaleString() : 'Awaiting', detail: 'Awaiting training projection' },
+    { label: 'Verified records', value: verified > 0 ? verified.toLocaleString() : 'Awaiting', detail: 'Awaiting review status' },
   ];
 });
 
@@ -299,7 +318,7 @@ onUnmounted(() => {
         <p class="beneficiaries-eyebrow">Beneficiary registry</p>
         <h1 id="beneficiaries-title">Beneficiaries</h1>
         <p>
-          Live Dataverse beneficiary profiles from the baseline import, with prototype fallback when the portal cannot read beneficiary tables.
+          Live Dataverse beneficiary profiles from the baseline import. Unsupported finance, training, and review metrics stay pending until their source projections are available.
         </p>
       </div>
       <span class="beneficiaries-hero__icon" aria-hidden="true">

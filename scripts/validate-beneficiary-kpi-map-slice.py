@@ -66,11 +66,11 @@ def validate_dashboard_component() -> None:
         "<DashboardCard :span=\"6\" variant=\"goal\" title=\"Program Impact Goal\">",
         "insights-grid",
         "charts.MapChart",
-        "Loan Portfolio by Type",
+        "Loan Financing by Stage",
         "Disbursement Trend (TZS)",
         "Loans by Region",
-        "Technologies Financed",
-        "Loan Performance",
+        "Technologies / Practices Financed",
+        "Baseline Data Quality",
         "Climate Resilience Outcomes",
         "Area Under Improved<br>Practices (ha)",
         "Soil Fertility Improved<br>(Reports)",
@@ -80,7 +80,6 @@ def validate_dashboard_component() -> None:
         "Program Impact Goal",
         "Increase the resilience of food crop farmers<br>to climate change through finance,<br>technology and capacity building.",
         "program-impact-farmer.png",
-        "Prototype dashboard using demonstration data",
         "Reporting period awaiting live data",
     ):
         require_text(DASHBOARD, expected)
@@ -105,13 +104,10 @@ def validate_dashboard_component() -> None:
 
 def validate_prototype_data() -> None:
     for expected in (
-        "Active Loans",
-        "12,458",
-        "Active Borrowers",
-        "18,732",
-        "Total Disbursed",
-        "TZS 152.6B",
-        "Repayment Rate",
+        "Baseline Rows",
+        "Beneficiaries",
+        "Loan Amount",
+        "GPS Coverage",
         "Farmers Trained",
         "tCO₂e Avoided",
         "Morogoro",

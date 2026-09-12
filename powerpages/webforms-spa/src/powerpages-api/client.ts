@@ -3195,23 +3195,83 @@ export class PowerPagesApiClient {
   }
 
   private buildBaselineDashboardAggregates(repeats: Record<string, Array<Record<string, unknown>>>): Record<string, unknown> {
-    const loans = (repeats.loan_repeat ?? []).map((loan) => {
-      const amountTzs = this.toBaselineNumber(loan['What was the amount (TZS) of this loan?']);
-      const year = this.normalizeBaselineLoanYear(loan['In what year was this loan received?']);
-      const stages = Object.entries(loan)
-        .filter(([key, value]) => key.startsWith('Which agricultural value chain stages were financed by this loan?/') && this.isBaselineTruthy(value))
-        .map(([key]) => key.split('/').pop() ?? '')
-        .filter(Boolean);
+    const loanRepeats = [
+      ...(repeats.loan_repeat ?? []),
+      ...(repeats.loan_value_chain ?? []),
+    ];
+    const loans = loanRepeats.map((loan) => {
+      const amountTzs = this.firstBaselineNumber(loan, [
+        'What was the amount (TZS) of this loan?',
+        'loan_amount',
+      ]);
+      const period = this.normalizeBaselineLoanPeriod(
+        loan['In what year was this loan received?'] ?? loan.loan_year,
+      );
+      const stages = this.readBaselineLoanStages(loan);
       return this.omitUndefined({
         amountTzs: amountTzs ?? undefined,
-        year: year || undefined,
+        year: period || undefined,
         stages,
       });
     });
     return { loans };
   }
 
-  private normalizeBaselineLoanYear(value: unknown): string {
+  private firstBaselineNumber(record: Record<string, unknown>, keys: string[]): number | null {
+    for (const key of keys) {
+      const numeric = this.toBaselineNumber(record[key]);
+      if (numeric !== null) return numeric;
+    }
+    return null;
+  }
+
+  private readBaselineLoanStages(loan: Record<string, unknown>): string[] {
+    const labelledStages = Object.entries(loan)
+      .filter(([key, value]) => key.startsWith('Which agricultural value chain stages were financed by this loan?/') && this.isBaselineTruthy(value))
+      .map(([key]) => key.split('/').pop() ?? '')
+      .filter(Boolean);
+    if (labelledStages.length > 0) return labelledStages;
+
+    const cleanedStageLabels: Record<string, string> = {
+      other_stage_1: 'Farm Preparation',
+      other_stage_2: 'Farm Operations',
+      other_stage_3: 'Input Supply',
+      other_stage_4: 'Weeding / Field Management',
+      other_stage_5: 'Pre-harvest / Pest Control',
+      other_stage_6: 'Harvesting',
+      other_stage_7: 'Post-harvest Handling',
+      other_stage_8: 'Storage / Warehousing',
+      other_stage_9: 'Crop Transport',
+      other_stage_10: 'Value Addition / Processing',
+      other_stage_11: 'Aquaculture Production',
+      other_stage_12: 'Fisheries Landing',
+      other_stage_13: 'Aquaponics Systems',
+      other_stage_14: 'Marketing / Trading',
+      other_stage_15: 'Consumption / End User',
+      other_stage_16: 'Trainers & Trainees',
+      other_stage_17: 'Farmer Group Capacity Building',
+      other_stage_18: 'Other Value Chain Activity',
+    };
+
+    const cleanedFlagStages = Object.entries(cleanedStageLabels)
+      .filter(([key]) => this.isBaselineTruthy(loan[key]))
+      .map(([, label]) => label);
+    if (cleanedFlagStages.length > 0) return cleanedFlagStages;
+
+    return this.splitBaselineStageCodes(loan.other_stage).map((code) => cleanedStageLabels[`other_stage_${code}`] ?? `Stage ${code}`);
+  }
+
+  private splitBaselineStageCodes(value: unknown): string[] {
+    if (typeof value === 'number' && Number.isFinite(value)) return [String(Math.trunc(value))];
+    if (typeof value !== 'string') return [];
+    return value
+      .trim()
+      .split(/[\s,;]+/)
+      .map((part) => part.trim())
+      .filter((part) => /^\d+$/.test(part));
+  }
+
+  private normalizeBaselineLoanPeriod(value: unknown): string {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return this.excelSerialDateYear(value) || String(Math.trunc(value));
     }
@@ -3219,12 +3279,26 @@ export class PowerPagesApiClient {
     const normalized = value.trim();
     if (!normalized) return '';
     if (/^\d{4}$/.test(normalized)) return normalized;
-    if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) return normalized.slice(0, 4);
+    if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) return normalized.slice(0, 7);
+    const compactDate = normalized.match(/^(\d{1,2})(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)(\d{4})$/i);
+    if (compactDate) {
+      const month = this.monthNumber(compactDate[2]);
+      return month ? `${compactDate[3]}-${month}` : normalized;
+    }
     const numeric = Number(normalized);
     if (Number.isFinite(numeric)) return this.excelSerialDateYear(numeric) || normalized;
     const parsed = new Date(normalized);
-    if (!Number.isNaN(parsed.getTime())) return String(parsed.getFullYear());
+    if (!Number.isNaN(parsed.getTime())) {
+      return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+    }
     return normalized;
+  }
+
+  private monthNumber(value: string): string {
+    const month = value.slice(0, 3).toLowerCase();
+    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const index = months.indexOf(month);
+    return index >= 0 ? String(index + 1).padStart(2, '0') : '';
   }
 
   private excelSerialDateYear(value: number): string {

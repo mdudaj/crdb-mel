@@ -231,6 +231,12 @@ def find_environment_manifest_issues(package: Path, environment_url_or_host: str
         return [
             f"Missing target environment manifest {expected}; found {', '.join(existing) or 'none'}"
         ]
+    extras = [name for name in existing if name != expected]
+    if extras:
+        return [
+            f"Upload package contains non-target environment manifest(s): {', '.join(extras)}; "
+            f"keep only {expected} before upload"
+        ]
     return []
 
 

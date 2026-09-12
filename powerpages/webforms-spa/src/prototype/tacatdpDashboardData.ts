@@ -51,12 +51,12 @@ export interface RecentSubmission {
 }
 
 export const dashboardKpis: KpiMetric[] = [
-  { id: 'active-loans', label: 'Active Loans', value: '12,458', change: '+14% vs Apr', icon: 'leaf', tone: 'green' },
-  { id: 'active-borrowers', label: 'Active Borrowers', value: '18,732', change: '+11% vs Apr', icon: 'group', tone: 'green' },
-  { id: 'total-disbursed', label: 'Total Disbursed', value: 'TZS 152.6B', change: '+16% vs Apr', icon: 'finance', tone: 'blue' },
-  { id: 'repayment-rate', label: 'Repayment Rate', value: '93%', change: '+3pp vs Apr', icon: 'repayment', tone: 'amber' },
-  { id: 'farmers-trained', label: 'Farmers Trained', value: '8,452', change: '+21% vs Apr', icon: 'sprout', tone: 'green' },
-  { id: 'carbon-avoided', label: 'tCO₂e Avoided', value: '32,184', change: '+19% vs Apr', icon: 'co2', tone: 'purple' },
+  { id: 'active-loans', label: 'Baseline Rows', value: 'Pending', change: 'Awaiting live data', icon: 'leaf', tone: 'green' },
+  { id: 'active-borrowers', label: 'Beneficiaries', value: 'Pending', change: 'Awaiting live data', icon: 'group', tone: 'green' },
+  { id: 'total-disbursed', label: 'Loan Amount', value: 'Pending', change: 'Awaiting live data', icon: 'finance', tone: 'blue' },
+  { id: 'repayment-rate', label: 'GPS Coverage', value: 'Pending', change: 'Awaiting live data', icon: 'map', tone: 'green' },
+  { id: 'farmers-trained', label: 'Farmers Trained', value: 'Pending', change: 'Awaiting live data', icon: 'sprout', tone: 'green' },
+  { id: 'carbon-avoided', label: 'tCO₂e Avoided', value: 'Pending', change: 'Awaiting live data', icon: 'co2', tone: 'purple' },
 ];
 
 export const loanPortfolio: NamedValue[] = [
@@ -80,12 +80,6 @@ export const technologyFinancing: NamedValue[] = [
   { name: 'Organic Fertilizer', value: 1536, percent: 12 },
   { name: 'Drought-resistant Seeds', value: 1328, percent: 11 },
   { name: 'Other Practices', value: 722, percent: 6 },
-];
-
-export const loanPerformance: NamedValue[] = [
-  { name: 'Performing', value: 11584, percent: 93, color: '#16A34A', amount: 'TZS 141.8B' },
-  { name: 'At Risk', value: 542, percent: 4, color: '#F59E0B', amount: 'TZS 6.8B' },
-  { name: 'Non-Performing', value: 332, percent: 3, color: '#DC2626', amount: 'TZS 4.0B' },
 ];
 
 export const regionalMetrics: RegionMetric[] = [

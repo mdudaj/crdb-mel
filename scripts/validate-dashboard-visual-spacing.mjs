@@ -82,26 +82,60 @@ if (!/\.programme-goal-copy\s*{[\s\S]*background:\s*linear-gradient/.test(dashbo
 
 for (const fragment of [
   'Live projection:',
+  'Loading live baseline data…',
   'Baseline Rows',
   'Report rows',
   'Beneficiaries',
   'Profiles',
   'Loan Amount',
   'TZS baseline',
-  'Loan Status',
-  'Core banking',
+  'GPS Coverage',
+  'geotagged',
   'Farmers Trained',
   'Baseline',
   'tCO₂e Avoided',
   'Baseline estimate',
   'Verify method',
   "changeDirection: 'neutral'",
-  'Demo data: dashboard visual design only',
   'flex-wrap: wrap;',
   'border-radius: 999px;',
+  'dashboard-loading-state',
 ]) {
   if (!dashboardPageSource.includes(fragment)) {
     throw new Error(`Dashboard live KPI projection must include conservative ${fragment} state.`);
+  }
+}
+
+if (dashboardPageSource.includes('Demo data: dashboard visual design only')) {
+  throw new Error('Dashboard must not render demo/prototype data messaging while live baseline data is loading.');
+}
+
+for (const fragment of [
+  "value: liveDashboardError.value ? 'Unavailable' : 'Pending'",
+  "change: liveDashboardError.value ? 'Check access' : 'Awaiting live data'",
+  "liveDashboardLoading ? 'Loading loan financing data' : 'Awaiting loan financing data'",
+  "liveDashboardLoading ? 'Loading disbursement trend' : 'Awaiting disbursement trend'",
+  "liveDashboardLoading ? 'Loading regional coverage' : 'Awaiting regional coverage'",
+  "liveDashboardLoading ? 'Loading technology data' : 'Awaiting technology data'",
+  'Baseline Data Quality',
+  'GPS Coverage',
+  'baselineDataQualityMetrics',
+  'dataQuality.gpsCoveragePct',
+]) {
+  if (!dashboardPageSource.includes(fragment)) {
+    throw new Error(`Dashboard loading state must avoid demo values and expose ${fragment}.`);
+  }
+}
+
+for (const forbidden of [
+  'Pending loan performance feed',
+  'Core banking',
+  'Loan Status',
+  'Loan Performance',
+  'Repayment Rate',
+]) {
+  if (dashboardPageSource.includes(forbidden)) {
+    throw new Error(`Dashboard must not expose external-feed loan performance KPI without an approved data source: found ${forbidden}.`);
   }
 }
 
@@ -126,8 +160,8 @@ if (!dashboardPageSource.includes('calculateTacatdpBaselineProjection') || !dash
   throw new Error('Dashboard must calculate KPI projections from imported baseline report rows.');
 }
 
-if (!dashboardPageSource.includes('api.listDashboardSubmissionReportRows({ maxRows: 1000 })')) {
-  throw new Error('Dashboard live KPI projection must page through report rows up to the prototype dashboard limit, not only read the first page.');
+if (!dashboardPageSource.includes('api.listDashboardSubmissionReportRows({ maxRows: 2000 })')) {
+  throw new Error('Dashboard live KPI projection must read enough report rows for the cleaned 1,246-row baseline import.');
 }
 
 for (const fragment of [
@@ -135,6 +169,12 @@ for (const fragment of [
   'DIESEL_KG_CO2E_PER_LITRE = 2.68',
   'ACRE_TO_HECTARE = 0.404686',
   'annualTco2eAvoided',
+  'dataQuality: {',
+  'gpsCoveragePct',
+  'identifierCoveragePct',
+  'loanLinkagePct',
+  'duplicateIdentifierRows',
+  'countDuplicateIdentifierRows',
   'improvedHectares',
   'farmersTrained',
   'femaleTrained',
@@ -154,6 +194,7 @@ for (const fragment of [
   'buildRegions',
   'buildLoanPortfolioValues',
   'buildTechnologyValues',
+  'buildTechnologyPracticeFallback',
   'buildTrend',
   'buildRecentSubmissions',
   'readSelectedLoanStages',
@@ -199,12 +240,38 @@ for (const fragment of [
   '__dashboardAggregates',
   'buildBaselineDashboardAggregates',
   'loan_repeat',
-  'normalizeBaselineLoanYear',
+  'loan_value_chain',
+  'loan_amount',
+  'loan_year',
+  'other_stage_1',
+  'normalizeBaselineLoanPeriod',
+  'monthNumber',
   'excelSerialDateYear',
 ]) {
   if (!apiClientSource.includes(fragment)) {
     throw new Error(`Baseline import projection must enrich report rows for dashboard aggregates: missing ${fragment}.`);
   }
+}
+
+for (const fragment of [
+  '\\d{4}-\\d{2}',
+  'formatTrendPeriod',
+  "month: formatTrendPeriod(period)",
+  'ROOT_STAGE_LABELS',
+  'vc_stages',
+  'toTechnologyPracticeLabel',
+]) {
+  if (!projectionSource.includes(fragment)) {
+    throw new Error(`Dashboard projection must support cleaned baseline monthly periods and root-level financed stages: missing ${fragment}.`);
+  }
+}
+
+if (!projectionSource.includes('technologyAccumulators.size > 0') || !projectionSource.includes('buildTechnologyPracticeFallback(loanStageAccumulators)')) {
+  throw new Error('Technology/practice projection must fall back to baseline loan-stage data when explicit technology fields are unavailable.');
+}
+
+if (!dashboardPageSource.includes('Technologies / Practices Financed')) {
+  throw new Error('Dashboard technology card must disclose when baseline supports financed practices/stages rather than exact core-banking technology products.');
 }
 
 if (!kpiCardSource.includes("changeDirection?: 'up' | 'neutral'") || !kpiCardSource.includes("changeDirection === 'up'")) {

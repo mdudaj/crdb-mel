@@ -170,6 +170,9 @@ def sync_upload_manifest_to_target_environment() -> None:
     generic_manifest = portal_config / "manifest.yml"
     if target_manifest.exists():
         shutil.copy2(target_manifest, generic_manifest)
+        for manifest in portal_config.glob("*-manifest.yml"):
+            if manifest.name != target_manifest.name:
+                manifest.unlink()
 
 
 def sync_indicator_browser_seed_artifacts() -> None:

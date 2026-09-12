@@ -1,0 +1,426 @@
+<!doctype html><html><head><meta charset='utf-8'>
+<title>TACATDP Integrated M&amp;E System and Monitoring Tool</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 18mm 16mm;
+  @bottom-left {
+    content: "TACATDP Integrated M&E System";
+    font-size: 8pt;
+    color: #6B7280;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-size: 8pt;
+    color: #6B7280;
+  }
+}
+body {
+  font-family: "Inter", "Roboto", "DejaVu Sans", Arial, sans-serif;
+  color: #17211C;
+  font-size: 10.2pt;
+  line-height: 1.5;
+}
+.cover {
+  min-height: 180mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 8px solid #064E3B;
+  padding-left: 18mm;
+}
+.cover h1 {
+  font-size: 28pt;
+  line-height: 1.15;
+  margin: 0 0 8mm 0;
+  color: #064E3B;
+}
+.cover p {
+  font-size: 13pt;
+  color: #64706A;
+  margin: 0 0 3mm 0;
+}
+.document {
+  break-before: page;
+}
+h1 {
+  color: #064E3B;
+  font-size: 22pt;
+  line-height: 1.2;
+  margin: 0 0 8mm 0;
+  border-bottom: 1px solid #E3E8E5;
+  padding-bottom: 4mm;
+}
+h2 {
+  color: #064E3B;
+  font-size: 14pt;
+  margin: 8mm 0 3mm 0;
+}
+h3 {
+  color: #15803D;
+  font-size: 11.5pt;
+  margin: 6mm 0 2mm 0;
+}
+p {
+  margin: 0 0 3.5mm 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0 6mm 0;
+  font-size: 8.8pt;
+}
+th {
+  background: #EAF7EE;
+  color: #064E3B;
+  text-align: left;
+  font-weight: 700;
+}
+th, td {
+  border: 1px solid #E3E8E5;
+  padding: 2.2mm 2.5mm;
+  vertical-align: top;
+}
+tr {
+  break-inside: avoid;
+}
+ul, ol {
+  margin: 0 0 4mm 6mm;
+  padding: 0;
+}
+li {
+  margin-bottom: 1.5mm;
+}
+code {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 8.5pt;
+  background: #F5F7F6;
+  padding: 0.4mm 1mm;
+  border-radius: 2mm;
+}
+figure {
+  margin: 5mm 0 8mm 0;
+  break-inside: avoid;
+}
+img {
+  width: 100%;
+  max-height: 170mm;
+  object-fit: contain;
+  border: 1px solid #E3E8E5;
+  border-radius: 3mm;
+}
+figcaption {
+  margin-top: 2mm;
+  color: #64706A;
+  font-size: 8.5pt;
+}
+</style></head><body>
+<section class='cover'>
+<h1>TACATDP Integrated M&amp;E System and Monitoring Tool</h1>
+<p>Prototype status, dashboard evidence, user manual, SOP draft, and annex index</p>
+<p>27 August 2026</p>
+</section>
+<section class='document'>
+<h1>Report with all system stages details</h1>
+<p>Date: 2026-08-27</p>
+<p>System: TACATDP Integrated M&amp;E System and Monitoring Tool</p>
+<h2>1. Executive summary</h2>
+<p>The current prototype demonstrates a Microsoft-hosted monitoring, evaluation, and reporting workflow for TACATDP. It includes an authenticated Power Pages portal, Dataverse-backed form and submission storage, a baseline import workflow, a beneficiary registry view, dashboard visualisation, reporting/export pathways, and role-based administration screens.</p>
+<p>The cleaned TACATDP baseline dataset has been successfully imported through the prototype import workflow. The CRDB development environment has also been updated with the latest working portal build. The remaining CRDB-side activities are operational: seed or confirm the latest form version, import the cleaned baseline dataset through the portal, and verify CRDB permissions for the relevant user roles.</p>
+<p>An important change was received from CRDB ICT on Tuesday: ICT is recommending a CRDB-hosted deployment strategy instead of continuing with the Microsoft Power Pages and Dataverse environment. That change affects the future production architecture. A rebuild has already started around the proposed CRDB-hosted strategy so that a working system can be ready when CRDB’s environment is available.</p>
+<h2>2. Development stages completed</h2>
+<table><thead><tr><th>Stage</th><th>Status</th><th>Details</th></tr></thead><tbody><tr><td>Requirements discovery</td><td>Completed for prototype; revised for future deployment</td><td>TACATDP was treated as the first programme configuration for a broader MEL capability.</td></tr><tr><td>Prototype architecture</td><td>Completed</td><td>Power Pages hosts the app shell and authentication. Dataverse stores forms, submissions, baseline projections, beneficiary profiles, and configuration records.</td></tr><tr><td>Application shell</td><td>Completed</td><td>CRDB-branded navigation, top bar, content area, route separation, and footer are implemented.</td></tr><tr><td>Form runtime</td><td>Completed for prototype</td><td>The tool uses an XForms/web forms runtime to render the TACATDP form from a stored form version.</td></tr><tr><td>Latest form version</td><td>Implemented</td><td>Version <code>2608130924</code> is the expected active form version for baseline import and future data updates.</td></tr><tr><td>Baseline import</td><td>Completed for prototype</td><td>Cleaned baseline data was imported through the portal import workflow. The same import path is available in CRDB subject to user permissions.</td></tr><tr><td>Beneficiary registry</td><td>Implemented for prototype</td><td>Imported baseline data is projected into beneficiary-facing records and detail views.</td></tr><tr><td>Dashboard visualisation</td><td>Implemented for prototype</td><td>Dashboard cards use live baseline projections where the imported data supports the metric. Unsupported metrics remain explicitly pending.</td></tr><tr><td>Reporting/export</td><td>Implemented for prototype</td><td>Reporting rows and export pathways exist for imported submissions and projected baseline data.</td></tr><tr><td>User and access management</td><td>Implemented for prototype</td><td>User, role, access, and assignment concepts are represented. Automation depends on CRDB permissions and ownership.</td></tr><tr><td>CRDB environment update</td><td>Completed</td><td>Latest working Power Pages build was deployed to the CRDB development environment.</td></tr><tr><td>Production hardening</td><td>Pending</td><td>Depends on final deployment strategy, CRDB infrastructure, security review, and integration permissions.</td></tr></tbody></table>
+<h2>3. Current environment state</h2>
+<h3>Prototype baseline validation</h3>
+<p>The cleaned baseline data has been imported through the portal workflow and used to validate dashboard, beneficiary, reporting, and import behavior.</p>
+<h3>CRDB development environment</h3>
+<p>The CRDB development environment has been updated with the latest tested Power Pages build.</p>
+<p>Known CRDB environment details:</p>
+<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr><td>Environment</td><td><code>TACATDP-CRDB-Dev</code></td></tr><tr><td>Environment URL</td><td><code>https://org5eb0379b.crm4.dynamics.com/</code></td></tr><tr><td>Portal URL</td><td><code>https://tacatdp-crdb.powerappsportals.com/</code></td></tr><tr><td>Website</td><td><code>TACATDP Monitoring Tool</code></td></tr><tr><td>Website ID</td><td><code>fccc0cc6-7f5e-4885-aeb8-2272e68130a3</code></td></tr><tr><td>Current form version</td><td><code>2608130924</code></td></tr></tbody></table>
+<h2>4. Baseline data status</h2>
+<p>The cleaned baseline dataset was prepared from the shared TACATDP DAP dataset folder.</p>
+<p>Current cleaned-data profile:</p>
+<table><thead><tr><th>Item</th><th>Count</th></tr></thead><tbody><tr><td>Root beneficiary baseline rows</td><td>1,246</td></tr><tr><td>Loan/value-chain child rows</td><td>1,484</td></tr><tr><td>Value-chain cost rows</td><td>7,585</td></tr><tr><td>GPS rows</td><td>1,246</td></tr><tr><td>Regions</td><td>29</td></tr><tr><td>Districts</td><td>130</td></tr><tr><td>Wards</td><td>415</td></tr><tr><td>Total reported loan amount in baseline</td><td>TZS 51.6B</td></tr></tbody></table>
+<p>The import treats each row as a form submission. This preserves the field-data lineage and keeps the platform ready for future follow-up data collection.</p>
+<h2>5. Dashboard status</h2>
+<p>The dashboard uses baseline-derived values only where the imported data supports the calculation.</p>
+<table><thead><tr><th>Dashboard area</th><th>Current data source</th><th>Status</th></tr></thead><tbody><tr><td>Beneficiary count</td><td>Imported baseline registry/projection</td><td>Available after import</td></tr><tr><td>Report rows</td><td>Imported submission report rows</td><td>Available after import</td></tr><tr><td>Reported loan amount</td><td>Baseline <code>total_loan_amount</code> and loan repeat data</td><td>Available after import</td></tr><tr><td>Regional map</td><td>Baseline region and amount fields</td><td>Available after import</td></tr><tr><td>Financed technologies/practices</td><td>Baseline technology fields and value-chain stage fallback</td><td>Available where source fields exist</td></tr><tr><td>Training metrics</td><td>Baseline training fields</td><td>Available where source fields exist</td></tr><tr><td>Climate outcome estimates</td><td>Baseline-supported calculations only</td><td>Available where source fields support a defensible calculation</td></tr><tr><td>Loan performance</td><td>Core banking/repayment feed</td><td>Pending</td></tr><tr><td>Monthly disbursement trend</td><td>Dated loan repeat records</td><td>Pending unless dated loan records are exposed to the dashboard projection</td></tr></tbody></table>
+<p>The dashboard does not present unsupported figures as official values. If a feed is missing, the UI shows a pending or unavailable state.</p>
+<h2>6. User roles represented in the prototype</h2>
+<table><thead><tr><th>Role</th><th>Prototype responsibility</th></tr></thead><tbody><tr><td>Platform Administrator</td><td>Manage form version seed, baseline import, user/access setup, and environment checks.</td></tr><tr><td>M&amp;E Manager</td><td>Review dashboard, reporting outputs, SOPs, and system readiness.</td></tr><tr><td>MEL Officer</td><td>Review dashboard, beneficiary records, submissions, and monitoring outputs.</td></tr><tr><td>Data Collector / Field Officer</td><td>Complete assigned TACATDP forms.</td></tr><tr><td>Reviewer / Approver</td><td>Review submitted data and verify reporting outputs.</td></tr><tr><td>ICT / System Administrator</td><td>Manage environment, permissions, deployment, hosting, and integration readiness.</td></tr></tbody></table>
+<h2>7. Known limitations</h2>
+<ul>
+<li>The prototype is not yet a full production system.</li>
+<li>CRDB permissions still control whether CRDB users can import, read, or update all required records.</li>
+<li>Power BI plugin/report creation depends on CRDB Power BI permissions.</li>
+<li>Mailbox-based notifications depend on an approved sender mailbox and Power Automate ownership.</li>
+<li>The proposed CRDB-hosted deployment strategy requires architectural rework away from the current Microsoft Power Pages/Dataverse-specific implementation.</li>
+</ul>
+<h2>8. Deployment strategy change</h2>
+<p>CRDB ICT has recommended moving toward CRDB-hosted infrastructure instead of continuing only with Microsoft Power Pages and Dataverse. This changes the production direction.</p>
+<p>Implications:</p>
+<ul>
+<li>Authentication, hosting, database, workflow automation, deployment, and reporting integration must be revised.</li>
+<li>The current prototype remains valuable as a functional proof and requirements reference.</li>
+<li>Future implementation should be rebuilt around the approved CRDB-hosted environment.</li>
+<li>The client should sign off system requirements and system design documents before major implementation work starts.</li>
+</ul>
+<h2>9. Immediate next actions</h2>
+<ol>
+<li>Capture final dashboard screenshots after CRDB baseline import verification.</li>
+<li>Seed or confirm latest form version <code>2608130924</code> in the CRDB environment.</li>
+<li>Import the cleaned baseline dataset into the CRDB environment.</li>
+<li>Verify CRDB user permissions for baseline import, dashboard read, beneficiary read, and reporting read.</li>
+<li>Deliver the documentation pack and annexes.</li>
+<li>Continue rebuilding the future system around the CRDB-hosted deployment strategy.</li>
+</ol>
+</section>
+<section class='document'>
+<h1>Dashboard interface screenshot</h1>
+<p>Date: 2026-08-27</p>
+<h2>Purpose</h2>
+<p>This document supports the required dashboard screenshot deliverable.</p>
+<p>The dashboard screenshot shows the TACATDP monitoring dashboard after baseline data has loaded. The screenshot is prototype evidence and is not an official CRDB Bank or Green Climate Fund report.</p>
+<h2>Captured screenshots</h2>
+<p>The screenshots show the current deployed prototype build, including dashboard, beneficiary registry, baseline import, form runtime, and reporting/export capability.</p>
+<table><thead><tr><th>File</th><th>Purpose</th></tr></thead><tbody><tr><td><code>assets/01-dashboard-overview.jpg</code></td><td>Dashboard overview with baseline KPI projection, map, technology/practice chart, and baseline data-quality card.</td></tr><tr><td><code>assets/02-beneficiaries-list.jpg</code></td><td>Beneficiary registry/list view populated from imported baseline records.</td></tr><tr><td><code>assets/03-baseline-import.jpg</code></td><td>Baseline import route used by administrators to append or replace cleaned baseline data.</td></tr><tr><td><code>assets/04-form-runner.jpg</code></td><td>Field data collection form runtime.</td></tr><tr><td><code>assets/05-reporting-export.jpg</code></td><td>Reporting/export route for submitted baseline records.</td></tr></tbody></table>
+<p>Primary visual evidence:</p>
+<figure><img src="assets/01-dashboard-overview.jpg" alt="Dashboard overview"><figcaption>Dashboard overview</figcaption></figure>
+<p>Additional prototype evidence:</p>
+<figure><img src="assets/02-beneficiaries-list.jpg" alt="Beneficiaries list"><figcaption>Beneficiaries list</figcaption></figure>
+<figure><img src="assets/03-baseline-import.jpg" alt="Baseline import route"><figcaption>Baseline import route</figcaption></figure>
+<figure><img src="assets/04-form-runner.jpg" alt="Field form runner"><figcaption>Field form runner</figcaption></figure>
+<figure><img src="assets/05-reporting-export.jpg" alt="Reporting and export route"><figcaption>Reporting and export route</figcaption></figure>
+<h2>Required dashboard elements</h2>
+<p>The screenshot should show:</p>
+<ul>
+<li>CRDB/TACATDP application shell.</li>
+<li>Dashboard route.</li>
+<li>KPI summary row.</li>
+<li>Regional Tanzania map.</li>
+<li>Loan/financing or financed-stage card.</li>
+<li>Technologies/practices financed card.</li>
+<li>Training and climate outcome cards where data is available.</li>
+<li>Recent submissions or reporting-status card.</li>
+<li>Baseline data-quality summary replacing metrics that require unavailable CRDB operational feeds.</li>
+</ul>
+<h2>Screenshot notes to include in submission</h2>
+<p>Use this caption:</p>
+<p>&gt; Dashboard interface showing prototype TACATDP baseline monitoring projections. Values shown are derived from imported baseline data where available. Metrics that require CRDB operational feeds are excluded from the dashboard until the approved source data is connected.</p>
+<h2>Metrics interpretation</h2>
+<table><thead><tr><th>Metric area</th><th>Interpretation</th></tr></thead><tbody><tr><td>Beneficiaries</td><td>Imported baseline beneficiary profiles or report rows.</td></tr><tr><td>Reported amount</td><td>Reported loan amount from the baseline dataset.</td></tr><tr><td>Regional map</td><td>Baseline regional coverage and reported loan amount by region.</td></tr><tr><td>Technologies/practices</td><td>Baseline technology fields or financed value-chain stages where exact technology fields are unavailable.</td></tr><tr><td>Training</td><td>Baseline training fields where present.</td></tr><tr><td>Baseline data quality</td><td>Completeness and linkage checks derived from imported baseline records.</td></tr><tr><td>Disbursement trend</td><td>Requires dated loan records exposed to the dashboard projection.</td></tr></tbody></table>
+<h2>Acceptance checklist</h2>
+<ul>
+<li>[x] Screenshot is captured after the import completes.</li>
+<li>[x] Loading states have cleared where data exists.</li>
+<li>[x] Unsupported external-feed metrics are not presented as live results.</li>
+<li>[x] Browser zoom is normal.</li>
+<li>[x] The screenshot does not expose sensitive individual beneficiary details.</li>
+<li>[x] The screenshot caption states that the dashboard is a prototype baseline projection.</li>
+</ul>
+</section>
+<section class='document'>
+<h1>User manual</h1>
+<p>Date: 2026-08-27</p>
+<h2>1. Purpose</h2>
+<p>This manual explains how users operate the TACATDP Integrated M&amp;E System and Monitoring Tool prototype.</p>
+<p>The prototype supports authenticated access, form version setup, baseline data import, dashboard review, beneficiary review, and reporting/export review.</p>
+<h2>2. User roles</h2>
+<table><thead><tr><th>Role</th><th>Main tasks</th></tr></thead><tbody><tr><td>Platform Administrator</td><td>Prepare the form version, import baseline data, manage access, and support users.</td></tr><tr><td>M&amp;E Manager</td><td>Review dashboard outputs, reports, system status, and SOP compliance.</td></tr><tr><td>MEL Officer</td><td>Review monitoring dashboard, beneficiary records, submissions, and reporting projections.</td></tr><tr><td>Data Collector / Field Officer</td><td>Open assigned forms and submit data.</td></tr><tr><td>Reviewer / Approver</td><td>Review submitted records and confirm data readiness.</td></tr><tr><td>ICT / System Administrator</td><td>Manage environment access, deployment, permissions, and support.</td></tr></tbody></table>
+<h2>3. Sign in</h2>
+<ol>
+<li>Open the portal link.</li>
+<li>Select the Microsoft sign-in option.</li>
+<li>Sign in with the approved account.</li>
+<li>Confirm that the application shell loads.</li>
+</ol>
+<p>If access is denied, contact the Platform Administrator or ICT administrator. A successful Microsoft sign-in does not automatically grant application access. The user also needs site visibility, web role, table permissions, and form assignment where applicable.</p>
+<h2>4. View the dashboard</h2>
+<ol>
+<li>Open the portal.</li>
+<li>Select <code>Overview</code> or <code>Dashboards</code>.</li>
+<li>Wait for live baseline data to load.</li>
+<li>Review the KPI cards, map, financed practices, training, climate outcomes, and submission status.</li>
+</ol>
+<p>If a card shows a pending state, the required source data may not be available yet. Do not treat pending values as zero.</p>
+<h2>5. Seed the latest form version</h2>
+<p>This task is for Platform Administrators only.</p>
+<ol>
+<li>Open <code>#/baseline-import</code>.</li>
+<li>In Step 1, select the compiled XForm XML file:</li>
+</ol>
+<p>``<code>text artifacts/xforms/tacatdp_impact_evaluation-2608130924.xml </code>``</p>
+<ol>
+<li>Confirm that the page reports form version <code>2608130924</code> as ready.</li>
+</ol>
+<p>This step prepares the form version that baseline submissions and future data updates reference.</p>
+<h2>6. Import baseline data</h2>
+<p>This task is for Platform Administrators only.</p>
+<ol>
+<li>Open <code>#/baseline-import</code>.</li>
+<li>Confirm that Step 1 has already seeded form version <code>2608130924</code>.</li>
+<li>In Step 2, select the generated baseline bridge JSON file.</li>
+<li>Select the import mode:</li>
+</ol>
+<ul>
+<li>Use <code>Append</code> to preserve history.</li>
+<li>Use <code>Replace</code> to update matching baseline rows in place.</li>
+</ul>
+<ol>
+<li>Run the smoke test first.</li>
+<li>If the smoke test succeeds, run the full import.</li>
+<li>Wait until the import reaches the final row count.</li>
+<li>Open the dashboard and reports to confirm that baseline projections refresh.</li>
+</ol>
+<p>Do not upload the original Kobo workbook directly into the browser import control. The browser import expects the generated JSON bridge asset.</p>
+<h2>7. Review beneficiaries</h2>
+<ol>
+<li>Open <code>Beneficiaries</code>.</li>
+<li>Use search or filters to find a region, beneficiary, technology/practice, or status.</li>
+<li>Open a beneficiary detail view.</li>
+<li>Review profile, finance, technology/practice, training, outcomes, location, and data-lineage sections.</li>
+</ol>
+<p>The prototype beneficiary view is a registry projection from imported submissions. Production registry governance must be finalized during the next architecture phase.</p>
+<h2>8. Review submitted records and reports</h2>
+<ol>
+<li>Open <code>Data Submissions</code> or <code>Reports</code>.</li>
+<li>Search or filter the available records.</li>
+<li>Confirm projection status and update dates.</li>
+<li>Export CSV where the route provides an export action.</li>
+</ol>
+<p>If reporting reads fail, the user may be missing table permissions for the relevant Dataverse table.</p>
+<h2>9. Interpret pending states</h2>
+<table><thead><tr><th>Pending state</th><th>Meaning</th></tr></thead><tbody><tr><td>Awaiting live data</td><td>The app has not received readable live rows yet.</td></tr><tr><td>Awaiting loan financing data</td><td>The required loan fields are not available in the current projection.</td></tr><tr><td>Awaiting dated loan records</td><td>Monthly trend cannot render until dated loan records are available.</td></tr><tr><td>Pending loan performance feed</td><td>Repayment and portfolio quality require CRDB operational loan-performance data.</td></tr><tr><td>Data unavailable</td><td>The current user may lack permission, or the source table may not be configured for Web API access.</td></tr></tbody></table>
+<h2>10. Support notes</h2>
+<p>When reporting an issue, include:</p>
+<ul>
+<li>portal URL;</li>
+<li>signed-in user email;</li>
+<li>route name;</li>
+<li>action attempted;</li>
+<li>exact error message;</li>
+<li>screenshot;</li>
+<li>date and time.</li>
+</ul>
+</section>
+<section class='document'>
+<h1>Draft SOPs</h1>
+<p>Date: 2026-08-27</p>
+<h2>1. Purpose</h2>
+<p>These draft standard operating procedures define how different user levels operate the TACATDP Integrated M&amp;E System and Monitoring Tool prototype.</p>
+<p>The SOPs should be finalized after CRDB confirms the final system configuration, deployment strategy, user roles, and permission model.</p>
+<h2>2. SOP ownership</h2>
+<table><thead><tr><th>Area</th><th>Responsible role</th></tr></thead><tbody><tr><td>System access and permissions</td><td>ICT / Platform Administrator</td></tr><tr><td>Form version control</td><td>Platform Administrator and M&amp;E Manager</td></tr><tr><td>Baseline import</td><td>Platform Administrator</td></tr><tr><td>Data collection</td><td>Data Collector / Field Officer</td></tr><tr><td>Submission review</td><td>MEL Officer and Reviewer / Approver</td></tr><tr><td>Dashboard review</td><td>M&amp;E Manager and MEL Officer</td></tr><tr><td>Reporting</td><td>M&amp;E Manager and MEL Officer</td></tr><tr><td>Production support</td><td>ICT / System Administrator</td></tr></tbody></table>
+<h2>3. Access management SOP</h2>
+<ol>
+<li>ICT confirms that the user has an approved Microsoft account.</li>
+<li>The Platform Administrator confirms the required application role.</li>
+<li>ICT or the Platform Administrator grants portal access where the site is private.</li>
+<li>The Platform Administrator assigns the user to the required form or project.</li>
+<li>The user signs in and confirms that the expected routes are visible.</li>
+<li>The administrator records the access change for audit purposes.</li>
+</ol>
+<h2>4. Form version management SOP</h2>
+<ol>
+<li>The M&amp;E Manager approves the form version to be used.</li>
+<li>The Platform Administrator confirms the compiled XForm XML version.</li>
+<li>The Platform Administrator opens <code>#/baseline-import</code>.</li>
+<li>The Platform Administrator uploads the approved XML in Step 1.</li>
+<li>The Platform Administrator confirms that the portal reports the form version as ready.</li>
+<li>The M&amp;E Manager confirms that data collectors should use the updated form.</li>
+</ol>
+<p>Current approved prototype form version:</p>
+<p>``<code>text 2608130924 </code>``</p>
+<h2>5. Baseline import SOP</h2>
+<ol>
+<li>The data owner confirms that the cleaned dataset is approved for import.</li>
+<li>The technical team generates the baseline bridge JSON from the cleaned dataset.</li>
+<li>The Platform Administrator opens <code>#/baseline-import</code>.</li>
+<li>The Platform Administrator selects the generated JSON file.</li>
+<li>The Platform Administrator runs the smoke test first.</li>
+<li>If the smoke test succeeds, the Platform Administrator runs the full import.</li>
+<li>The Platform Administrator waits for the final row count.</li>
+<li>The MEL Officer checks dashboard and reporting projections.</li>
+<li>The M&amp;E Manager confirms that the imported baseline is acceptable for prototype reporting.</li>
+</ol>
+<h2>6. Data collection SOP</h2>
+<ol>
+<li>The Data Collector signs in to the portal.</li>
+<li>The Data Collector opens the assigned form.</li>
+<li>The Data Collector completes required fields.</li>
+<li>The Data Collector reviews the form before submission.</li>
+<li>The Data Collector submits the form.</li>
+<li>The system stores the submission and versioned payload.</li>
+<li>The Data Collector reports any validation or submission issue to the MEL Officer.</li>
+</ol>
+<h2>7. Submission review SOP</h2>
+<ol>
+<li>The MEL Officer opens submitted records or reports.</li>
+<li>The MEL Officer checks completeness, region, beneficiary profile, finance, training, and outcome fields.</li>
+<li>The Reviewer / Approver checks records that require validation.</li>
+<li>Corrections are requested where data is incomplete or inconsistent.</li>
+<li>Approved records are used for dashboard and reporting projections.</li>
+</ol>
+<h2>8. Dashboard review SOP</h2>
+<ol>
+<li>The MEL Officer opens the dashboard.</li>
+<li>The MEL Officer waits for live data to load.</li>
+<li>The MEL Officer reviews beneficiary, reporting, financing, regional, training, and outcome cards.</li>
+<li>The MEL Officer records pending metrics and missing source feeds.</li>
+<li>The M&amp;E Manager reviews dashboard screenshots and interpretation notes before external sharing.</li>
+</ol>
+<p>Do not interpret missing data as zero. Pending states must be reported as pending.</p>
+<h2>9. Reporting SOP</h2>
+<ol>
+<li>The MEL Officer opens the reporting route.</li>
+<li>The MEL Officer selects the relevant records or reporting period.</li>
+<li>The MEL Officer exports available data where required.</li>
+<li>The M&amp;E Manager reviews the report for consistency.</li>
+<li>The final report includes notes on data source, limitations, and pending operational feeds.</li>
+</ol>
+<h2>10. Change management SOP</h2>
+<ol>
+<li>Any change in hosting, architecture, role model, form structure, or source data must be documented.</li>
+<li>The client reviews and signs off requirements and design changes before implementation.</li>
+<li>The technical team implements approved changes in a test environment first.</li>
+<li>The M&amp;E Manager validates the output.</li>
+<li>ICT approves deployment to the target CRDB environment.</li>
+</ol>
+<h2>11. Current SOP limitations</h2>
+<p>These SOPs are draft because the final CRDB deployment strategy is changing. They should be revised after CRDB confirms:</p>
+<ul>
+<li>final hosting model;</li>
+<li>database platform;</li>
+<li>authentication model;</li>
+<li>workflow engine;</li>
+<li>reporting stack;</li>
+<li>user roles;</li>
+<li>support owner;</li>
+<li>production deployment path.</li>
+</ul>
+</section>
+<section class='document'>
+<h1>Annex index</h1>
+<p>Date: 2026-08-27</p>
+<h2>Purpose</h2>
+<p>This document lists the annexes used to support the TACATDP Integrated M&amp;E System and Monitoring Tool submission.</p>
+<p>Do not include raw beneficiary data in an external sharing pack unless CRDB authorizes the recipient and channel.</p>
+<h2>Annex A: Requirements and scope</h2>
+<table><thead><tr><th>Annex</th><th>Source</th></tr></thead><tbody><tr><td>Prototype acceptance scope</td><td><code>docs/powerpages-odk-webforms/prototype-acceptance-scope-20260812.md</code></td></tr><tr><td>Power Pages ODK/web forms requirements</td><td><code>docs/powerpages-odk-webforms/requirements.md</code></td></tr><tr><td>Acceptance criteria</td><td><code>docs/powerpages-odk-webforms/acceptance-criteria.md</code></td></tr><tr><td>Dashboard ECharts slice</td><td><code>docs/powerpages-odk-webforms/tacatdp-dashboard-echarts-slice-20260810.md</code></td></tr></tbody></table>
+<h2>Annex B: Data and import</h2>
+<table><thead><tr><th>Annex</th><th>Source</th></tr></thead><tbody><tr><td>Cleaned DTA baseline import plan</td><td><code>docs/powerpages-odk-webforms/cleaned-dta-baseline-import-plan-20260826.md</code></td></tr><tr><td>Baseline browser import route</td><td><code>docs/powerpages-odk-webforms/baseline-browser-import-mshirika-20260814.md</code></td></tr><tr><td>Baseline import dry run</td><td><code>docs/powerpages-odk-webforms/baseline-bridge-import-dry-run-20260814.md</code></td></tr><tr><td>Cleaned import dry-run summary</td><td><code>artifacts/import-assets/reference/tacatdp-cleaned-dta-dry-run.json</code></td></tr><tr><td>Latest compiled XForm XML</td><td><code>artifacts/xforms/tacatdp_impact_evaluation-2608130924.xml</code></td></tr></tbody></table>
+<h2>Annex C: Architecture and deployment</h2>
+<table><thead><tr><th>Annex</th><th>Source</th></tr></thead><tbody><tr><td>Microsoft environment permission map</td><td><code>docs/powerpages-odk-webforms/crdb-microsoft-environment-permission-map-20260813.md</code></td></tr><tr><td>CRDB Microsoft resources and permissions</td><td><code>docs/powerpages-odk-webforms/crdb-microsoft-resources-permissions-20260813.md</code></td></tr><tr><td>Power Pages deployment readiness</td><td><code>docs/powerpages-odk-webforms/crdb-deployment-readiness-20260730.md</code></td></tr><tr><td>ODK Central-inspired schema</td><td><code>schemas/dataverse/odk-central-inspired-mvp-schema.md</code></td></tr><tr><td>Beneficiary entity extension schema</td><td><code>schemas/dataverse/beneficiary-entity-extension-schema.json</code></td></tr></tbody></table>
+<h2>Annex D: User access and roles</h2>
+<table><thead><tr><th>Annex</th><th>Source</th></tr></thead><tbody><tr><td>Access management requirements</td><td><code>docs/powerpages-odk-webforms/access-management-requirements.md</code></td></tr><tr><td>Access permission matrix</td><td><code>docs/powerpages-odk-webforms/access-permission-matrix-20260721.md</code></td></tr><tr><td>User/access route implementation notes</td><td><code>docs/powerpages-odk-webforms/access-create-invite-assign-ux-20260722.md</code></td></tr><tr><td>Onboarding queue requirements</td><td><code>docs/powerpages-odk-webforms/access-onboarding-queue-requirements-20260724.md</code></td></tr></tbody></table>
+<h2>Annex E: Screenshots</h2>
+<p>Captured screenshots:</p>
+<table><thead><tr><th>Annex</th><th>File</th></tr></thead><tbody><tr><td>Dashboard overview</td><td><code>docs/submission-pack-20260827/assets/01-dashboard-overview.jpg</code></td></tr><tr><td>Beneficiaries list</td><td><code>docs/submission-pack-20260827/assets/02-beneficiaries-list.jpg</code></td></tr><tr><td>Baseline import route</td><td><code>docs/submission-pack-20260827/assets/03-baseline-import.jpg</code></td></tr><tr><td>Field form runner</td><td><code>docs/submission-pack-20260827/assets/04-form-runner.jpg</code></td></tr><tr><td>Reporting/export route</td><td><code>docs/submission-pack-20260827/assets/05-reporting-export.jpg</code></td></tr></tbody></table>
+<h2>Annex F: References used for documentation style</h2>
+<ul>
+<li>Microsoft Writing Style Guide: scannable content and concise procedures.</li>
+<li>Microsoft step-by-step instruction guidance.</li>
+<li>M&amp;E/SOP guidance: role-based procedures, data source clarity, and monitoring/reporting responsibilities.</li>
+</ul>
+</section>
+</body></html>

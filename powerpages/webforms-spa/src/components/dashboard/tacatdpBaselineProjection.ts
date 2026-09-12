@@ -51,6 +51,21 @@ export interface TacatdpBaselineProjection {
     lifetimeTco2eAvoided: number;
     negativeSavingRecords: number;
   };
+  dataQuality: {
+    sourceUuidRecords: number;
+    customerIdRecords: number;
+    phoneRecords: number;
+    gpsRecords: number;
+    loanRepeatRows: number;
+    rowsWithLinkedLoans: number;
+    regions: number;
+    districts: number;
+    wards: number;
+    duplicateIdentifierRows: number;
+    identifierCoveragePct: number | null;
+    gpsCoveragePct: number | null;
+    loanLinkagePct: number | null;
+  };
   dataQualityFlags: number;
 }
 
@@ -77,6 +92,26 @@ const ACRE_TO_HECTARE = 0.404686;
 const DIESEL_KG_CO2E_PER_LITRE = 2.68;
 const DASHBOARD_AGGREGATES_KEY = '__dashboardAggregates';
 const LOAN_STAGE_ROOT_PREFIX = 'In which agricultural value chain stages did you invest your TACATDP loan(s)?/';
+const ROOT_STAGE_LABELS: Record<string, string> = {
+  '1': 'Farm Preparation',
+  '2': 'Farm Operations',
+  '3': 'Input Supply',
+  '4': 'Field Management',
+  '5': 'Pest Control',
+  '6': 'Harvesting',
+  '7': 'Post-harvest Handling',
+  '8': 'Storage / Warehousing',
+  '9': 'Crop Transport',
+  '10': 'Value Addition / Processing',
+  '11': 'Aquaculture Production',
+  '12': 'Fisheries Landing',
+  '13': 'Aquaponics Systems',
+  '14': 'Marketing / Trading',
+  '15': 'Consumption / End User',
+  '16': 'Training / Capacity Building',
+  '17': 'Farmer Group Capacity Building',
+  '18': 'Other Value Chain Activity',
+};
 const TECHNOLOGY_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
   { name: 'Climate-smart seeds', pattern: /TACATDP ARA Technology Deployed\/.+Climate-smart seeds|drought-resistant|drought tolerant/i },
   { name: 'Organic inputs', pattern: /TACATDP ARA Technology Deployed\/.+Organic inputs|organic fertilizer|bio-?fertili[sz]er|compost/i },
@@ -141,6 +176,21 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
       lifetimeTco2eAvoided: 0,
       negativeSavingRecords: 0,
     },
+    dataQuality: {
+      sourceUuidRecords: 0,
+      customerIdRecords: 0,
+      phoneRecords: 0,
+      gpsRecords: 0,
+      loanRepeatRows: 0,
+      rowsWithLinkedLoans: 0,
+      regions: 0,
+      districts: 0,
+      wards: 0,
+      duplicateIdentifierRows: 0,
+      identifierCoveragePct: null,
+      gpsCoveragePct: null,
+      loanLinkagePct: null,
+    },
     dataQualityFlags: 0,
   };
 
@@ -150,6 +200,13 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
   const regionAccumulators = new Map<string, RegionAccumulator>();
   const technologyAccumulators = new Map<string, CategoryAccumulator>();
   const trendAmountsByYear = new Map<string, number>();
+  const sourceUuids: string[] = [];
+  const customerIds: string[] = [];
+  const phoneNumbers: string[] = [];
+  const distinctRegions = new Set<string>();
+  const districts = new Set<string>();
+  const wards = new Set<string>();
+  const duplicateCandidateKeys: Array<{ customerId: string; phone: string }> = [];
   let detailedProductionBefore = 0;
   let detailedProductionAfter = 0;
 
@@ -162,6 +219,22 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     const region = getRegionAccumulator(regionAccumulators, regionName);
     region.profiles += 1;
     region.latestUpdate = latestIso(region.latestUpdate, row.mp_updatedat || row.mp_projectedat || row.mp_submittedat || '');
+
+    const sourceUuid = readText(answers, [/^_uuid$/i]);
+    const customerId = readText(answers, [/^Customer_ID$/i, /^customer_id$/i]);
+    const phone = readText(answers, [/^Farmer_Phone$/i, /^phone$/i]);
+    const latitude = readNumber(answers, [/^_Georeference_latitude$/i, /latitude$/i]);
+    const longitude = readNumber(answers, [/^_Georeference_longitude$/i, /longitude$/i]);
+    const district = readText(answers, [/^district$/i, /^District$/i]);
+    const ward = readText(answers, [/^ward$/i, /^Ward$/i]);
+    if (sourceUuid) sourceUuids.push(sourceUuid);
+    if (customerId) customerIds.push(customerId);
+    if (phone) phoneNumbers.push(phone);
+    if (customerId || phone) duplicateCandidateKeys.push({ customerId, phone });
+    if (latitude !== null && longitude !== null) projection.dataQuality.gpsRecords += 1;
+    if (regionName && regionName !== 'Not recorded') distinctRegions.add(regionName);
+    if (district) districts.add(district);
+    if (ward) wards.add(ward);
 
     const rootLoanAmount = readNumber(answers, [/(?:^|\/)total_loan_amount$/i, /total.*loan.*amount/i]);
     const aggregateLoanAmount = sumAggregateLoanAmount(aggregate);
@@ -184,9 +257,12 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     }
 
     const aggregateLoans = aggregate.loans ?? [];
+    projection.dataQuality.loanRepeatRows += aggregateLoans.length;
+    if (aggregateLoans.length > 0) projection.dataQuality.rowsWithLinkedLoans += 1;
+    const rootLoanStages = readSelectedLoanStages(answers);
     const loanStages = aggregateLoans.some((loan) => loan.stages?.length)
       ? aggregateLoans.flatMap((loan) => loan.stages ?? []).filter(Boolean)
-      : readSelectedLoanStages(answers);
+      : rootLoanStages;
     const allocatedStageAmount = loanStages.length > 0 ? reportedLoanAmount / loanStages.length : 0;
     for (const stage of loanStages) {
       const category = getCategoryAccumulator(loanStageAccumulators, simplifyLoanStageName(stage));
@@ -293,10 +369,20 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     }
 
     const rowTechnologies = classifyTechnologies(answers);
+    const technologyOrPracticeItems = rowTechnologies.length > 0
+      ? rowTechnologies
+      : rootLoanStages.map(toTechnologyPracticeLabel);
     for (const technology of rowTechnologies) {
       const category = getCategoryAccumulator(technologyAccumulators, technology);
       category.value += 1;
       category.amountTzs += reportedLoanAmount;
+      region.technologies.set(technology, (region.technologies.get(technology) ?? 0) + 1);
+    }
+    for (const technology of technologyOrPracticeItems) {
+      if (rowTechnologies.includes(technology)) continue;
+      const category = getCategoryAccumulator(technologyAccumulators, technology);
+      category.value += 1;
+      category.amountTzs += technologyOrPracticeItems.length > 0 ? reportedLoanAmount / technologyOrPracticeItems.length : 0;
       region.technologies.set(technology, (region.technologies.get(technology) ?? 0) + 1);
     }
 
@@ -346,9 +432,23 @@ export function calculateTacatdpBaselineProjection(rows: SubmissionReportRow[]):
     projection.training.youthTrained,
     projection.training.farmersTrained,
   );
+  projection.dataQuality.sourceUuidRecords = sourceUuids.length;
+  projection.dataQuality.customerIdRecords = customerIds.length;
+  projection.dataQuality.phoneRecords = phoneNumbers.length;
+  projection.dataQuality.regions = distinctRegions.size;
+  projection.dataQuality.districts = districts.size;
+  projection.dataQuality.wards = wards.size;
+  projection.dataQuality.duplicateIdentifierRows = countDuplicateIdentifierRows(duplicateCandidateKeys);
+  projection.dataQuality.identifierCoveragePct = percentage(duplicateCandidateKeys.length, projection.rowsWithAnswers);
+  projection.dataQuality.gpsCoveragePct = percentage(projection.dataQuality.gpsRecords, projection.rowsWithAnswers);
+  projection.dataQuality.loanLinkagePct = percentage(projection.dataQuality.rowsWithLinkedLoans, projection.rowsWithAnswers);
   projection.loanPortfolio = buildLoanPortfolioValues(loanStageAccumulators);
   projection.regions = buildRegions(regionAccumulators);
-  projection.technologies = buildTechnologyValues(technologyAccumulators);
+  projection.technologies = buildTechnologyValues(
+    technologyAccumulators.size > 0
+      ? technologyAccumulators
+      : buildTechnologyPracticeFallback(loanStageAccumulators),
+  );
   projection.disbursementTrend = buildTrend(trendAmountsByYear);
   projection.recentSubmissions = buildRecentSubmissions(rows);
 
@@ -430,10 +530,22 @@ function classifyTechnologies(answers: RootAnswers): string[] {
 }
 
 function readSelectedLoanStages(answers: RootAnswers): string[] {
-  return Object.entries(answers)
+  const labelledStages = Object.entries(answers)
     .filter(([key, value]) => key.startsWith(LOAN_STAGE_ROOT_PREFIX) && isTruthyAnswer(value))
     .map(([key]) => key.slice(LOAN_STAGE_ROOT_PREFIX.length))
     .filter(Boolean);
+  if (labelledStages.length > 0) return labelledStages;
+
+  const flaggedStages = Object.entries(ROOT_STAGE_LABELS)
+    .filter(([code]) => readTruthy(answers, [
+      new RegExp(`(?:^|/)vc_stages_${code}$`, 'i'),
+      new RegExp(`(?:^|/)other_stage_${code}$`, 'i'),
+    ]))
+    .map(([, label]) => label);
+  if (flaggedStages.length > 0) return flaggedStages;
+
+  const codedStages = readText(answers, [/(?:^|\/)vc_stages$/i, /(?:^|\/)other_stage$/i]);
+  return splitStageCodes(codedStages).map((code) => ROOT_STAGE_LABELS[code] ?? `Stage ${code}`);
 }
 
 function simplifyLoanStageName(stage: string): string {
@@ -445,6 +557,53 @@ function simplifyLoanStageName(stage: string): string {
     .replace('Value Addition / Processing Stage', 'Processing')
     .replace('Marketing / Trading Stage', 'Trading')
     .replace(/\s+Stage$/i, '');
+}
+
+function splitStageCodes(value: string): string[] {
+  return value
+    .trim()
+    .split(/[\s,;]+/)
+    .map((part) => part.trim())
+    .filter((part) => /^\d+$/.test(part));
+}
+
+function countDuplicateIdentifierRows(rows: Array<{ customerId: string; phone: string }>): number {
+  const customerCounts = countValues(rows.map((row) => row.customerId));
+  const phoneCounts = countValues(rows.map((row) => row.phone));
+  return rows.filter((row) => (
+    (row.customerId && (customerCounts.get(row.customerId) ?? 0) > 1)
+    || (row.phone && (phoneCounts.get(row.phone) ?? 0) > 1)
+  )).length;
+}
+
+function countValues(values: string[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    if (!value) continue;
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function toTechnologyPracticeLabel(stage: string): string {
+  const normalized = simplifyLoanStageName(stage);
+  if (/input/i.test(normalized)) return 'Inputs and seed systems';
+  if (/post-harvest|storage|warehousing/i.test(normalized)) return 'Post-harvest/storage';
+  if (/processing|value addition/i.test(normalized)) return 'Agro-processing/value addition';
+  if (/farm preparation|farm operations|field management|pest control|harvesting/i.test(normalized)) return 'Climate-smart farm practices';
+  if (/aquaculture|fisheries|aquaponics/i.test(normalized)) return 'Water-based production systems';
+  if (/training|capacity/i.test(normalized)) return 'Training / capacity building';
+  return normalized;
+}
+
+function buildTechnologyPracticeFallback(stages: Map<string, CategoryAccumulator>): Map<string, CategoryAccumulator> {
+  const technologies = new Map<string, CategoryAccumulator>();
+  for (const stage of stages.values()) {
+    const technology = getCategoryAccumulator(technologies, toTechnologyPracticeLabel(stage.name));
+    technology.value += stage.value;
+    technology.amountTzs += stage.amountTzs;
+  }
+  return technologies;
 }
 
 function getRegionAccumulator(regions: Map<string, RegionAccumulator>, name: string): RegionAccumulator {
@@ -522,14 +681,25 @@ function buildLoanPortfolioValues(categories: Map<string, CategoryAccumulator>):
 
 function buildTrend(amountsByYear: Map<string, number>): TrendPoint[] {
   const entries = [...amountsByYear.entries()]
-    .filter(([year, amount]) => /^\d{4}$/.test(year) && amount > 0)
+    .filter(([period, amount]) => /^(\d{4}|\d{4}-\d{2})$/.test(period) && amount > 0)
     .sort(([left], [right]) => left.localeCompare(right));
   let cumulative = 0;
-  return entries.map(([year, amount]) => {
+  return entries.map(([period, amount]) => {
     cumulative += amount;
     const value = toBillions(cumulative);
-    return { month: year, value, label: `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })}B` };
+    return {
+      month: formatTrendPeriod(period),
+      value,
+      label: `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })}B`,
+    };
   });
+}
+
+function formatTrendPeriod(period: string): string {
+  const monthPeriod = period.match(/^(\d{4})-(\d{2})$/);
+  if (!monthPeriod) return period;
+  const date = new Date(Date.UTC(Number(monthPeriod[1]), Number(monthPeriod[2]) - 1, 1));
+  return new Intl.DateTimeFormat('en', { month: 'short', year: 'numeric' }).format(date);
 }
 
 function buildRecentSubmissions(rows: SubmissionReportRow[]): RecentSubmission[] {

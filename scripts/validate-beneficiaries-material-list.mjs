@@ -34,6 +34,14 @@ assertIncludes(viewSource, 'role="search"', 'Beneficiaries filters must expose a
 assertIncludes(viewSource, "import SurfaceCard from '../components/ui/SurfaceCard.vue';", 'Beneficiaries page must use the shared SurfaceCard abstraction.');
 assertIncludes(viewSource, '<SurfaceCard as="section" class="beneficiaries-hero">', 'Beneficiaries hero must use a plain SurfaceCard without the metric accent rail.');
 assertIncludes(viewSource, 'as="article" accent="green" accented class="beneficiary-metric"', 'Beneficiary summary metrics must opt into the metric accent rail.');
+assertIncludes(viewSource, 'hasLiveBeneficiaryProfiles', 'Beneficiary summary metrics must distinguish live Dataverse profiles from prototype fallback records.');
+assertIncludes(viewSource, "value: 'Pending'", 'Beneficiary summary metrics must show pending states while live data or source projections are unavailable.');
+assertIncludes(viewSource, "value: activeBorrowers > 0 ? activeBorrowers.toLocaleString() : 'Awaiting'", 'Active-borrower summary must not render unsupported zero values as measured data.');
+assertIncludes(viewSource, "value: trained > 0 ? trained.toLocaleString() : 'Awaiting'", 'Training summary must not render unsupported zero values as measured data.');
+assertIncludes(viewSource, "value: verified > 0 ? verified.toLocaleString() : 'Awaiting'", 'Verified-record summary must not render unsupported zero values as measured data.');
+if (viewSource.includes("detail: beneficiaryDataSource.value === 'dataverse' ? 'Live Dataverse profiles' : 'Prototype fallback'")) {
+  throw new Error('Beneficiary summary metrics must not use prototype fallback values before live baseline data is loaded.');
+}
 assertIncludes(viewSource, '<SurfaceCard as="section" class="material-list-surface beneficiary-list"', 'Beneficiary list surface must use SurfaceCard plus the shared Material list surface class.');
 assertIncludes(viewSource, 'class="beneficiary-metric"', 'Beneficiary summary metrics must use shared card styling.');
 assertIncludes(viewSource, 'class="material-list-surface beneficiary-list"', 'Beneficiary list surface must use shared Material surface styling.');

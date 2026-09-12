@@ -25,13 +25,8 @@ import { calculateTacatdpBaselineProjection } from './tacatdpBaselineProjection'
 import {
   climateOutcomes,
   dashboardKpis,
-  disbursementTrend,
-  loanPerformance,
-  loanPortfolio,
-  recentSubmissions,
-  regionalMetrics,
-  technologyFinancing,
   type KpiMetric,
+  type RegionMetric,
   type OutcomeMetric,
 } from '../../prototype/tacatdpDashboardData';
 
@@ -101,7 +96,7 @@ const liveBeneficiaryCount = ref<number | null>(null);
 const liveReportRowCount = ref<number | null>(null);
 const liveBeneficiaries = ref<BeneficiaryListItem[]>([]);
 const liveReportRows = ref<SubmissionReportRow[]>([]);
-const liveDashboardLoading = ref(false);
+const liveDashboardLoading = ref(true);
 const liveDashboardError = ref('');
 
 const liveBaselineProjection = computed(() => calculateTacatdpBaselineProjection(liveReportRows.value));
@@ -109,29 +104,29 @@ const hasCalculatedBaselineProjection = computed(() => liveBaselineProjection.va
 const dashboardRegionMetrics = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.regions.length > 0
     ? liveBaselineProjection.value.regions
-    : regionalMetrics
+    : []
 ));
-const selectedRegion = computed(() => dashboardRegionMetrics.value[0] ?? regionalMetrics[0]);
+const selectedRegion = computed<RegionMetric | null>(() => dashboardRegionMetrics.value[0] ?? null);
 const regionData = computed(() => dashboardRegionMetrics.value.map((region) => ({ name: region.name, value: region.disbursed })));
 const dashboardTechnologyFinancing = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.technologies.length > 0
     ? liveBaselineProjection.value.technologies
-    : technologyFinancing
+    : []
 ));
 const dashboardDisbursementTrend = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.disbursementTrend.length > 0
     ? liveBaselineProjection.value.disbursementTrend
-    : disbursementTrend
+    : []
 ));
 const dashboardRecentSubmissions = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.recentSubmissions.length > 0
     ? liveBaselineProjection.value.recentSubmissions
-    : recentSubmissions
+    : []
 ));
 const dashboardLoanPortfolio = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.loanPortfolio.length > 0
     ? liveBaselineProjection.value.loanPortfolio
-    : loanPortfolio
+    : []
 ));
 const loanPortfolioTitle = computed(() => (
   hasCalculatedBaselineProjection.value && liveBaselineProjection.value.loanPortfolio.length > 0
@@ -140,7 +135,14 @@ const loanPortfolioTitle = computed(() => (
 ));
 
 const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) => {
-  if (!hasLiveKpiProjection.value) return metric;
+  if (!hasLiveKpiProjection.value) {
+    return {
+      ...metric,
+      value: liveDashboardError.value ? 'Unavailable' : 'Pending',
+      change: liveDashboardError.value ? 'Check access' : 'Awaiting live data',
+      changeDirection: 'neutral',
+    };
+  }
 
   if (metric.id === 'active-loans') {
     return { ...metric, label: 'Baseline Rows', value: formatLiveCount(liveReportRowCount.value), change: 'Report rows', changeDirection: 'neutral' };
@@ -159,7 +161,18 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
     };
   }
   if (metric.id === 'repayment-rate') {
-    return { ...metric, label: 'Loan Status', value: 'Pending', change: 'Core banking', changeDirection: 'neutral' };
+    const gpsCoverage = liveBaselineProjection.value.dataQuality.gpsCoveragePct;
+    return {
+      ...metric,
+      label: 'GPS Coverage',
+      value: gpsCoverage !== null ? formatPercent(gpsCoverage) : 'Awaiting',
+      change: liveBaselineProjection.value.dataQuality.gpsRecords > 0
+        ? `${formatWholeNumber(liveBaselineProjection.value.dataQuality.gpsRecords)} geotagged`
+        : 'Not imported',
+      changeDirection: 'neutral',
+      icon: 'map',
+      tone: 'green',
+    };
   }
   if (metric.id === 'farmers-trained') {
     const farmersTrained = liveBaselineProjection.value.training.farmersTrained;
@@ -184,8 +197,51 @@ const dashboardKpiRows = computed<KpiMetric[]>(() => dashboardKpis.map((metric) 
   return metric;
 }));
 
+const baselineDataQualityMetrics = computed(() => {
+  if (!hasCalculatedBaselineProjection.value) {
+    const value = liveDashboardError.value ? 'Unavailable' : 'Pending';
+    const detail = liveDashboardError.value ? 'Check access' : 'Awaiting live data';
+    return [
+      { label: 'Identifier coverage', value, detail },
+      { label: 'GPS coverage', value, detail },
+      { label: 'Loan linkage', value, detail },
+      { label: 'Needs review', value, detail },
+    ];
+  }
+
+  const quality = liveBaselineProjection.value.dataQuality;
+  return [
+    {
+      label: 'Identifier coverage',
+      value: quality.identifierCoveragePct !== null ? formatPercent(quality.identifierCoveragePct) : 'Awaiting',
+      detail: `${formatWholeNumber(Math.max(quality.customerIdRecords, quality.phoneRecords, quality.sourceUuidRecords))} records`,
+    },
+    {
+      label: 'GPS coverage',
+      value: quality.gpsCoveragePct !== null ? formatPercent(quality.gpsCoveragePct) : 'Awaiting',
+      detail: `${formatWholeNumber(quality.gpsRecords)} geotagged`,
+    },
+    {
+      label: 'Loan linkage',
+      value: quality.loanLinkagePct !== null ? formatPercent(quality.loanLinkagePct) : 'Awaiting',
+      detail: `${formatWholeNumber(quality.loanRepeatRows)} loan rows`,
+    },
+    {
+      label: 'Needs review',
+      value: formatWholeNumber(quality.duplicateIdentifierRows + liveBaselineProjection.value.dataQualityFlags),
+      detail: 'Identifier or validation flags',
+    },
+  ];
+});
+
 const dashboardClimateOutcomes = computed<OutcomeMetric[]>(() => {
-  if (!hasLiveKpiProjection.value || liveBaselineProjection.value.rowsWithAnswers === 0) return climateOutcomes;
+  if (!hasLiveKpiProjection.value || liveBaselineProjection.value.rowsWithAnswers === 0) {
+    return climateOutcomes.map((metric) => ({
+      ...metric,
+      value: liveDashboardError.value ? 'Unavailable' : 'Pending',
+      change: liveDashboardError.value ? 'Check access' : 'Awaiting live data',
+    }));
+  }
 
   const projection = liveBaselineProjection.value;
   const yieldIncrease = projection.yield.weightedDetailedChangePct ?? projection.yield.medianSimpleChangePct;
@@ -215,6 +271,21 @@ const dashboardClimateOutcomes = computed<OutcomeMetric[]>(() => {
 });
 
 const dashboardTrainingMetrics = computed(() => {
+  if (!hasLiveKpiProjection.value) {
+    const value = liveDashboardError.value ? 'Unavailable' : 'Pending';
+    const detail = liveDashboardError.value ? 'Check access' : 'Awaiting live data';
+    return {
+      farmers: value,
+      records: detail,
+      female: value,
+      femaleDetail: detail,
+      youth: value,
+      youthDetail: detail,
+      genderContent: value,
+      genderContentDetail: detail,
+    };
+  }
+
   const training = liveBaselineProjection.value.training;
   return {
     farmers: training.farmersTrained > 0 ? formatWholeNumber(training.farmersTrained) : 'Awaiting',
@@ -253,7 +324,7 @@ const latestLiveUpdateIso = computed(() => {
 });
 
 const liveDashboardSummary = computed(() => {
-  if (liveDashboardLoading.value) return 'Loading live baseline registry counts…';
+  if (liveDashboardLoading.value) return 'Loading live baseline data…';
   if (liveDashboardError.value) return `Live registry read unavailable: ${liveDashboardError.value}`;
   if (liveBeneficiaryCount.value !== null || liveReportRowCount.value !== null) {
     const parts = [];
@@ -273,7 +344,7 @@ async function loadDashboardLiveCounts() {
   try {
     const [beneficiaries, reportRows] = await Promise.all([
       api.listBeneficiaries(),
-      api.listDashboardSubmissionReportRows({ maxRows: 1000 }),
+      api.listDashboardSubmissionReportRows({ maxRows: 2000 }),
     ]);
     liveBeneficiaries.value = beneficiaries;
     liveReportRows.value = reportRows;
@@ -337,7 +408,7 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
     text: 'Total',
     subtext: hasCalculatedBaselineProjection.value && liveBaselineProjection.value.finance.reportedLoanCount > 0
       ? formatWholeNumber(liveBaselineProjection.value.finance.reportedLoanCount)
-      : '12,458',
+      : '',
     left: '28%',
     top: '34%',
     textAlign: 'center',
@@ -383,49 +454,6 @@ const loanPortfolioOption = computed<DashboardChartOption>(() => ({
 }));
 
 const disbursementTrendOption = computed<DashboardChartOption>(() => buildDisbursementTrendOption(dashboardDisbursementTrend.value));
-
-const loanPerformanceOption = computed<DashboardChartOption>(() => ({
-  title: {
-    text: 'Total Loans',
-    subtext: '12,458',
-    left: '30%',
-    top: '39%',
-    textAlign: 'center',
-    itemGap: 2,
-    textStyle: { color: '#64706A', fontSize: 11, fontWeight: 600 },
-    subtextStyle: { color: '#17211C', fontSize: 18, fontWeight: 800 },
-  },
-  tooltip: {
-    trigger: 'item',
-    formatter: (params: unknown) => {
-      const itemParams = chartParam(params);
-      const row = loanPerformance.find((item) => item.name === itemParams.name);
-      return `${itemParams.name}<br>${itemParams.value.toLocaleString()} loans (${itemParams.percent}%)<br>${row?.amount ?? 'Prototype outstanding principal'}`;
-    },
-  },
-  legend: {
-    orient: 'vertical',
-    right: -6,
-    top: 'middle',
-    itemWidth: 9,
-    itemHeight: 9,
-    itemGap: 12,
-    textStyle: { color: '#64706A', fontSize: 11 },
-    formatter: (name: string) => {
-      const item = loanPerformance.find((entry) => entry.name === name);
-      return item ? `${item.name}\n${item.value.toLocaleString()} (${item.percent}%)` : name;
-    },
-  },
-  series: [{
-    type: 'pie',
-    radius: ['39%', '62%'],
-    center: ['30%', '50%'],
-    avoidLabelOverlap: false,
-    data: loanPerformance.map((item) => ({ name: item.name, value: item.value, itemStyle: { color: item.color } })),
-    label: { show: false, position: 'center' },
-    labelLine: { show: false },
-  }],
-}));
 
 const technologyOption = computed<DashboardChartOption>(() => ({
   tooltip: { trigger: 'axis' },
@@ -515,6 +543,8 @@ function iconFor(metric: KpiMetric) {
 }
 
 function openKpiDetail(metric: KpiMetric) {
+  if (!hasLiveKpiProjection.value) return;
+
   if (metric.id === 'active-borrowers') {
     openBeneficiaries({ borrowerStatus: 'Active borrower' });
   }
@@ -524,6 +554,8 @@ function openKpiDetail(metric: KpiMetric) {
 }
 
 function openTechnologyBeneficiaries(params: unknown) {
+  if (dashboardTechnologyFinancing.value.length === 0) return;
+
   const itemParams = chartParam(params);
   if (itemParams.name) openBeneficiaries({ technology: itemParams.name });
 }
@@ -553,7 +585,6 @@ function regionNameFromSubmission(regionLabel: string) {
     </header>
 
     <div class="dashboard-status-strip" role="status" aria-live="polite">
-      <p class="dashboard-demo-note">Demo data: dashboard visual design only; figures are not official CRDB or GCF statistics.</p>
       <p class="dashboard-live-note" :class="{ 'dashboard-live-note--warning': liveDashboardError }">{{ liveDashboardSummary }}</p>
     </div>
 
@@ -578,7 +609,11 @@ function regionNameFromSubmission(regionLabel: string) {
 
     <section class="analytics-grid" aria-label="TACATDP analytics">
       <DashboardCard :span="3" :title="loanPortfolioTitle">
-        <DashboardChart class="chart chart--donut" :option="loanPortfolioOption" autoresize />
+        <DashboardChart v-if="dashboardLoanPortfolio.length > 0" class="chart chart--donut" :option="loanPortfolioOption" autoresize />
+        <div v-else class="dashboard-loading-state" aria-live="polite">
+          <strong>{{ liveDashboardLoading ? 'Loading loan financing data' : 'Awaiting loan financing data' }}</strong>
+          <span>Live baseline rows will populate this chart after they are available.</span>
+        </div>
         <template #footer>
           <a href="#reporting">View full report →</a>
         </template>
@@ -591,7 +626,11 @@ function regionNameFromSubmission(regionLabel: string) {
             <span>Monthly</span>
           </div>
         </template>
-        <DashboardChart class="chart chart--line" :option="disbursementTrendOption" autoresize />
+        <DashboardChart v-if="dashboardDisbursementTrend.length > 0" class="chart chart--line" :option="disbursementTrendOption" autoresize />
+        <div v-else class="dashboard-loading-state" aria-live="polite">
+          <strong>{{ liveDashboardLoading ? 'Loading disbursement trend' : 'Awaiting disbursement trend' }}</strong>
+          <span>Dated loan records are required to draw a monthly trend.</span>
+        </div>
       </DashboardCard>
 
       <DashboardCard :span="4" :row-span="2">
@@ -601,8 +640,12 @@ function regionNameFromSubmission(regionLabel: string) {
             <button class="text-action" type="button">Reset map</button>
           </div>
         </template>
-        <DashboardChart class="chart chart--map" :option="regionalMapOption" autoresize aria-label="Tanzania regional choropleth map showing prototype disbursement by region" />
-        <button class="selected-region-card selected-region-card--action" type="button" @click="openBeneficiaries({ region: selectedRegion.name })">
+        <DashboardChart v-if="regionData.length > 0" class="chart chart--map" :option="regionalMapOption" autoresize aria-label="Tanzania regional choropleth map showing live baseline disbursement by region" />
+        <div v-else class="dashboard-loading-state dashboard-loading-state--map" aria-live="polite">
+          <strong>{{ liveDashboardLoading ? 'Loading regional coverage' : 'Awaiting regional coverage' }}</strong>
+          <span>The map will render when live baseline rows include region data.</span>
+        </div>
+        <button v-if="selectedRegion" class="selected-region-card selected-region-card--action" type="button" @click="openBeneficiaries({ region: selectedRegion.name })">
           <div>
             <span>Top Region</span>
             <strong>{{ selectedRegion.name }}</strong>
@@ -619,17 +662,27 @@ function regionNameFromSubmission(regionLabel: string) {
         </button>
       </DashboardCard>
 
-      <DashboardCard :span="4" title="Technologies Financed">
-        <DashboardChart class="chart chart--bars" :option="technologyOption" autoresize @click="openTechnologyBeneficiaries" />
+      <DashboardCard :span="4" title="Technologies / Practices Financed">
+        <DashboardChart v-if="dashboardTechnologyFinancing.length > 0" class="chart chart--bars" :option="technologyOption" autoresize @click="openTechnologyBeneficiaries" />
+        <div v-else class="dashboard-loading-state" aria-live="polite">
+          <strong>{{ liveDashboardLoading ? 'Loading technology data' : 'Awaiting technology data' }}</strong>
+          <span>Technology or financed-practice categories will render after baseline answers are parsed.</span>
+        </div>
         <template #footer>
           <a href="#/beneficiaries?source=dashboard">View full breakdown →</a>
         </template>
       </DashboardCard>
 
-      <DashboardCard :span="4" title="Loan Performance">
-        <DashboardChart class="chart chart--donut" :option="loanPerformanceOption" autoresize />
+      <DashboardCard :span="4" title="Baseline Data Quality">
+        <div class="baseline-quality-grid" aria-label="Baseline data quality summary">
+          <section v-for="metric in baselineDataQualityMetrics" :key="metric.label" class="baseline-quality-item">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+            <small>{{ metric.detail }}</small>
+          </section>
+        </div>
         <template #footer>
-          <a href="#reporting">View portfolio quality →</a>
+          <a href="#reporting">View data quality →</a>
         </template>
       </DashboardCard>
     </section>
@@ -701,7 +754,7 @@ function regionNameFromSubmission(regionLabel: string) {
       </DashboardCard>
 
       <DashboardCard :span="6" title="Recent Data Submissions">
-        <div class="submission-list">
+        <div v-if="dashboardRecentSubmissions.length > 0" class="submission-list">
           <button
             v-for="submission in dashboardRecentSubmissions"
             :key="submission.region"
@@ -718,6 +771,10 @@ function regionNameFromSubmission(regionLabel: string) {
               <small>{{ submission.time }}</small>
             </div>
           </button>
+        </div>
+        <div v-else class="dashboard-loading-state" aria-live="polite">
+          <strong>{{ liveDashboardLoading ? 'Loading recent submissions' : 'Awaiting recent submissions' }}</strong>
+          <span>Submission activity will render after live baseline rows are available.</span>
         </div>
         <template #footer>
           <a href="#/beneficiaries?source=dashboard">View all submissions →</a>
@@ -750,7 +807,6 @@ function regionNameFromSubmission(regionLabel: string) {
   gap: var(--dash-space-4);
 }
 
-.dashboard-demo-note,
 .card-heading-row span,
 .donut-center span,
 .selected-region-card span,
@@ -759,11 +815,6 @@ function regionNameFromSubmission(regionLabel: string) {
 .submission-list span,
 .submission-list small {
   color: var(--dash-muted);
-}
-
-.dashboard-demo-note {
-  margin: 4px 0 0;
-  font-size: 0.84rem;
 }
 
 .tacatdp-dashboard__header-actions {
@@ -811,17 +862,6 @@ function regionNameFromSubmission(regionLabel: string) {
   gap: var(--dash-space-2);
 }
 
-.dashboard-demo-note {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  margin: 0;
-  padding: 6px var(--dash-space-3);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.08);
-}
-
 .dashboard-live-note {
   display: inline-flex;
   align-items: center;
@@ -840,6 +880,35 @@ function regionNameFromSubmission(regionLabel: string) {
   border-color: #F6D58D;
   background: #FFF8E8;
   color: #7A4D00;
+}
+
+.dashboard-loading-state {
+  display: grid;
+  place-content: center;
+  gap: var(--dash-space-2);
+  min-height: 190px;
+  padding: var(--dash-space-4);
+  border: 1px dashed #B7D6BF;
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.82), rgba(234, 247, 238, 0.7), rgba(255, 255, 255, 0.82));
+  color: var(--dash-muted);
+  text-align: center;
+}
+
+.dashboard-loading-state--map {
+  min-height: 360px;
+}
+
+.dashboard-loading-state strong {
+  color: var(--dash-text);
+  font-size: 0.96rem;
+}
+
+.dashboard-loading-state span {
+  max-width: 20rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .kpi-row {
@@ -951,6 +1020,48 @@ a,
   border-radius: 50%;
   background: #EAF7EE;
   color: #064E3B;
+}
+
+.baseline-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dash-space-3);
+}
+
+.baseline-quality-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: var(--dash-space-3);
+  border: 1px solid #E3E8E5;
+  border-radius: 12px;
+  background: #F8FBF9;
+}
+
+.baseline-quality-item span,
+.baseline-quality-item strong,
+.baseline-quality-item small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.baseline-quality-item span {
+  color: var(--dash-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.baseline-quality-item strong {
+  color: var(--dash-dark);
+  font-size: clamp(1.05rem, 1.25vw, 1.42rem);
+  line-height: 1.15;
+}
+
+.baseline-quality-item small {
+  color: var(--dash-muted);
+  font-size: 0.72rem;
 }
 
 .outcome-grid {
