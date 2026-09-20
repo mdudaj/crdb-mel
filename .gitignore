@@ -17,3 +17,7 @@ artifacts/import-assets/local/
 .env
 .env.*
 !.env.example
+
+# Syncthing local/conflict artifacts
+.stignore
+*.sync-conflict-*
